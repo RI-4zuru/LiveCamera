@@ -541,3 +541,130 @@ a { color: inherit; }
   .siteTitle { font-size: 16px; }
   .cameraGrid { grid-template-columns: 1fr; }
 }
+
+/* v5: YouTubeは埋め込まず、全画面の選択一覧として表示 */
+.viewerFigure img { cursor: zoom-out; }
+
+.youtubeGalleryPanel {
+  width: min(1100px, 94vw);
+  max-height: 86vh;
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+}
+
+.youtubeGalleryHeader h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 22px;
+}
+
+.youtubeGalleryHeader p {
+  margin: 5px 0 18px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.youtubeGalleryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.youtubeGalleryCard {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #dbe3ee;
+  border-radius: 11px;
+  background: #ffffff;
+  color: #1e293b;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.youtubeGalleryCard:hover,
+.youtubeGalleryCard:focus-visible,
+.youtubeGalleryCard.is-focused {
+  border-color: #dc2626;
+  outline: none;
+  box-shadow: 0 10px 28px rgba(127, 29, 29, 0.2);
+  transform: translateY(-2px);
+}
+
+.youtubeGalleryMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #111827;
+}
+
+.youtubeGalleryMedia img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.18s ease;
+}
+
+.youtubeGalleryCard:hover .youtubeGalleryMedia img { transform: scale(1.025); }
+
+.youtubeGalleryPlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 46px;
+  height: 34px;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(220, 38, 38, 0.94);
+  color: #ffffff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  transform: translate(-50%, -50%);
+}
+
+.youtubeGalleryText {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px 12px;
+}
+
+.youtubeGalleryText strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.youtubeGalleryText span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.youtubeGalleryEmpty {
+  grid-column: 1 / -1;
+  padding: 45px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: #64748b;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .youtubeGalleryGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .youtubeGalleryPanel { width: 96vw; max-height: 88vh; padding: 14px; }
+  .youtubeGalleryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+}
+
+@media (max-width: 420px) {
+  .youtubeGalleryGrid { grid-template-columns: 1fr; }
+}
