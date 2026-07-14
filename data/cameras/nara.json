@@ -46,7 +46,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_03.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C00406.jpg",
       "latitude": 34.617,
-      "longitude": 135.87
+      "longitude": 135.87,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-002",
@@ -57,7 +59,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_04.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02064.jpg",
       "latitude": 34.621,
-      "longitude": 135.877
+      "longitude": 135.877,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-003",
@@ -68,7 +72,22 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_05.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02144.jpg",
       "latitude": 34.62,
-      "longitude": 135.883
+      "longitude": 135.883,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
+    },
+    {
+      "id": "nara-061",
+      "area": "northwest",
+      "city": "奈良市",
+      "place": "【山地】名阪国道　一本松",
+      "terrain": "山地",
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_07.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02127.jpg",
+      "latitude": 34.6128,
+      "longitude": 135.9379
     },
     {
       "id": "nara-004",
@@ -79,7 +98,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_08.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C00374.jpg",
       "latitude": 34.615,
-      "longitude": 135.948
+      "longitude": 135.948,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-005",
@@ -90,7 +111,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_09.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02134.jpg",
       "latitude": 34.609,
-      "longitude": 135.941
+      "longitude": 135.941,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-006",
@@ -101,7 +124,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_10.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02142.jpg",
       "latitude": 34.61,
-      "longitude": 135.96
+      "longitude": 135.96,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-007",
@@ -112,7 +137,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_11.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C03993.jpg",
       "latitude": 34.603,
-      "longitude": 135.792
+      "longitude": 135.792,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-008",
@@ -123,7 +150,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_01.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C00418.jpg",
       "latitude": 34.614,
-      "longitude": 135.8
+      "longitude": 135.8,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-009",
@@ -134,7 +163,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_02.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C00414.jpg",
       "latitude": 34.595,
-      "longitude": 135.817
+      "longitude": 135.817,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-010",
@@ -145,7 +176,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_06.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C03991.jpg",
       "latitude": 34.629,
-      "longitude": 135.889
+      "longitude": 135.889,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-011",
@@ -156,7 +189,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_12.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02285.jpg",
       "latitude": 34.603,
-      "longitude": 135.792
+      "longitude": 135.792,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-012",
@@ -167,7 +202,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.6269444&clon=135.7911111&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069020&ownCd=22069&sysCamId=22069020&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02755.jpg",
       "latitude": 34.627,
-      "longitude": 135.791
+      "longitude": 135.791,
+      "mediaType": "image"
     },
     {
       "id": "nara-013",
@@ -178,7 +214,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.6152778&clon=135.7908333&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069019&ownCd=22069&sysCamId=22069019&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02754.jpg",
       "latitude": 34.615,
-      "longitude": 135.79
+      "longitude": 135.79,
+      "mediaType": "image"
     },
     {
       "id": "nara-014",
@@ -189,7 +226,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.5980556&clon=135.7697222&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069018&ownCd=22069&sysCamId=22069018&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C03372.jpg",
       "latitude": 34.598,
-      "longitude": 135.77
+      "longitude": 135.77,
+      "mediaType": "image"
     },
     {
       "id": "nara-015",
@@ -200,7 +238,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.5975&clon=135.7672222&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069017&ownCd=22069&sysCamId=22069017&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02772.jpg",
       "latitude": 34.598,
-      "longitude": 135.767
+      "longitude": 135.767,
+      "mediaType": "image"
     },
     {
       "id": "nara-016",
@@ -211,7 +250,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_17.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C03568.jpg",
       "latitude": 34.502,
-      "longitude": 135.79
+      "longitude": 135.79,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-017",
@@ -222,7 +263,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_18.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C03572.jpg",
       "latitude": 34.48,
-      "longitude": 135.78
+      "longitude": 135.78,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-018",
@@ -233,7 +276,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.5991667&clon=135.7102778&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069013&ownCd=22069&sysCamId=22069013&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02763.jpg",
       "latitude": 34.6,
-      "longitude": 135.71
+      "longitude": 135.71,
+      "mediaType": "image"
     },
     {
       "id": "nara-019",
@@ -244,7 +288,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.5958333&clon=135.7230556&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069014&ownCd=22069&sysCamId=22069014&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02765.jpg",
       "latitude": 34.596,
-      "longitude": 135.723
+      "longitude": 135.723,
+      "mediaType": "image"
     },
     {
       "id": "nara-020",
@@ -255,7 +300,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.592125&clon=135.74127777&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069015&ownCd=22069&sysCamId=22069015&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02739.jpg",
       "latitude": 34.592,
-      "longitude": 135.741
+      "longitude": 135.741,
+      "mediaType": "image"
     },
     {
       "id": "nara-021",
@@ -266,7 +312,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_19.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C03995.jpg",
       "latitude": 34.456,
-      "longitude": 135.748
+      "longitude": 135.748,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-022",
@@ -277,7 +325,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_20.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C03996.jpg",
       "latitude": 34.447,
-      "longitude": 135.744
+      "longitude": 135.744,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-023",
@@ -288,7 +338,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_28.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C04266.jpg",
       "latitude": 34.447,
-      "longitude": 135.737
+      "longitude": 135.737,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-024",
@@ -299,7 +351,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_29.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C04267.jpg",
       "latitude": 34.437,
-      "longitude": 135.718
+      "longitude": 135.718,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-025",
@@ -310,7 +364,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_27.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02250.jpg",
       "latitude": 34.405,
-      "longitude": 135.703
+      "longitude": 135.703,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-026",
@@ -321,7 +377,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.5913889&clon=135.7580556&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069016&ownCd=22069&sysCamId=22069016&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02747.jpg",
       "latitude": 34.591,
-      "longitude": 135.758
+      "longitude": 135.758,
+      "mediaType": "image"
     },
     {
       "id": "nara-027",
@@ -332,7 +389,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=15&clat=34.584166667&clon=135.751944444&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069022&ownCd=22069&sysCamId=22069022&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C04372.jpg",
       "latitude": 34.584,
-      "longitude": 135.752
+      "longitude": 135.752,
+      "mediaType": "image"
     },
     {
       "id": "nara-028",
@@ -343,7 +401,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_13.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02287.jpg",
       "latitude": 34.602,
-      "longitude": 135.798
+      "longitude": 135.798,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-029",
@@ -354,7 +414,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_15.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02298.jpg",
       "latitude": 34.591,
-      "longitude": 135.798
+      "longitude": 135.798,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-030",
@@ -365,7 +427,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_16.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02304.jpg",
       "latitude": 34.578,
-      "longitude": 135.784
+      "longitude": 135.784,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-031",
@@ -376,7 +440,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_14.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02294.jpg",
       "latitude": 34.594,
-      "longitude": 135.791
+      "longitude": 135.791,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-032",
@@ -387,7 +453,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=14&clat=34.5788889&clon=135.6744444&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069010&ownCd=22069&sysCamId=22069010&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02741.jpg",
       "latitude": 34.579,
-      "longitude": 135.674
+      "longitude": 135.674,
+      "mediaType": "image"
     },
     {
       "id": "nara-033",
@@ -398,7 +465,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=14&clat=34.5825&clon=135.6813889&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069009&ownCd=22069&sysCamId=22069009&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02775.jpg",
       "latitude": 34.583,
-      "longitude": 135.681
+      "longitude": 135.681,
+      "mediaType": "image"
     },
     {
       "id": "nara-034",
@@ -409,7 +477,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=14&clat=34.5886111&clon=135.6902778&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069011&ownCd=22069&sysCamId=22069011&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02773.jpg",
       "latitude": 34.589,
-      "longitude": 135.69
+      "longitude": 135.69,
+      "mediaType": "image"
     },
     {
       "id": "nara-035",
@@ -420,7 +489,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=14&clat=34.5916667&clon=135.6958333&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222069012&ownCd=22069&sysCamId=22069012&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/yamato/pic/C02749.jpg",
       "latitude": 34.592,
-      "longitude": 135.696
+      "longitude": 135.696,
+      "mediaType": "image"
     },
     {
       "id": "nara-036",
@@ -431,7 +501,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.563288889&clon=136.016011111&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222107005&ownCd=22107&sysCamId=22107005&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kizujyo/pic/C03317.jpg",
       "latitude": 34.562,
-      "longitude": 136.016
+      "longitude": 136.016,
+      "mediaType": "image"
     },
     {
       "id": "nara-037",
@@ -442,7 +513,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.57824572476039&clon=136.03631973266604&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222107004&ownCd=22107&sysCamId=22107004&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kizujyo/pic/C03318.jpg",
       "latitude": 34.578,
-      "longitude": 136.036
+      "longitude": 136.036,
+      "mediaType": "image"
     },
     {
       "id": "nara-038",
@@ -453,7 +525,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.677247222&clon=136.079397222&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222107011&ownCd=22107&sysCamId=22107011&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kizujyo/pic/C03130.jpg",
       "latitude": 34.677,
-      "longitude": 136.079
+      "longitude": 136.079,
+      "mediaType": "image"
     },
     {
       "id": "nara-039",
@@ -462,9 +535,11 @@
       "place": "【平地】京奈和道　岡町西",
       "terrain": "平地",
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_22.html",
-      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kizujyo/pic/C03317.jpg",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02316.jpg",
       "latitude": 34.371,
-      "longitude": 135.708
+      "longitude": 135.708,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-040",
@@ -475,7 +550,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_23.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02318.jpg",
       "latitude": 34.376,
-      "longitude": 135.7
+      "longitude": 135.7,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-041",
@@ -486,7 +563,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_24.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02326.jpg",
       "latitude": 34.344,
-      "longitude": 135.682
+      "longitude": 135.682,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-042",
@@ -497,7 +576,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_25.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02327.jpg",
       "latitude": 34.34,
-      "longitude": 135.672
+      "longitude": 135.672,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-043",
@@ -508,7 +589,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_26.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02332.jpg",
       "latitude": 34.337,
-      "longitude": 135.662
+      "longitude": 135.662,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-044",
@@ -519,7 +602,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.346875&clon=135.6908806&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222087002&ownCd=22087&sysCamId=29010023&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/wakayama/pic/C02849.jpg",
       "latitude": 34.347,
-      "longitude": 135.691
+      "longitude": 135.691,
+      "mediaType": "image"
     },
     {
       "id": "nara-045",
@@ -530,7 +614,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.346&clon=135.6895&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222087001&ownCd=22087&sysCamId=29010022&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/wakayama/pic/C03966.jpg",
       "latitude": 34.346,
-      "longitude": 135.69
+      "longitude": 135.69,
+      "mediaType": "image"
     },
     {
       "id": "nara-046",
@@ -541,7 +626,9 @@
       "pageUrl": "https://www.kkr.mlit.go.jp/nara/lcamera/cctv_21.html",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/nara/pic/C02306.jpg",
       "latitude": 34.358,
-      "longitude": 135.71
+      "longitude": 135.71,
+      "mediaType": "image",
+      "provider": "国土交通省 近畿地方整備局 奈良国道事務所"
     },
     {
       "id": "nara-047",
@@ -552,7 +639,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.376388889&clon=135.896666667&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077001&ownCd=22077&sysCamId=29010008&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C02923.jpg",
       "latitude": 34.376,
-      "longitude": 135.897
+      "longitude": 135.897,
+      "mediaType": "image"
     },
     {
       "id": "nara-048",
@@ -563,7 +651,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.208611111&clon=135.734722222&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077006&ownCd=22077&sysCamId=29010013&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03386.jpg",
       "latitude": 34.209,
-      "longitude": 135.735
+      "longitude": 135.735,
+      "mediaType": "image"
     },
     {
       "id": "nara-049",
@@ -574,7 +663,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.195833333&clon=135.734722222&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077007&ownCd=22077&sysCamId=29010014&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03387.jpg",
       "latitude": 34.196,
-      "longitude": 135.735
+      "longitude": 135.735,
+      "mediaType": "image"
     },
     {
       "id": "nara-050",
@@ -585,7 +675,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.1975&clon=135.731388889&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077008&ownCd=22077&sysCamId=29010015&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03388.jpg",
       "latitude": 34.198,
-      "longitude": 135.731
+      "longitude": 135.731,
+      "mediaType": "image"
     },
     {
       "id": "nara-051",
@@ -596,7 +687,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.180277778&clon=135.741111111&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077009&ownCd=22077&sysCamId=29010016&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03377.jpg",
       "latitude": 34.18,
-      "longitude": 135.741
+      "longitude": 135.741,
+      "mediaType": "image"
     },
     {
       "id": "nara-052",
@@ -607,7 +699,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.178333333&clon=135.741111111&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077010&ownCd=22077&sysCamId=29010017&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03378.jpg",
       "latitude": 34.178,
-      "longitude": 135.741
+      "longitude": 135.741,
+      "mediaType": "image"
     },
     {
       "id": "nara-053",
@@ -618,7 +711,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.179166667&clon=135.748611111&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077011&ownCd=22077&sysCamId=29010018&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03389.jpg",
       "latitude": 34.179,
-      "longitude": 135.749
+      "longitude": 135.749,
+      "mediaType": "image"
     },
     {
       "id": "nara-054",
@@ -629,7 +723,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.158611111&clon=135.749444444&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077012&ownCd=22077&sysCamId=29010019&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03391.jpg",
       "latitude": 34.159,
-      "longitude": 135.749
+      "longitude": 135.749,
+      "mediaType": "image"
     },
     {
       "id": "nara-055",
@@ -640,7 +735,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.151388889&clon=135.745555556&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077013&ownCd=22077&sysCamId=29010020&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03498.jpg",
       "latitude": 34.151,
-      "longitude": 135.746
+      "longitude": 135.746,
+      "mediaType": "image"
     },
     {
       "id": "nara-056",
@@ -651,7 +747,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=13&clat=34.14331111&clon=135.74925277&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077014&ownCd=22077&sysCamId=29010021&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03392.jpg",
       "latitude": 34.143,
-      "longitude": 135.749
+      "longitude": 135.749,
+      "mediaType": "image"
     },
     {
       "id": "nara-057",
@@ -662,7 +759,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=14&clat=34.355555556&clon=135.924722222&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077002&ownCd=22077&sysCamId=29010009&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C02922.jpg",
       "latitude": 34.356,
-      "longitude": 135.925
+      "longitude": 135.925,
+      "mediaType": "image"
     },
     {
       "id": "nara-058",
@@ -673,7 +771,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=14&clat=34.355555556&clon=135.924861111&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077003&ownCd=22077&sysCamId=29010010&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C02926.jpg",
       "latitude": 34.366,
-      "longitude": 135.925
+      "longitude": 135.925,
+      "mediaType": "image"
     },
     {
       "id": "nara-059",
@@ -684,7 +783,8 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=14&clat=34.350833333&clon=135.94125&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077004&ownCd=22077&sysCamId=29010011&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C02925.jpg",
       "latitude": 34.351,
-      "longitude": 135.942
+      "longitude": 135.942,
+      "mediaType": "image"
     },
     {
       "id": "nara-060",
@@ -695,7 +795,47 @@
       "pageUrl": "https://www.river.go.jp/kawabou/pc/tm?zm=12&clat=34.207416667&clon=135.748166667&fld=0&mapType=0&viewGrpStg=0&viewRd=1&viewRW=1&viewRiver=1&viewPoint=1&ext=0&itmkndCd=100&scamId=222077005&ownCd=22077&sysCamId=29010012&viewRl=1&viewRn=1",
       "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/kinokawa/cctv/pic/C03390.jpg",
       "latitude": 34.207,
-      "longitude": 135.748
+      "longitude": 135.748,
+      "mediaType": "image"
+    },
+    {
+      "id": "nara-youtube-001",
+      "area": "northwest",
+      "city": "奈良市",
+      "place": "東大寺大仏殿 ライブカメラ",
+      "terrain": "観光",
+      "mediaType": "youtube",
+      "provider": "YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=_za9ijiFUWY",
+      "youtubeId": "_za9ijiFUWY",
+      "latitude": 34.6869,
+      "longitude": 135.8392
+    },
+    {
+      "id": "nara-youtube-002",
+      "area": "northeast",
+      "city": "桜井市",
+      "place": "談山神社 ライブカメラ",
+      "terrain": "観光",
+      "mediaType": "youtube",
+      "provider": "奈良テレビ放送 / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=zppA64fWxfE",
+      "youtubeId": "zppA64fWxfE",
+      "latitude": 34.466,
+      "longitude": 135.8618
+    },
+    {
+      "id": "nara-youtube-003",
+      "area": "southwest",
+      "city": "御所市",
+      "place": "金剛山 国見城址ライブカメラ",
+      "terrain": "山地",
+      "mediaType": "youtube",
+      "provider": "金剛山ライブカメラ / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=7C5Cs0w5E1A",
+      "youtubeId": "7C5Cs0w5E1A",
+      "latitude": 34.4207,
+      "longitude": 135.671
     }
   ]
 }
