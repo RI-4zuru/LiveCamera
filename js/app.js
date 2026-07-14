@@ -1,6 +1,5 @@
 const DATA_ROOT = './data';
-const MARKER_ICON_ROOT = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img';
-const MARKER_SHADOW = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
+const Leaflet = window.L;
 
 const elements = {
   pageSubtitle: document.querySelector('#pageSubtitle'),
@@ -8,6 +7,7 @@ const elements = {
   cameraCount: document.querySelector('#cameraCount'),
   youtubeToggle: document.querySelector('#youtubeToggle'),
   youtubeCount: document.querySelector('#youtubeCount'),
+  youtubeToggleLabel: document.querySelector('#youtubeToggleLabel'),
   content: document.querySelector('#content'),
   status: document.querySelector('#statusMessage'),
   areaSelect: document.querySelector('#areaSelect'),
@@ -25,7 +25,9 @@ const elements = {
   viewer: document.querySelector('#viewer'),
   viewerImage: document.querySelector('#viewerImage'),
   viewerCaption: document.querySelector('#viewerCaption'),
-  viewerClose: document.querySelector('#viewerClose')
+  viewerClose: document.querySelector('#viewerClose'),
+  stickyStack: document.querySelector('#stickyStack'),
+  mapContainer: document.querySelector('#map')
 };
 
 const state = {
@@ -41,7 +43,10 @@ const state = {
   scrollSpeed: 0,
   scrollFrame: null,
   previousScrollTime: 0,
-  countdownTimer: null
+  countdownTimer: null,
+  stickyObserver: null,
+  mapResizeObserver: null,
+  mapRefreshFrame: null
 };
 
 init().catch((error) => {
@@ -50,7 +55,9 @@ init().catch((error) => {
 });
 
 async function init() {
+  if (!Leaflet) throw new Error('Leafletを読み込めませんでした。');
   bindEvents();
+  setupStickyStackObserver();
   state.prefectures = await fetchJson(`${DATA_ROOT}/prefectures.json`);
   renderPrefectureNavigation();
 
@@ -111,6 +118,8 @@ function updatePageMeta() {
 
 function updateYoutubeToggle() {
   elements.youtubeToggle.setAttribute('aria-pressed', String(state.showYoutube));
+  elements.youtubeToggle.classList.toggle('is-active', state.showYoutube);
+  elements.youtubeToggleLabel.textContent = state.showYoutube ? 'YouTube ON' : 'YouTube OFF';
   elements.youtubeToggle.title = state.showYoutube
     ? 'YouTubeライブカメラを非表示にします'
     : 'YouTubeライブカメラを表示します';
@@ -165,30 +174,91 @@ function renderAreaSelect() {
 function initializeOrResetMap() {
   const center = [state.prefecture.center.latitude, state.prefecture.center.longitude];
   if (!state.map) {
-    state.map = L.map('map', { zoomControl: true }).setView(center, state.prefecture.zoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    state.map = Leaflet.map('map', { zoomControl: true }).setView(center, state.prefecture.zoom);
+    Leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(state.map);
-    state.markerLayer = L.layerGroup().addTo(state.map);
+    state.markerLayer = Leaflet.layerGroup().addTo(state.map);
+    setupMapResizeObserver();
   } else {
     state.markerLayer.clearLayers();
     state.map.setView(center, state.prefecture.zoom);
   }
   state.markers.clear();
-  setTimeout(() => state.map.invalidateSize(), 0);
+  scheduleMapRefresh();
+}
+
+function setupStickyStackObserver() {
+  updateStickyStackHeight();
+  if ('ResizeObserver' in window) {
+    state.stickyObserver = new ResizeObserver(updateStickyStackHeight);
+    state.stickyObserver.observe(elements.stickyStack);
+  }
+}
+
+function updateStickyStackHeight() {
+  const height = Math.ceil(elements.stickyStack.getBoundingClientRect().height);
+  document.documentElement.style.setProperty('--sticky-stack-height', `${height}px`);
+  scheduleMapRefresh();
+}
+
+function setupMapResizeObserver() {
+  if (!('ResizeObserver' in window) || state.mapResizeObserver) return;
+  state.mapResizeObserver = new ResizeObserver(() => scheduleMapRefresh());
+  state.mapResizeObserver.observe(elements.mapContainer);
+}
+
+function scheduleMapRefresh(visibleIds = null) {
+  if (!state.map) return;
+  cancelAnimationFrame(state.mapRefreshFrame);
+  state.mapRefreshFrame = requestAnimationFrame(() => {
+    state.map.invalidateSize(false);
+    if (visibleIds) fitMapToVisibleMarkers(visibleIds);
+  });
+
+  window.setTimeout(() => {
+    if (!state.map) return;
+    state.map.invalidateSize(false);
+  }, 180);
 }
 
 function renderCameras() {
   const cameras = filteredCameras();
+  const imageCameras = cameras.filter((camera) => cameraMediaType(camera) === 'image');
+  const youtubeCameras = cameras.filter((camera) => cameraMediaType(camera) === 'youtube');
   const fragment = document.createDocumentFragment();
   const visibleIds = new Set(cameras.map((camera) => camera.id));
 
   state.markerLayer.clearLayers();
   state.markers.clear();
 
+  /* YouTubeをONにしたとき、変化がすぐ分かるよう一覧の先頭へ表示する */
+  if (youtubeCameras.length) {
+    const section = document.createElement('section');
+    section.className = 'areaSection youtubeSection';
+    section.id = 'area-youtube';
+    section.style.setProperty('--area-color', '#dc2626');
+
+    const title = document.createElement('h2');
+    title.className = 'areaTitle';
+    title.innerHTML = `YouTubeライブ <span class="areaCount">${youtubeCameras.length}地点</span>`;
+
+    const grid = document.createElement('div');
+    grid.className = 'cameraGrid';
+    for (const camera of youtubeCameras) {
+      const area = state.prefecture.areas.find((item) => item.id === camera.area);
+      if (!area) continue;
+      grid.appendChild(createCameraCard(camera, area));
+      addMarker(camera, area);
+    }
+
+    section.append(title, grid);
+    fragment.appendChild(section);
+  }
+
   for (const area of state.prefecture.areas) {
-    const areaCameras = cameras.filter((camera) => camera.area === area.id);
+    const areaCameras = imageCameras.filter((camera) => camera.area === area.id);
     if (!areaCameras.length) continue;
 
     const section = document.createElement('section');
@@ -221,13 +291,16 @@ function renderCameras() {
 
   elements.content.replaceChildren(fragment);
   const available = state.prefecture.cameras.filter((camera) => state.showYoutube || cameraMediaType(camera) !== 'youtube');
-  const visibleStill = cameras.filter((camera) => cameraMediaType(camera) === 'image').length;
-  const visibleYoutube = cameras.filter((camera) => cameraMediaType(camera) === 'youtube').length;
+  const visibleStill = imageCameras.length;
+  const visibleYoutube = youtubeCameras.length;
   const typeLabel = state.showYoutube
     ? `静止画${visibleStill}・YouTube${visibleYoutube}`
     : '静止画';
-  elements.cameraCount.textContent = `${cameras.length} / ${available.length}地点（${typeLabel}）`;
-  fitMapToVisibleMarkers(visibleIds);
+  const hasFilter = state.area !== 'all' || normalizeText(state.search) !== '';
+  elements.cameraCount.textContent = hasFilter
+    ? `${cameras.length} / ${available.length}地点（${typeLabel}）`
+    : `${cameras.length}地点（${typeLabel}）`;
+  scheduleMapRefresh(visibleIds);
 }
 
 function filteredCameras() {
@@ -319,7 +392,7 @@ function createCameraCard(camera, area) {
 
 function addMarker(camera, area) {
   const type = cameraMediaType(camera);
-  const marker = L.marker([camera.latitude, camera.longitude], {
+  const marker = Leaflet.marker([camera.latitude, camera.longitude], {
     icon: type === 'youtube' ? createYoutubeMarkerIcon() : createMarkerIcon(area.color),
     title: `${camera.city} ${camera.place}`
   });
@@ -338,7 +411,7 @@ function addMarker(camera, area) {
 }
 
 function createYoutubeMarkerIcon() {
-  return L.divIcon({
+  return Leaflet.divIcon({
     className: '',
     html: '<span class="youtubeMarker" aria-hidden="true">▶</span>',
     iconSize: [30, 30],
@@ -347,13 +420,13 @@ function createYoutubeMarkerIcon() {
 }
 
 function createMarkerIcon(color) {
-  return L.icon({
-    iconUrl: `${MARKER_ICON_ROOT}/marker-icon-${color}.png`,
-    shadowUrl: MARKER_SHADOW,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+  const pinColor = markerCssColor(color);
+  return Leaflet.divIcon({
+    className: 'cameraMarkerWrapper',
+    html: `<span class="cameraMapPin" style="--pin-color:${pinColor}" aria-hidden="true"></span>`,
+    iconSize: [30, 36],
+    iconAnchor: [15, 34],
+    tooltipAnchor: [0, -30]
   });
 }
 
@@ -384,7 +457,7 @@ function fitMapToVisibleMarkers(visibleIds = new Set(state.markers.keys())) {
   } else if (latLngs.length === 1) {
     state.map.setView(latLngs[0], 13);
   } else {
-    state.map.fitBounds(L.latLngBounds(latLngs), { padding: [28, 28], maxZoom: 12 });
+    state.map.fitBounds(Leaflet.latLngBounds(latLngs), { padding: [28, 28], maxZoom: 12 });
   }
 }
 
@@ -507,6 +580,10 @@ function bindEvents() {
   elements.scrollSpeedSelect.addEventListener('change', (event) => setScrollSpeed(event.target.value));
   window.addEventListener('wheel', stopAutoScroll, { passive: true });
   window.addEventListener('touchstart', stopAutoScroll, { passive: true });
+  window.addEventListener('resize', () => {
+    updateStickyStackHeight();
+    scheduleMapRefresh(new Set(state.markers.keys()));
+  });
 
   elements.prefectureMenuButton.addEventListener('click', openPrefecturePanel);
   elements.prefectureMenuClose.addEventListener('click', closePrefecturePanel);
