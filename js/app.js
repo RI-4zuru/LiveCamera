@@ -6,6 +6,8 @@ const elements = {
   pageSubtitle: document.querySelector('#pageSubtitle'),
   prefectureName: document.querySelector('#prefectureName'),
   cameraCount: document.querySelector('#cameraCount'),
+  youtubeToggle: document.querySelector('#youtubeToggle'),
+  youtubeCount: document.querySelector('#youtubeCount'),
   content: document.querySelector('#content'),
   status: document.querySelector('#statusMessage'),
   areaSelect: document.querySelector('#areaSelect'),
@@ -31,6 +33,7 @@ const state = {
   prefecture: null,
   area: 'all',
   search: '',
+  showYoutube: false,
   map: null,
   markers: new Map(),
   markerLayer: null,
@@ -78,7 +81,9 @@ async function loadPrefecture(prefectureId) {
   state.prefecture = data;
   state.area = 'all';
   state.search = '';
+  state.showYoutube = false;
   elements.cameraSearch.value = '';
+  updateYoutubeToggle();
 
   updatePageMeta();
   renderAreaSelect();
@@ -94,11 +99,21 @@ async function loadPrefecture(prefectureId) {
 }
 
 function updatePageMeta() {
-  const count = state.prefecture.cameras.length;
+  const stillCount = state.prefecture.cameras.filter((camera) => cameraMediaType(camera) === 'image').length;
+  const youtubeCount = state.prefecture.cameras.filter((camera) => cameraMediaType(camera) === 'youtube').length;
   document.title = `${state.prefecture.name}ライブカメラ｜全国ライブカメラ`;
   elements.pageSubtitle.textContent = `${state.prefecture.region}地方・${state.prefecture.name}`;
   elements.prefectureName.textContent = state.prefecture.name;
-  elements.cameraCount.textContent = `${count}地点`;
+  elements.cameraCount.textContent = `${stillCount}地点（静止画）`;
+  elements.youtubeCount.textContent = youtubeCount;
+  elements.youtubeToggle.hidden = youtubeCount === 0;
+}
+
+function updateYoutubeToggle() {
+  elements.youtubeToggle.setAttribute('aria-pressed', String(state.showYoutube));
+  elements.youtubeToggle.title = state.showYoutube
+    ? 'YouTubeライブカメラを非表示にします'
+    : 'YouTubeライブカメラを表示します';
 }
 
 function renderPrefectureNavigation() {
@@ -205,22 +220,30 @@ function renderCameras() {
   }
 
   elements.content.replaceChildren(fragment);
-  elements.cameraCount.textContent = `${cameras.length} / ${state.prefecture.cameras.length}地点`;
+  const available = state.prefecture.cameras.filter((camera) => state.showYoutube || cameraMediaType(camera) !== 'youtube');
+  const visibleStill = cameras.filter((camera) => cameraMediaType(camera) === 'image').length;
+  const visibleYoutube = cameras.filter((camera) => cameraMediaType(camera) === 'youtube').length;
+  const typeLabel = state.showYoutube
+    ? `静止画${visibleStill}・YouTube${visibleYoutube}`
+    : '静止画';
+  elements.cameraCount.textContent = `${cameras.length} / ${available.length}地点（${typeLabel}）`;
   fitMapToVisibleMarkers(visibleIds);
 }
 
 function filteredCameras() {
   const keyword = normalizeText(state.search);
   return state.prefecture.cameras.filter((camera) => {
+    if (cameraMediaType(camera) === 'youtube' && !state.showYoutube) return false;
     if (state.area !== 'all' && camera.area !== state.area) return false;
     if (!keyword) return true;
-    return normalizeText(`${camera.city} ${camera.place} ${camera.terrain}`).includes(keyword);
+    return normalizeText(`${camera.city} ${camera.place} ${camera.terrain ?? ''} ${camera.provider ?? ''}`).includes(keyword);
   });
 }
 
 function createCameraCard(camera, area) {
+  const type = cameraMediaType(camera);
   const card = document.createElement('article');
-  card.className = 'cameraCard';
+  card.className = `cameraCard ${type === 'youtube' ? 'youtubeCard' : ''}`.trim();
   card.id = `camera-${camera.id}`;
   card.dataset.cameraId = camera.id;
   card.style.setProperty('--area-color', markerCssColor(area.color));
@@ -231,30 +254,49 @@ function createCameraCard(camera, area) {
   city.className = 'city';
   city.textContent = camera.city;
   header.appendChild(city);
-  if (camera.terrain) {
-    const badge = document.createElement('span');
-    badge.className = 'terrainBadge';
-    badge.textContent = camera.terrain;
-    header.appendChild(badge);
-  }
+
+  const badge = document.createElement('span');
+  badge.className = `terrainBadge ${type === 'youtube' ? 'youtubeBadge' : ''}`.trim();
+  badge.textContent = type === 'youtube' ? 'YouTube' : (camera.terrain || '静止画');
+  header.appendChild(badge);
 
   const media = document.createElement('div');
-  media.className = 'cameraMedia';
-  const image = document.createElement('img');
-  image.className = 'cameraImage';
-  image.src = cacheBustedUrl(camera.imageUrl);
-  image.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のライブカメラ画像`;
-  image.loading = 'lazy';
-  image.decoding = 'async';
-  image.dataset.baseUrl = camera.imageUrl;
-  image.addEventListener('click', () => openViewer(camera));
-  image.addEventListener('mouseenter', () => focusCamera(camera.id, false));
-  image.addEventListener('error', () => media.classList.add('error'));
-  image.addEventListener('load', () => media.classList.remove('error'));
-  const error = document.createElement('div');
-  error.className = 'imageError';
-  error.textContent = '画像を取得できませんでした。地点名のリンクから提供元ページを確認してください。';
-  media.append(image, error);
+  media.className = `cameraMedia ${type === 'youtube' ? 'youtubeMedia' : ''}`.trim();
+
+  if (type === 'youtube') {
+    const frame = document.createElement('iframe');
+    frame.className = 'youtubeFrame';
+    frame.src = youtubeEmbedUrl(camera.youtubeId);
+    frame.title = `${camera.city} ${stripTerrainPrefix(camera.place)}のYouTubeライブカメラ`;
+    frame.loading = 'lazy';
+    frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.allowFullscreen = true;
+
+    const fallback = document.createElement('a');
+    fallback.className = 'youtubeFallback';
+    fallback.href = camera.pageUrl;
+    fallback.target = '_blank';
+    fallback.rel = 'noopener noreferrer';
+    fallback.textContent = '▶ YouTubeで開く';
+    media.append(frame, fallback);
+  } else {
+    const image = document.createElement('img');
+    image.className = 'cameraImage';
+    image.src = cacheBustedUrl(camera.imageUrl);
+    image.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のライブカメラ画像`;
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.dataset.baseUrl = camera.imageUrl;
+    image.addEventListener('click', () => openViewer(camera));
+    image.addEventListener('mouseenter', () => focusCamera(camera.id, false));
+    image.addEventListener('error', () => media.classList.add('error'));
+    image.addEventListener('load', () => media.classList.remove('error'));
+    const error = document.createElement('div');
+    error.className = 'imageError';
+    error.textContent = '画像を取得できませんでした。地点名のリンクから提供元ページを確認してください。';
+    media.append(image, error);
+  }
 
   const footer = document.createElement('div');
   footer.className = 'cardFooter';
@@ -264,9 +306,10 @@ function createCameraCard(camera, area) {
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.textContent = camera.place;
+  link.title = '提供元ページを開く';
   const coordinates = document.createElement('div');
   coordinates.className = 'coordinates';
-  coordinates.textContent = `${camera.latitude.toFixed(3)}, ${camera.longitude.toFixed(3)}`;
+  coordinates.textContent = `緯度 ${camera.latitude.toFixed(4)} / 経度 ${camera.longitude.toFixed(4)}`;
   footer.append(link, coordinates);
 
   card.addEventListener('mouseenter', () => focusCamera(camera.id, false));
@@ -275,21 +318,32 @@ function createCameraCard(camera, area) {
 }
 
 function addMarker(camera, area) {
+  const type = cameraMediaType(camera);
   const marker = L.marker([camera.latitude, camera.longitude], {
-    icon: createMarkerIcon(area.color),
+    icon: type === 'youtube' ? createYoutubeMarkerIcon() : createMarkerIcon(area.color),
     title: `${camera.city} ${camera.place}`
   });
 
-  marker.bindTooltip(`${escapeHtml(camera.city)}<br>${escapeHtml(camera.place)}`, {
+  const typeText = type === 'youtube' ? '<br><strong>YouTubeライブ</strong>' : '';
+  marker.bindTooltip(`${escapeHtml(camera.city)}<br>${escapeHtml(camera.place)}${typeText}`, {
     direction: 'top',
-    offset: [0, -30]
+    offset: [0, -24]
   });
   marker.on('click', () => {
     focusCamera(camera.id, true);
-    openViewer(camera);
+    if (type === 'image') openViewer(camera);
   });
   marker.addTo(state.markerLayer);
   state.markers.set(camera.id, marker);
+}
+
+function createYoutubeMarkerIcon() {
+  return L.divIcon({
+    className: '',
+    html: '<span class="youtubeMarker" aria-hidden="true">▶</span>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
 }
 
 function createMarkerIcon(color) {
@@ -343,7 +397,7 @@ function resetMap() {
 }
 
 function refreshImages() {
-  document.querySelectorAll('.cameraImage').forEach((image) => {
+  document.querySelectorAll('.cameraImage[data-base-url]').forEach((image) => {
     image.src = cacheBustedUrl(image.dataset.baseUrl);
   });
 }
@@ -380,6 +434,7 @@ function updateClock() {
 }
 
 function openViewer(camera) {
+  if (cameraMediaType(camera) !== 'image') return;
   elements.viewerImage.src = cacheBustedUrl(camera.imageUrl);
   elements.viewerImage.alt = `${camera.city} ${camera.place}`;
   elements.viewerCaption.textContent = `${camera.city}｜${camera.place}`;
@@ -442,6 +497,11 @@ function bindEvents() {
     state.search = event.target.value;
     renderCameras();
   });
+  elements.youtubeToggle.addEventListener('click', () => {
+    state.showYoutube = !state.showYoutube;
+    updateYoutubeToggle();
+    renderCameras();
+  });
   elements.refreshButton.addEventListener('click', refreshImages);
   elements.resetMapButton.addEventListener('click', resetMap);
   elements.scrollSpeedSelect.addEventListener('change', (event) => setScrollSpeed(event.target.value));
@@ -471,6 +531,15 @@ function showStatus(message) {
 
 function hideStatus() {
   elements.status.classList.remove('visible');
+}
+
+function cameraMediaType(camera) {
+  return camera.mediaType === 'youtube' ? 'youtube' : 'image';
+}
+
+function youtubeEmbedUrl(videoId) {
+  const safeId = encodeURIComponent(videoId ?? '');
+  return `https://www.youtube-nocookie.com/embed/${safeId}?playsinline=1&rel=0`;
 }
 
 function normalizeText(text) {
