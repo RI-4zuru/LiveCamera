@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260714-5">
+  <link rel="stylesheet" href="./css/style.css?v=20260715-6">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -24,9 +24,9 @@
           <span>自動スクロール</span>
           <select id="scrollSpeedSelect">
             <option value="0" selected>停止</option>
-            <option value="70">遅い</option>
-            <option value="180">普通</option>
-            <option value="420">速い</option>
+            <option value="180">遅い</option>
+            <option value="360">普通</option>
+            <option value="540">速い</option>
           </select>
         </label>
         <div class="timeInfo" aria-live="polite">
@@ -133,6 +133,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260714-5"></script>
+  <script type="module" src="./js/app.js?v=20260715-6"></script>
 </body>
 </html>
