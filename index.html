@@ -5,12 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
-
-  <link rel="preconnect" href="https://unpkg.com">
-  <link rel="preconnect" href="https://tile.openstreetmap.org">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260714-4">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="./css/style.css?v=20260714-5">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -28,9 +24,9 @@
           <span>自動スクロール</span>
           <select id="scrollSpeedSelect">
             <option value="0" selected>停止</option>
-            <option value="20">遅い</option>
-            <option value="45">普通</option>
-            <option value="80">速い</option>
+            <option value="70">遅い</option>
+            <option value="180">普通</option>
+            <option value="420">速い</option>
           </select>
         </label>
         <div class="timeInfo" aria-live="polite">
@@ -121,10 +117,22 @@
     </figure>
   </div>
 
-  <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260714-4"></script>
+  <div id="youtubeViewer" class="viewer youtubeViewer" role="dialog" aria-modal="true" aria-label="YouTubeライブカメラ一覧" aria-hidden="true">
+    <button id="youtubeViewerClose" class="viewerClose" type="button" aria-label="YouTube一覧を閉じる">×</button>
+    <section class="youtubeGalleryPanel">
+      <div class="youtubeGalleryHeader">
+        <div>
+          <h2>YouTubeライブカメラ</h2>
+          <p>見たいカメラを選ぶと、YouTubeを別タブで開きます。</p>
+        </div>
+      </div>
+      <div id="youtubeGalleryList" class="youtubeGalleryGrid"></div>
+    </section>
+  </div>
+
+  <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script type="module" src="./js/app.js?v=20260714-5"></script>
 </body>
 </html>
