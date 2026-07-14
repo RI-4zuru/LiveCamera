@@ -322,6 +322,20 @@ a { color: inherit; }
   content: "";
 }
 
+.municipalityGroup {
+  margin-bottom: 20px;
+  scroll-margin-top: calc(var(--sticky-stack-height) + 12px);
+}
+.municipalityGroup:last-child { margin-bottom: 0; }
+.municipalityTitle {
+  margin: 0 0 8px;
+  padding: 5px 9px;
+  border-left: 3px solid var(--area-color, #64748b);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--area-color, #64748b) 8%, white);
+  font-size: 14px;
+}
+
 .cameraGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
