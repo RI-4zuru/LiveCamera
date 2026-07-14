@@ -3,6 +3,7 @@ const Leaflet = window.L;
 const NARA_RIVER_SOURCE = 'naraPrefectureRiver';
 const NARA_RIVER_INTERVAL_MS = 10 * 60 * 1000;
 const NARA_RIVER_MAX_FALLBACKS = 6;
+const JAPANESE_COLLATOR = new Intl.Collator('ja-JP', { numeric: true, sensitivity: 'base' });
 
 const elements = {
   pageSubtitle: document.querySelector('#pageSubtitle'),
@@ -33,6 +34,9 @@ const elements = {
   viewerImage: document.querySelector('#viewerImage'),
   viewerCaption: document.querySelector('#viewerCaption'),
   viewerClose: document.querySelector('#viewerClose'),
+  youtubeViewer: document.querySelector('#youtubeViewer'),
+  youtubeGalleryList: document.querySelector('#youtubeGalleryList'),
+  youtubeViewerClose: document.querySelector('#youtubeViewerClose'),
   stickyStack: document.querySelector('#stickyStack'),
   mapContainer: document.querySelector('#map'),
   mapHint: document.querySelector('#mapHint')
@@ -105,6 +109,9 @@ async function loadPrefecture(prefectureId) {
   state.showYoutube = false;
   state.selectedCameraId = null;
   state.hiddenCameraIds = loadHiddenCameraIds(prefectureId, data.cameras);
+  elements.youtubeViewer.classList.remove('open');
+  elements.youtubeViewer.setAttribute('aria-hidden', 'true');
+  updateBodyScrollLock();
 
   elements.cameraSearch.value = '';
   elements.visibilitySearch.value = '';
@@ -268,68 +275,60 @@ function scheduleMapRefresh(visibleIds = null) {
 function renderCameras() {
   if (!state.prefecture || !state.markerLayer) return;
 
-  const cameras = filteredCameras();
-  const imageCameras = cameras.filter((camera) => cameraMediaType(camera) === 'image');
-  const youtubeCameras = cameras.filter((camera) => cameraMediaType(camera) === 'youtube');
+  const imageCameras = filteredCameras('image').sort(compareCamerasByMunicipality);
+  const youtubeCameras = state.showYoutube
+    ? filteredCameras('youtube').sort(compareCamerasByMunicipality)
+    : [];
   const fragment = document.createDocumentFragment();
-  const visibleIds = new Set(cameras.map((camera) => camera.id));
+  const visibleIds = new Set();
 
   state.markerLayer.clearLayers();
   state.markers.clear();
 
-  if (youtubeCameras.length) {
+  const cityGroups = new Map();
+  for (const camera of imageCameras) {
+    const city = municipalityName(camera.city);
+    if (!cityGroups.has(city)) cityGroups.set(city, []);
+    cityGroups.get(city).push(camera);
+  }
+
+  for (const [city, cityCameras] of cityGroups) {
+    const firstArea = findArea(cityCameras[0]?.area);
     const section = document.createElement('section');
-    section.className = 'areaSection youtubeSection';
-    section.id = 'area-youtube';
-    section.style.setProperty('--area-color', '#dc2626');
+    section.className = 'areaSection municipalitySection';
+    section.id = `city-${slugForId(city)}`;
+    section.style.setProperty('--area-color', markerCssColor(firstArea?.color));
 
     const title = document.createElement('h2');
     title.className = 'areaTitle';
-    title.textContent = 'YouTubeライブ';
+    title.textContent = city;
 
     const grid = document.createElement('div');
     grid.className = 'cameraGrid';
 
-    for (const camera of youtubeCameras) {
+    for (const camera of cityCameras) {
       const area = findArea(camera.area);
       if (!area) continue;
       grid.appendChild(createCameraCard(camera, area));
       addMarker(camera, area);
+      visibleIds.add(camera.id);
     }
 
     section.append(title, grid);
     fragment.appendChild(section);
   }
 
-  for (const area of state.prefecture.areas) {
-    const areaCameras = imageCameras.filter((camera) => camera.area === area.id);
-    if (!areaCameras.length) continue;
-
-    const section = document.createElement('section');
-    section.className = 'areaSection';
-    section.id = `area-${area.id}`;
-    section.style.setProperty('--area-color', markerCssColor(area.color));
-
-    const title = document.createElement('h2');
-    title.className = 'areaTitle';
-    title.textContent = area.name;
-
-    const grid = document.createElement('div');
-    grid.className = 'cameraGrid';
-
-    for (const camera of areaCameras) {
-      grid.appendChild(createCameraCard(camera, area));
-      addMarker(camera, area);
-    }
-
-    section.append(title, grid);
-    fragment.appendChild(section);
+  for (const camera of youtubeCameras) {
+    const area = findArea(camera.area);
+    if (!area) continue;
+    addMarker(camera, area);
+    visibleIds.add(camera.id);
   }
 
-  if (!cameras.length) {
+  if (!imageCameras.length) {
     const empty = document.createElement('div');
     empty.className = 'emptyState';
-    empty.textContent = '表示条件に一致するライブカメラはありません。表示編集も確認してください。';
+    empty.textContent = '表示条件に一致する静止画ライブカメラはありません。表示編集も確認してください。';
     fragment.appendChild(empty);
   }
 
@@ -337,17 +336,18 @@ function renderCameras() {
   scheduleMapRefresh(visibleIds);
 }
 
-function filteredCameras() {
+function filteredCameras(mediaType = 'image') {
   const keyword = normalizeText(state.search);
 
   return state.prefecture.cameras.filter((camera) => {
+    if (cameraMediaType(camera) !== mediaType) return false;
     if (state.hiddenCameraIds.has(camera.id)) return false;
-    if (cameraMediaType(camera) === 'youtube' && !state.showYoutube) return false;
     if (state.area !== 'all' && camera.area !== state.area) return false;
     if (!keyword) return true;
 
     const searchable = [
       camera.city,
+      municipalityName(camera.city),
       stripTerrainPrefix(camera.place),
       camera.provider,
       camera.riverName
@@ -358,9 +358,8 @@ function filteredCameras() {
 }
 
 function createCameraCard(camera, area) {
-  const type = cameraMediaType(camera);
   const card = document.createElement('article');
-  card.className = `cameraCard ${type === 'youtube' ? 'youtubeCard' : ''}`.trim();
+  card.className = 'cameraCard';
   card.id = `camera-${camera.id}`;
   card.dataset.cameraId = camera.id;
   card.style.setProperty('--area-color', markerCssColor(area.color));
@@ -373,53 +372,28 @@ function createCameraCard(camera, area) {
   city.textContent = camera.city;
   header.appendChild(city);
 
-  if (type === 'youtube') {
-    const badge = document.createElement('span');
-    badge.className = 'youtubeBadge';
-    badge.textContent = 'YouTube';
-    header.appendChild(badge);
-  }
-
   const media = document.createElement('div');
-  media.className = `cameraMedia ${type === 'youtube' ? 'youtubeMedia' : ''}`.trim();
+  media.className = 'cameraMedia';
 
-  if (type === 'youtube') {
-    const frame = document.createElement('iframe');
-    frame.className = 'youtubeFrame';
-    frame.src = youtubeEmbedUrl(camera.youtubeId);
-    frame.title = `${camera.city} ${stripTerrainPrefix(camera.place)}のYouTubeライブカメラ`;
-    frame.loading = 'lazy';
-    frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-    frame.referrerPolicy = 'strict-origin-when-cross-origin';
-    frame.allowFullscreen = true;
+  const image = document.createElement('img');
+  image.className = 'cameraImage';
+  image.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のライブカメラ画像`;
+  image.loading = 'lazy';
+  image.decoding = 'async';
+  image.dataset.cameraId = camera.id;
 
-    const fallback = document.createElement('a');
-    fallback.className = 'youtubeFallback';
-    fallback.href = camera.pageUrl;
-    fallback.target = '_blank';
-    fallback.rel = 'noopener noreferrer';
-    fallback.textContent = '▶ YouTubeで開く';
-    media.append(frame, fallback);
-  } else {
-    const image = document.createElement('img');
-    image.className = 'cameraImage';
-    image.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のライブカメラ画像`;
-    image.loading = 'lazy';
-    image.decoding = 'async';
-    image.dataset.cameraId = camera.id;
+  setCameraImageSource(image, camera, 0);
 
-    setCameraImageSource(image, camera, 0);
+  image.addEventListener('click', () => openViewer(camera, image.currentSrc || image.src));
+  image.addEventListener('mouseenter', () => focusCamera(camera.id, false));
+  image.addEventListener('mouseleave', () => releaseCameraFocus(camera.id));
+  image.addEventListener('load', () => media.classList.remove('error'));
+  image.addEventListener('error', () => handleCameraImageError(image, media, camera));
 
-    image.addEventListener('click', () => openViewer(camera, image.currentSrc || image.src));
-    image.addEventListener('mouseenter', () => focusCamera(camera.id, false));
-    image.addEventListener('load', () => media.classList.remove('error'));
-    image.addEventListener('error', () => handleCameraImageError(image, media, camera));
-
-    const error = document.createElement('div');
-    error.className = 'imageError';
-    error.textContent = '画像を取得できませんでした。地点名のリンクから提供元ページを確認し、必要に応じて「表示編集」で非表示にできます。';
-    media.append(image, error);
-  }
+  const error = document.createElement('div');
+  error.className = 'imageError';
+  error.textContent = '画像を取得できませんでした。地点名のリンクから提供元ページを確認し、必要に応じて「表示編集」で非表示にできます。';
+  media.append(image, error);
 
   const footer = document.createElement('div');
   footer.className = 'cardFooter';
@@ -433,7 +407,7 @@ function createCameraCard(camera, area) {
   link.title = '提供元ページを開く';
   footer.appendChild(link);
 
-  card.addEventListener('mouseenter', () => focusCamera(camera.id, false));
+  card.addEventListener('mouseleave', () => releaseCameraFocus(camera.id));
   card.append(header, media, footer);
   return card;
 }
@@ -496,15 +470,18 @@ function addMarker(camera, area) {
   const typeText = type === 'youtube' ? '<br><strong>YouTubeライブ</strong>' : '';
   marker.bindTooltip(
     `${escapeHtml(camera.city)}<br>${escapeHtml(stripTerrainPrefix(camera.place))}${typeText}`,
-    { direction: 'top', offset: [0, -24] }
+    { direction: 'top', offset: [0, -24], permanent: false, sticky: false }
   );
 
   marker.on('click', () => {
-    focusCamera(camera.id, true);
-    if (type === 'image') {
-      const cardImage = document.querySelector(`#camera-${CSS.escape(camera.id)} .cameraImage`);
-      openViewer(camera, cardImage?.currentSrc || cardImage?.src || null);
+    if (type === 'youtube') {
+      openYoutubeGallery(camera.id);
+      return;
     }
+
+    focusCamera(camera.id, true);
+    const cardImage = document.querySelector(`#camera-${CSS.escape(camera.id)} .cameraImage`);
+    openViewer(camera, cardImage?.currentSrc || cardImage?.src || null);
   });
 
   marker.addTo(state.markerLayer);
@@ -547,6 +524,16 @@ function focusCamera(cameraId, scrollToCard) {
     state.map.panTo(marker.getLatLng(), { animate: true, duration: 0.35 });
     marker.openTooltip();
   }
+}
+
+function releaseCameraFocus(cameraId) {
+  const card = document.querySelector(`#camera-${CSS.escape(cameraId)}`);
+  card?.classList.remove('selected');
+
+  const marker = state.markers.get(cameraId);
+  marker?.closeTooltip();
+
+  if (state.selectedCameraId === cameraId) state.selectedCameraId = null;
 }
 
 function fitMapToVisibleMarkers(visibleIds = new Set(state.markers.keys())) {
@@ -611,7 +598,7 @@ function openViewer(camera, sourceUrl = null) {
   elements.viewerCaption.textContent = `${camera.city}｜${stripTerrainPrefix(camera.place)}`;
   elements.viewer.classList.add('open');
   elements.viewer.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
+  updateBodyScrollLock();
   elements.viewerClose.focus();
 }
 
@@ -619,7 +606,100 @@ function closeViewer() {
   elements.viewer.classList.remove('open');
   elements.viewer.setAttribute('aria-hidden', 'true');
   elements.viewerImage.src = '';
-  document.body.style.overflow = '';
+  updateBodyScrollLock();
+}
+
+function openYoutubeGallery(focusCameraId = null) {
+  state.showYoutube = true;
+  updateYoutubeToggle();
+  renderCameras();
+  renderYoutubeGallery(focusCameraId);
+  elements.youtubeViewer.classList.add('open');
+  elements.youtubeViewer.setAttribute('aria-hidden', 'false');
+  updateBodyScrollLock();
+  stopAutoScroll();
+
+  window.setTimeout(() => {
+    const target = focusCameraId
+      ? elements.youtubeGalleryList.querySelector(`[data-camera-id="${CSS.escape(focusCameraId)}"]`)
+      : null;
+    target?.focus();
+    if (!target) elements.youtubeViewerClose.focus();
+  }, 0);
+}
+
+function closeYoutubeGallery({ keepEnabled = false } = {}) {
+  elements.youtubeViewer.classList.remove('open');
+  elements.youtubeViewer.setAttribute('aria-hidden', 'true');
+
+  if (!keepEnabled && state.showYoutube) {
+    state.showYoutube = false;
+    updateYoutubeToggle();
+    renderCameras();
+  }
+
+  updateBodyScrollLock();
+}
+
+function renderYoutubeGallery(focusCameraId = null) {
+  const cameras = filteredCameras('youtube').sort(compareCamerasByMunicipality);
+  const fragment = document.createDocumentFragment();
+
+  for (const camera of cameras) {
+    const link = document.createElement('a');
+    link.className = 'youtubeGalleryCard';
+    link.href = camera.pageUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.dataset.cameraId = camera.id;
+    if (camera.id === focusCameraId) link.classList.add('is-focused');
+
+    const media = document.createElement('div');
+    media.className = 'youtubeGalleryMedia';
+
+    const thumbnail = document.createElement('img');
+    thumbnail.src = camera.thumbnailUrl || youtubeThumbnailUrl(camera.youtubeId);
+    thumbnail.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のYouTubeサムネイル`;
+    thumbnail.loading = 'lazy';
+    thumbnail.decoding = 'async';
+
+    const play = document.createElement('span');
+    play.className = 'youtubeGalleryPlay';
+    play.textContent = '▶';
+    play.setAttribute('aria-hidden', 'true');
+    media.append(thumbnail, play);
+
+    const text = document.createElement('div');
+    text.className = 'youtubeGalleryText';
+
+    const city = document.createElement('strong');
+    city.textContent = municipalityName(camera.city);
+
+    const place = document.createElement('span');
+    place.textContent = stripTerrainPrefix(camera.place);
+
+    text.append(city, place);
+    link.append(media, text);
+    link.addEventListener('click', () => {
+      window.setTimeout(() => closeYoutubeGallery({ keepEnabled: true }), 0);
+    });
+    fragment.appendChild(link);
+  }
+
+  if (!cameras.length) {
+    const empty = document.createElement('div');
+    empty.className = 'youtubeGalleryEmpty';
+    empty.textContent = '現在の表示条件に一致するYouTubeライブカメラはありません。';
+    fragment.appendChild(empty);
+  }
+
+  elements.youtubeGalleryList.replaceChildren(fragment);
+}
+
+function updateBodyScrollLock() {
+  const shouldLock = elements.viewer.classList.contains('open')
+    || elements.youtubeViewer.classList.contains('open');
+  document.body.style.overflow = shouldLock ? 'hidden' : '';
 }
 
 function hiddenStorageKey(prefectureId) {
@@ -816,9 +896,11 @@ function bindEvents() {
   });
 
   elements.youtubeToggle.addEventListener('click', () => {
-    state.showYoutube = !state.showYoutube;
-    updateYoutubeToggle();
-    renderCameras();
+    if (state.showYoutube) {
+      closeYoutubeGallery();
+    } else {
+      openYoutubeGallery();
+    }
   });
 
   elements.visibilityEditButton.addEventListener('click', openVisibilityPanel);
@@ -849,13 +931,20 @@ function bindEvents() {
   elements.panelBackdrop.addEventListener('click', closeAllSidePanels);
 
   elements.viewerClose.addEventListener('click', closeViewer);
+  elements.viewerImage.addEventListener('click', closeViewer);
   elements.viewer.addEventListener('click', (event) => {
     if (event.target === elements.viewer) closeViewer();
+  });
+
+  elements.youtubeViewerClose.addEventListener('click', () => closeYoutubeGallery());
+  elements.youtubeViewer.addEventListener('click', (event) => {
+    if (event.target === elements.youtubeViewer) closeYoutubeGallery();
   });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       closeViewer();
+      closeYoutubeGallery();
       closeAllSidePanels();
     }
   });
@@ -874,10 +963,25 @@ function cameraMediaType(camera) {
   return camera.mediaType === 'youtube' ? 'youtube' : 'image';
 }
 
-function youtubeEmbedUrl(videoId) {
-  const safeId = encodeURIComponent(videoId ?? '');
-  return `https://www.youtube-nocookie.com/embed/${safeId}?playsinline=1&rel=0`;
+
+function municipalityName(city) {
+  return String(city ?? '').replace(/(?:北部|南部|東部|西部)$/u, '').trim();
 }
+
+function compareCamerasByMunicipality(a, b) {
+  return JAPANESE_COLLATOR.compare(municipalityName(a.city), municipalityName(b.city))
+    || JAPANESE_COLLATOR.compare(stripTerrainPrefix(a.place), stripTerrainPrefix(b.place));
+}
+
+function youtubeThumbnailUrl(videoId) {
+  const safeId = encodeURIComponent(videoId ?? '');
+  return `https://i.ytimg.com/vi/${safeId}/hqdefault.jpg`;
+}
+
+function slugForId(value) {
+  return encodeURIComponent(String(value ?? '')).replaceAll('%', '').toLowerCase();
+}
+
 
 function normalizeText(text) {
   return String(text ?? '').normalize('NFKC').toLocaleLowerCase('ja-JP').replace(/\s+/g, '');
