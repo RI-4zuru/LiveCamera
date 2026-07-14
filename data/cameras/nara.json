@@ -8,7 +8,7 @@
     "longitude": 135.84
   },
   "zoom": 9,
-  "refreshIntervalMinutes": 10,
+  "refreshIntervalMinutes": 5,
   "areas": [
     {
       "id": "northwest",
