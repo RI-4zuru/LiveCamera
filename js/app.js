@@ -57,6 +57,7 @@ const state = {
   selectedCameraId: null,
   scrollSpeed: 0,
   scrollFrame: null,
+  scrollReturnTimer: null,
   previousScrollTime: 0,
   countdownTimer: null,
   stickyObserver: null,
@@ -275,9 +276,9 @@ function scheduleMapRefresh(visibleIds = null) {
 function renderCameras() {
   if (!state.prefecture || !state.markerLayer) return;
 
-  const imageCameras = filteredCameras('image').sort(compareCamerasByMunicipality);
+  const imageCameras = filteredCameras('image').sort(compareCamerasByAreaAndMunicipality);
   const youtubeCameras = state.showYoutube
-    ? filteredCameras('youtube').sort(compareCamerasByMunicipality)
+    ? filteredCameras('youtube').sort(compareCamerasByAreaAndMunicipality)
     : [];
   const fragment = document.createDocumentFragment();
   const visibleIds = new Set();
@@ -285,36 +286,49 @@ function renderCameras() {
   state.markerLayer.clearLayers();
   state.markers.clear();
 
-  const cityGroups = new Map();
-  for (const camera of imageCameras) {
-    const city = municipalityName(camera.city);
-    if (!cityGroups.has(city)) cityGroups.set(city, []);
-    cityGroups.get(city).push(camera);
-  }
+  for (const area of state.prefecture.areas) {
+    const areaCameras = imageCameras.filter((camera) => camera.area === area.id);
+    if (!areaCameras.length) continue;
 
-  for (const [city, cityCameras] of cityGroups) {
-    const firstArea = findArea(cityCameras[0]?.area);
     const section = document.createElement('section');
-    section.className = 'areaSection municipalitySection';
-    section.id = `city-${slugForId(city)}`;
-    section.style.setProperty('--area-color', markerCssColor(firstArea?.color));
+    section.className = 'areaSection';
+    section.id = `area-${area.id}`;
+    section.style.setProperty('--area-color', markerCssColor(area.color));
 
-    const title = document.createElement('h2');
-    title.className = 'areaTitle';
-    title.textContent = city;
+    const areaTitle = document.createElement('h2');
+    areaTitle.className = 'areaTitle';
+    areaTitle.textContent = area.name;
+    section.appendChild(areaTitle);
 
-    const grid = document.createElement('div');
-    grid.className = 'cameraGrid';
-
-    for (const camera of cityCameras) {
-      const area = findArea(camera.area);
-      if (!area) continue;
-      grid.appendChild(createCameraCard(camera, area));
-      addMarker(camera, area);
-      visibleIds.add(camera.id);
+    const municipalityGroups = new Map();
+    for (const camera of areaCameras) {
+      const municipality = municipalityName(camera.city);
+      if (!municipalityGroups.has(municipality)) municipalityGroups.set(municipality, []);
+      municipalityGroups.get(municipality).push(camera);
     }
 
-    section.append(title, grid);
+    for (const [municipality, municipalityCameras] of municipalityGroups) {
+      const group = document.createElement('div');
+      group.className = 'municipalityGroup';
+      group.id = `city-${area.id}-${slugForId(municipality)}`;
+
+      const municipalityTitle = document.createElement('h3');
+      municipalityTitle.className = 'municipalityTitle';
+      municipalityTitle.textContent = municipality;
+
+      const grid = document.createElement('div');
+      grid.className = 'cameraGrid';
+
+      for (const camera of municipalityCameras) {
+        grid.appendChild(createCameraCard(camera, area));
+        addMarker(camera, area);
+        visibleIds.add(camera.id);
+      }
+
+      group.append(municipalityTitle, grid);
+      section.appendChild(group);
+    }
+
     fragment.appendChild(section);
   }
 
@@ -865,16 +879,38 @@ function setScrollSpeed(value) {
   state.scrollSpeed = Number(value) || 0;
   state.previousScrollTime = performance.now();
   cancelAnimationFrame(state.scrollFrame);
+  clearTimeout(state.scrollReturnTimer);
+  state.scrollReturnTimer = null;
   if (state.scrollSpeed > 0) state.scrollFrame = requestAnimationFrame(autoScroll);
 }
 
 function autoScroll(timestamp) {
   if (state.scrollSpeed <= 0) return;
+
+  const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  if (maxScroll <= 0) {
+    state.previousScrollTime = timestamp;
+    state.scrollFrame = requestAnimationFrame(autoScroll);
+    return;
+  }
+
   const elapsed = Math.min(100, timestamp - state.previousScrollTime) / 1000;
   state.previousScrollTime = timestamp;
-  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
   const next = window.scrollY + state.scrollSpeed * elapsed;
-  window.scrollTo({ top: next >= maxScroll - 1 ? 0 : next, behavior: 'auto' });
+
+  if (next >= maxScroll - 1) {
+    window.scrollTo({ top: maxScroll, behavior: 'auto' });
+    state.scrollReturnTimer = window.setTimeout(() => {
+      state.scrollReturnTimer = null;
+      if (state.scrollSpeed <= 0) return;
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      state.previousScrollTime = performance.now();
+      state.scrollFrame = requestAnimationFrame(autoScroll);
+    }, 1000);
+    return;
+  }
+
+  window.scrollTo({ top: next, behavior: 'auto' });
   state.scrollFrame = requestAnimationFrame(autoScroll);
 }
 
@@ -882,6 +918,8 @@ function stopAutoScroll() {
   state.scrollSpeed = 0;
   elements.scrollSpeedSelect.value = '0';
   cancelAnimationFrame(state.scrollFrame);
+  clearTimeout(state.scrollReturnTimer);
+  state.scrollReturnTimer = null;
 }
 
 function bindEvents() {
@@ -971,6 +1009,13 @@ function municipalityName(city) {
 function compareCamerasByMunicipality(a, b) {
   return JAPANESE_COLLATOR.compare(municipalityName(a.city), municipalityName(b.city))
     || JAPANESE_COLLATOR.compare(stripTerrainPrefix(a.place), stripTerrainPrefix(b.place));
+}
+
+function compareCamerasByAreaAndMunicipality(a, b) {
+  const areaOrder = new Map(state.prefecture.areas.map((area, index) => [area.id, index]));
+  return (areaOrder.get(a.area) ?? Number.MAX_SAFE_INTEGER)
+    - (areaOrder.get(b.area) ?? Number.MAX_SAFE_INTEGER)
+    || compareCamerasByMunicipality(a, b);
 }
 
 function youtubeThumbnailUrl(videoId) {
