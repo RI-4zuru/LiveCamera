@@ -11,6 +11,7 @@
   --success: #16834c;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
   --radius: 12px;
+  --sticky-stack-height: 130px;
 }
 
 * { box-sizing: border-box; }
@@ -30,10 +31,17 @@ button, select { cursor: pointer; }
 
 a { color: inherit; }
 
-.topbar {
+.stickyStack {
   position: sticky;
   top: 0;
   z-index: 2000;
+  padding-bottom: 10px;
+  background: linear-gradient(to bottom, rgba(242, 245, 249, 0.99) 0%, rgba(242, 245, 249, 0.97) 88%, rgba(242, 245, 249, 0));
+}
+
+.topbar {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -134,20 +142,23 @@ a { color: inherit; }
 .prefectureButton:hover:not(:disabled), .prefectureButton.active { border-color: var(--accent); background: #fff4ed; color: var(--accent-dark); }
 .prefectureButton:disabled { cursor: not-allowed; background: #f1f5f9; color: #a4afbd; }
 
-.pageShell { width: 100%; margin: 0 auto; padding: 14px 16px 24px; }
+.pageShell { width: 100%; margin: 0 auto; padding: 0 16px 24px; }
 .summaryBar {
   position: relative;
-  z-index: 10;
-  flex-wrap: wrap;
+  z-index: 1;
+  flex-wrap: nowrap;
   gap: 18px;
-  margin-bottom: 14px;
+  margin: 0 16px;
   padding: 12px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
-.summaryBar > div, .summaryBar label { display: flex; align-items: center; gap: 8px; }
+.summaryBar > div, .summaryBar label { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; white-space: nowrap; }
+.summaryBar strong, .youtubeToggle { white-space: nowrap; }
 .summaryLabel { color: var(--muted); font-size: 12px; }
 .searchBox { margin-left: auto; }
 .searchBox input { width: min(260px, 42vw); }
@@ -159,27 +170,27 @@ a { color: inherit; }
   gap: 7px;
   min-height: 36px;
   padding: 7px 11px;
-  border: 1px solid #e1e7ef;
+  border: 1px solid #b91c1c;
   border-radius: 9px;
-  background: #ffffff;
-  color: #475569;
+  background: #dc2626;
+  color: #ffffff;
   font-size: 12px;
   font-weight: 800;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
-.youtubeToggle:hover { border-color: #ff8b8b; color: #c81e1e; transform: translateY(-1px); }
-.youtubeToggle[aria-pressed="true"] { border-color: #dc2626; background: #dc2626; color: white; }
+.youtubeToggle:hover { border-color: #7f1d1d; background: #b91c1c; color: white; transform: translateY(-1px); }
+.youtubeToggle[aria-pressed="true"], .youtubeToggle.is-active { border-color: #7f1d1d; background: #991b1b; color: white; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18); }
 .youtubePlay { font-size: 10px; }
 .youtubeCount {
   min-width: 20px;
   padding: 1px 6px;
   border-radius: 999px;
-  background: #eef2f7;
-  color: #475569;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
   font-size: 10px;
   text-align: center;
 }
-.youtubeToggle[aria-pressed="true"] .youtubeCount { background: rgba(255,255,255,0.22); color: white; }
+.youtubeToggle[aria-pressed="true"] .youtubeCount, .youtubeToggle.is-active .youtubeCount { background: rgba(255,255,255,0.3); color: white; }
 
 .statusMessage {
   display: none;
@@ -195,13 +206,13 @@ a { color: inherit; }
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(360px, 25vw, 470px);
+  grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 500px);
   gap: 16px;
   align-items: start;
 }
 
 .cameraContent { min-width: 0; }
-.areaSection { margin-bottom: 28px; scroll-margin-top: 90px; }
+.areaSection { margin-bottom: 28px; scroll-margin-top: calc(var(--sticky-stack-height) + 12px); }
 .areaTitle {
   display: flex;
   align-items: center;
@@ -227,7 +238,7 @@ a { color: inherit; }
   border-radius: 10px;
   box-shadow: 0 3px 12px rgba(15, 23, 42, 0.055);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  scroll-margin-top: 92px;
+  scroll-margin-top: calc(var(--sticky-stack-height) + 12px);
 }
 .cameraCard:hover, .cameraCard.selected { border-color: color-mix(in srgb, var(--area-color, #64748b) 70%, white); box-shadow: 0 9px 24px rgba(15, 23, 42, 0.13); transform: translateY(-2px); }
 .cardHeader { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 8px 9px; }
@@ -249,6 +260,7 @@ a { color: inherit; }
 }
 .cameraMedia.error .imageError { display: grid; }
 
+.youtubeSection { padding-top: 2px; }
 .youtubeMedia { background: #111827; }
 .youtubeFrame { width: 100%; height: 100%; border: 0; }
 .youtubeFallback {
@@ -291,8 +303,8 @@ a { color: inherit; }
 
 .mapWrap {
   position: sticky;
-  top: 78px;
-  max-height: calc(100vh - 92px);
+  top: calc(var(--sticky-stack-height) + 8px);
+  max-height: calc(100vh - var(--sticky-stack-height) - 16px);
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -302,8 +314,41 @@ a { color: inherit; }
 .mapHeader { justify-content: space-between; gap: 12px; padding: 10px 12px; }
 .mapHeader strong { display: block; font-size: 13px; }
 #mapHint { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
-#map { height: calc(100vh - 145px); min-height: 460px; background: #dce6ee; }
+#map {
+  height: calc(100vh - var(--sticky-stack-height) - 74px);
+  min-height: 360px;
+  background: #dce6ee;
+  isolation: isolate;
+}
+.leaflet-container { width: 100%; z-index: 0; }
 .leaflet-tooltip { max-width: 260px; white-space: normal; }
+
+.cameraMarkerWrapper {
+  background: transparent;
+  border: 0;
+}
+.cameraMapPin {
+  position: relative;
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--pin-color, #2a7be4);
+  box-shadow: 0 3px 9px rgba(15, 23, 42, 0.42);
+  transform: rotate(-45deg);
+}
+.cameraMapPin::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+  transform: translate(-50%, -50%);
+}
 
 .viewer {
   position: fixed;
@@ -321,35 +366,43 @@ a { color: inherit; }
 .viewerFigure img { display: block; max-width: 94vw; max-height: 82vh; margin: 0 auto; object-fit: contain; background: #0f172a; }
 .viewerFigure figcaption { margin-top: 10px; color: white; font-size: 14px; }
 
-@media (max-width: 880px) {
-  .topbar { align-items: flex-start; }
-  .headerTools { flex-wrap: wrap; }
-  .layout { grid-template-columns: 1fr; }
-  .mapWrap { position: relative; top: auto; max-height: none; order: -1; }
-  #map { height: 48vh; min-height: 380px; }
+@media (max-width: 1000px) {
+  .compactControl > span { display: none; }
+  .headerTools { gap: 8px; }
+  .timeInfo { min-width: 145px; }
+  .summaryBar { gap: 12px; }
+  .searchBox input { width: 200px; }
 }
 
-@media (max-width: 760px) {
+/* PCではブラウザ幅を狭めても、地図を右・カメラを4列のまま維持する */
+@media (min-width: 621px) {
+  .layout { grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 500px); }
+  .mapWrap { order: initial; }
+  .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* スマートフォン相当の幅でのみ縦並びに切り替える */
+@media (max-width: 620px) {
+  .stickyStack { padding-bottom: 7px; }
   .topbar { display: block; padding: 8px 10px; }
   .brandArea { min-width: 0; }
   .headerTools { justify-content: flex-start; margin-top: 8px; gap: 8px; }
-  .timeInfo { min-width: 140px; margin-left: auto; text-align: right; }
-  .compactControl span { display: none; }
-  .pageShell { padding: 10px; }
-  .summaryBar { gap: 10px 14px; }
-  .youtubeToggle { margin-left: auto; }
+  .timeInfo { display: none; }
+  .primaryButton { margin-left: auto; }
+  .pageSubtitle { display: none; }
+  .pageShell { padding: 0 10px 20px; }
+  .summaryBar { flex-wrap: wrap; gap: 9px 12px; margin: 0 10px; overflow-x: visible; }
   .searchBox { width: 100%; margin-left: 0; }
   .searchBox input { width: 100%; }
+  .layout { grid-template-columns: 1fr; }
+  .mapWrap { position: relative; top: auto; max-height: none; order: -1; }
+  #map { height: 46vh; min-height: 320px; }
   .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .prefectureList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .viewer { padding: 16px; }
 }
 
-@media (max-width: 460px) {
+@media (max-width: 420px) {
   .siteTitle { font-size: 16px; }
-  .pageSubtitle { display: none; }
-  .timeInfo { display: none; }
-  .primaryButton { margin-left: auto; }
-  .prefectureList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cameraGrid { grid-template-columns: 1fr; }
-  #map { min-height: 320px; }
 }
