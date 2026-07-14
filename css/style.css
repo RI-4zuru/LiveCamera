@@ -11,7 +11,7 @@
   --success: #16834c;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
   --radius: 12px;
-  --sticky-stack-height: 130px;
+  --sticky-stack-height: 132px;
 }
 
 * { box-sizing: border-box; }
@@ -28,32 +28,33 @@ body {
 
 button, select, input { font: inherit; }
 button, select { cursor: pointer; }
-
 a { color: inherit; }
 
 .stickyStack {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  inset: 0 0 auto;
   z-index: 2000;
-  padding-bottom: 10px;
-  background: linear-gradient(to bottom, rgba(242, 245, 249, 0.99) 0%, rgba(242, 245, 249, 0.97) 88%, rgba(242, 245, 249, 0));
+  padding-bottom: 9px;
+  background: linear-gradient(to bottom, rgba(242, 245, 249, 1) 0%, rgba(242, 245, 249, 0.98) 88%, rgba(242, 245, 249, 0));
 }
 
 .topbar {
-  position: relative;
-  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
   min-height: 64px;
   padding: 8px 18px;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.97);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(10px);
 }
 
-.brandArea, .headerTools, .compactControl, .summaryBar, .mapHeader {
+.brandArea,
+.headerTools,
+.compactControl,
+.summaryBar,
+.mapHeader {
   display: flex;
   align-items: center;
 }
@@ -64,7 +65,10 @@ a { color: inherit; }
 
 .headerTools { justify-content: flex-end; gap: 12px; }
 .compactControl { gap: 7px; color: var(--muted); font-size: 12px; }
-.compactControl select, .summaryBar select, .summaryBar input {
+.compactControl select,
+.summaryBar select,
+.summaryBar input,
+.visibilityTools input {
   min-height: 34px;
   padding: 6px 9px;
   color: var(--text);
@@ -73,9 +77,18 @@ a { color: inherit; }
   border-radius: 7px;
 }
 
-.timeInfo { min-width: 160px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: right; }
+.timeInfo {
+  min-width: 160px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+}
 
-.iconButton, .primaryButton, .secondaryButton {
+.iconButton,
+.primaryButton,
+.secondaryButton,
+.editButton {
   border: 0;
   border-radius: 8px;
 }
@@ -84,6 +97,7 @@ a { color: inherit; }
   display: grid;
   width: 38px;
   height: 38px;
+  flex: 0 0 auto;
   place-items: center;
   background: var(--surface-muted);
   color: var(--text);
@@ -105,12 +119,76 @@ a { color: inherit; }
   font-size: 12px;
   font-weight: 700;
 }
+.secondaryButton:hover { background: #e2e8f0; }
 
-.prefecturePanel {
+.editButton {
+  min-height: 36px;
+  padding: 7px 12px;
+  background: #334155;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.editButton:hover,
+.editButton[aria-expanded="true"] { background: #1e293b; }
+
+.summaryBar {
+  flex-wrap: nowrap;
+  gap: 18px;
+  margin: 8px 16px 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  scrollbar-width: thin;
+}
+
+.summaryBar > div,
+.summaryBar label {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.summaryBar strong,
+.youtubeToggle,
+.editButton { white-space: nowrap; }
+.summaryLabel { color: var(--muted); font-size: 12px; }
+.searchBox { margin-left: auto; }
+.searchBox input { width: min(260px, 42vw); }
+
+.youtubeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #b91c1c;
+  border-radius: 9px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.youtubeToggle:hover { border-color: #7f1d1d; background: #b91c1c; transform: translateY(-1px); }
+.youtubeToggle[aria-pressed="true"],
+.youtubeToggle.is-active {
+  border-color: #7f1d1d;
+  background: #991b1b;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}
+.youtubePlay { font-size: 10px; }
+
+.sidePanel {
   position: fixed;
   inset: 0 auto 0 0;
-  z-index: 3000;
-  width: min(430px, 92vw);
+  z-index: 3100;
+  width: min(450px, 94vw);
   padding: 18px;
   overflow-y: auto;
   background: var(--surface);
@@ -118,15 +196,30 @@ a { color: inherit; }
   transform: translateX(-105%);
   transition: transform 0.22s ease;
 }
-.prefecturePanel.open { transform: translateX(0); }
+.sidePanel.open { transform: translateX(0); }
+
+.visibilityPanel {
+  inset: 0 0 0 auto;
+  box-shadow: -18px 0 50px rgba(15, 23, 42, 0.2);
+  transform: translateX(105%);
+}
+.visibilityPanel.open { transform: translateX(0); }
+
 .panelBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 2900;
+  z-index: 3000;
   background: rgba(15, 23, 42, 0.45);
 }
-.panelHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.panelHeader p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.panelHeader p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
 .prefectureNavigation { margin-top: 18px; }
 .regionGroup + .regionGroup { margin-top: 18px; }
 .regionGroup h2 { margin: 0 0 8px; font-size: 14px; }
@@ -139,58 +232,58 @@ a { color: inherit; }
   color: var(--text);
   font-size: 12px;
 }
-.prefectureButton:hover:not(:disabled), .prefectureButton.active { border-color: var(--accent); background: #fff4ed; color: var(--accent-dark); }
+.prefectureButton:hover:not(:disabled),
+.prefectureButton.active { border-color: var(--accent); background: #fff4ed; color: var(--accent-dark); }
 .prefectureButton:disabled { cursor: not-allowed; background: #f1f5f9; color: #a4afbd; }
 
-.pageShell { width: 100%; margin: 0 auto; padding: 0 16px 24px; }
-.summaryBar {
-  position: relative;
-  z-index: 1;
-  flex-wrap: nowrap;
-  gap: 18px;
-  margin: 0 16px;
-  padding: 12px 14px;
+.visibilityTools {
+  position: sticky;
+  top: -18px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin: 16px -4px 10px;
+  padding: 12px 4px 8px;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
-.summaryBar > div, .summaryBar label { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; white-space: nowrap; }
-.summaryBar strong, .youtubeToggle { white-space: nowrap; }
-.summaryLabel { color: var(--muted); font-size: 12px; }
-.searchBox { margin-left: auto; }
-.searchBox input { width: min(260px, 42vw); }
-
-
-.youtubeToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 7px 11px;
-  border: 1px solid #b91c1c;
-  border-radius: 9px;
-  background: #dc2626;
-  color: #ffffff;
+.visibilityTools input { width: 100%; }
+.visibilityList { display: grid; gap: 6px; padding-bottom: 24px; }
+.visibilityGroupTitle {
+  position: sticky;
+  top: 56px;
+  z-index: 1;
+  margin: 12px 0 4px;
+  padding: 6px 4px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #475569;
   font-size: 12px;
   font-weight: 800;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
-.youtubeToggle:hover { border-color: #7f1d1d; background: #b91c1c; color: white; transform: translateY(-1px); }
-.youtubeToggle[aria-pressed="true"], .youtubeToggle.is-active { border-color: #7f1d1d; background: #991b1b; color: white; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18); }
-.youtubePlay { font-size: 10px; }
-.youtubeCount {
-  min-width: 20px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-  color: #ffffff;
-  font-size: 10px;
-  text-align: center;
+.visibilityRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  cursor: pointer;
 }
-.youtubeToggle[aria-pressed="true"] .youtubeCount, .youtubeToggle.is-active .youtubeCount { background: rgba(255,255,255,0.3); color: white; }
+.visibilityRow:hover { border-color: #94a3b8; }
+.visibilityRow.is-hidden { opacity: 0.58; background: #eef2f7; }
+.visibilityRow input { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--success); }
+.visibilityName { min-width: 0; }
+.visibilityCity { font-size: 12px; font-weight: 800; }
+.visibilityPlace { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.visibilityEmpty { padding: 30px 8px; color: var(--muted); font-size: 13px; text-align: center; }
+
+.pageShell {
+  width: 100%;
+  margin: 0 auto;
+  padding: calc(var(--sticky-stack-height) + 12px) 16px 24px;
+}
 
 .statusMessage {
   display: none;
@@ -206,7 +299,7 @@ a { color: inherit; }
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 500px);
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 31vw, 520px);
   gap: 16px;
   align-items: start;
 }
@@ -221,8 +314,13 @@ a { color: inherit; }
   padding: 0 3px;
   font-size: 17px;
 }
-.areaTitle::before { width: 5px; height: 23px; border-radius: 4px; background: var(--area-color, #64748b); content: ""; }
-.areaCount { color: var(--muted); font-size: 12px; font-weight: 500; }
+.areaTitle::before {
+  width: 5px;
+  height: 23px;
+  border-radius: 4px;
+  background: var(--area-color, #64748b);
+  content: "";
+}
 
 .cameraGrid {
   display: grid;
@@ -240,12 +338,31 @@ a { color: inherit; }
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   scroll-margin-top: calc(var(--sticky-stack-height) + 12px);
 }
-.cameraCard:hover, .cameraCard.selected { border-color: color-mix(in srgb, var(--area-color, #64748b) 70%, white); box-shadow: 0 9px 24px rgba(15, 23, 42, 0.13); transform: translateY(-2px); }
+.cameraCard:hover,
+.cameraCard.selected {
+  border-color: color-mix(in srgb, var(--area-color, #64748b) 70%, white);
+  box-shadow: 0 9px 24px rgba(15, 23, 42, 0.13);
+  transform: translateY(-2px);
+}
 .cardHeader { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 8px 9px; }
 .city { min-width: 0; overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
-.terrainBadge { flex: 0 0 auto; padding: 2px 6px; border-radius: 999px; background: #eef2f7; color: var(--muted); font-size: 10px; }
-.cameraMedia { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #dfe5ec; }
-.cameraImage { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; transition: transform 0.18s ease; }
+.youtubeBadge {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.cameraMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #dfe5ec;
+}
+.cameraImage { display: block; width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; transition: transform 0.18s ease; }
 .cameraCard:hover .cameraImage { transform: scale(1.015); }
 .imageError {
   position: absolute;
@@ -269,7 +386,6 @@ a { color: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   padding: 6px 9px;
   border-radius: 7px;
   background: rgba(220, 38, 38, 0.92);
@@ -277,29 +393,21 @@ a { color: inherit; }
   font-size: 10px;
   font-weight: 800;
   text-decoration: none;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-}
-.youtubeBadge { background: #fee2e2; color: #b91c1c; }
-.youtubeMarker {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border: 3px solid white;
-  border-radius: 50%;
-  background: #dc2626;
-  color: white;
-  box-shadow: 0 2px 8px rgba(15,23,42,0.35);
-  font-size: 11px;
-  line-height: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
-.cardFooter { padding: 8px 9px 9px; }
+.cardFooter { padding: 8px 9px 10px; }
 .placeLink { display: block; color: #1769aa; font-size: 12px; line-height: 1.45; text-decoration: none; }
 .placeLink:hover { text-decoration: underline; }
-.coordinates { margin-top: 4px; color: var(--muted); font-size: 10px; }
 
-.emptyState { padding: 50px 20px; background: var(--surface); border: 1px dashed #bac5d3; border-radius: var(--radius); color: var(--muted); text-align: center; }
+.emptyState {
+  padding: 50px 20px;
+  background: var(--surface);
+  border: 1px dashed #bac5d3;
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-align: center;
+}
 
 .mapWrap {
   position: sticky;
@@ -315,18 +423,32 @@ a { color: inherit; }
 .mapHeader strong { display: block; font-size: 13px; }
 #mapHint { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
 #map {
+  position: relative;
+  z-index: 0;
+  width: 100%;
   height: calc(100vh - var(--sticky-stack-height) - 74px);
   min-height: 360px;
+  overflow: hidden;
   background: #dce6ee;
-  isolation: isolate;
 }
-.leaflet-container { width: 100%; z-index: 0; }
+
+/* LeafletのCSSが他のスタイルに上書きされてもタイルが崩れないための保険 */
+#map .leaflet-pane,
+#map .leaflet-tile,
+#map .leaflet-marker-icon,
+#map .leaflet-marker-shadow,
+#map .leaflet-tile-container,
+#map .leaflet-pane > svg,
+#map .leaflet-pane > canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#map .leaflet-tile { max-width: none !important; max-height: none !important; }
+#map .leaflet-container { width: 100%; height: 100%; }
 .leaflet-tooltip { max-width: 260px; white-space: normal; }
 
-.cameraMarkerWrapper {
-  background: transparent;
-  border: 0;
-}
+.cameraMarkerWrapper { background: transparent; border: 0; }
 .cameraMapPin {
   position: relative;
   display: block;
@@ -348,6 +470,19 @@ a { color: inherit; }
   background: #fff;
   content: "";
   transform: translate(-50%, -50%);
+}
+.youtubeMarker {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
+  font-size: 11px;
+  line-height: 1;
 }
 
 .viewer {
@@ -374,14 +509,14 @@ a { color: inherit; }
   .searchBox input { width: 200px; }
 }
 
-/* PCではブラウザ幅を狭めても、地図を右・カメラを4列のまま維持する */
+/* PCではブラウザを半幅にしても、地図を右・カメラを4列のまま維持する */
 @media (min-width: 621px) {
-  .layout { grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 500px); }
+  .layout { grid-template-columns: minmax(0, 1fr) clamp(300px, 31vw, 520px); }
   .mapWrap { order: initial; }
   .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-/* スマートフォン相当の幅でのみ縦並びに切り替える */
+/* スマートフォン相当の幅でのみ縦並びへ切り替える */
 @media (max-width: 620px) {
   .stickyStack { padding-bottom: 7px; }
   .topbar { display: block; padding: 8px 10px; }
@@ -390,10 +525,10 @@ a { color: inherit; }
   .timeInfo { display: none; }
   .primaryButton { margin-left: auto; }
   .pageSubtitle { display: none; }
-  .pageShell { padding: 0 10px 20px; }
-  .summaryBar { flex-wrap: wrap; gap: 9px 12px; margin: 0 10px; overflow-x: visible; }
+  .summaryBar { flex-wrap: wrap; gap: 9px 12px; margin: 7px 10px 0; overflow-x: visible; }
   .searchBox { width: 100%; margin-left: 0; }
   .searchBox input { width: 100%; }
+  .pageShell { padding-right: 10px; padding-left: 10px; }
   .layout { grid-template-columns: 1fr; }
   .mapWrap { position: relative; top: auto; max-height: none; order: -1; }
   #map { height: 46vh; min-height: 320px; }
