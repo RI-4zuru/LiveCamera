@@ -60,8 +60,28 @@ a { color: inherit; }
 }
 
 .brandArea { gap: 10px; min-width: 230px; }
+.brandText { min-width: 0; }
 .siteTitle { font-size: 18px; font-weight: 800; letter-spacing: 0.02em; }
 .pageSubtitle { margin-top: 2px; color: var(--muted); font-size: 12px; }
+
+.summaryToggleButton {
+  display: none;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.summaryToggleButton[aria-expanded="true"] {
+  border-color: #64748b;
+  background: #334155;
+  color: #fff;
+}
 
 .headerTools { justify-content: flex-end; gap: 12px; }
 .compactControl { gap: 7px; color: var(--muted); font-size: 12px; }
@@ -322,24 +342,16 @@ a { color: inherit; }
   content: "";
 }
 
-.municipalityGroup {
-  margin-bottom: 20px;
-  scroll-margin-top: calc(var(--sticky-stack-height) + 12px);
-}
-.municipalityGroup:last-child { margin-bottom: 0; }
-.municipalityTitle {
-  margin: 0 0 8px;
-  padding: 5px 9px;
-  border-left: 3px solid var(--area-color, #64748b);
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--area-color, #64748b) 8%, white);
-  font-size: 14px;
-}
-
 .cameraGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+}
+
+/* 市町村が変わっても別の列・行にはせず、カード間の小さな目印だけ付ける */
+.cameraCard.municipalityStart:not(:first-child) {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--area-color, #64748b) 55%, white),
+              0 3px 12px rgba(15, 23, 42, 0.055);
 }
 
 .cameraCard {
@@ -534,12 +546,33 @@ a { color: inherit; }
 @media (max-width: 620px) {
   .stickyStack { padding-bottom: 7px; }
   .topbar { display: block; padding: 8px 10px; }
-  .brandArea { min-width: 0; }
+  .brandArea { width: 100%; min-width: 0; }
+  .brandText { min-width: 0; }
+  .summaryToggleButton { display: inline-flex; align-items: center; justify-content: center; }
   .headerTools { justify-content: flex-start; margin-top: 8px; gap: 8px; }
   .timeInfo { display: none; }
   .primaryButton { margin-left: auto; }
   .pageSubtitle { display: none; }
-  .summaryBar { flex-wrap: wrap; gap: 9px 12px; margin: 7px 10px 0; overflow-x: visible; }
+  .summaryBar {
+    flex-wrap: wrap;
+    gap: 9px 12px;
+    max-height: 320px;
+    margin: 7px 10px 0;
+    overflow: visible;
+    opacity: 1;
+    transition: max-height 0.2s ease, margin 0.2s ease, padding 0.2s ease, opacity 0.15s ease, border-width 0.2s ease;
+  }
+  .summaryBar.is-collapsed {
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
   .searchBox { width: 100%; margin-left: 0; }
   .searchBox input { width: 100%; }
   .pageShell { padding-right: 10px; padding-left: 10px; }
@@ -552,7 +585,8 @@ a { color: inherit; }
 }
 
 @media (max-width: 420px) {
-  .siteTitle { font-size: 16px; }
+  .siteTitle { font-size: 15px; }
+  .summaryToggleButton { padding: 6px 8px; font-size: 10px; }
   .cameraGrid { grid-template-columns: 1fr; }
 }
 
