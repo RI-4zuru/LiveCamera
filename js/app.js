@@ -4,8 +4,6 @@ const NARA_RIVER_SOURCE = 'naraPrefectureRiver';
 const NARA_RIVER_INTERVAL_MS = 10 * 60 * 1000;
 const NARA_RIVER_MAX_FALLBACKS = 6;
 const JAPANESE_COLLATOR = new Intl.Collator('ja-JP', { numeric: true, sensitivity: 'base' });
-const JARTIC_STATUS_URL = './data/jartic/fog-speed.json';
-const JARTIC_CHECK_INTERVAL_MS = 5 * 60 * 1000;
 const VISIBILITY_IMAGE_MODE_KEY = 'national-live-camera:visibility-image-mode:v1';
 const MAP_VISIBILITY_KEY = 'national-live-camera:map-visible:v1';
 
@@ -56,9 +54,7 @@ const elements = {
   mapWrap: document.querySelector('#mapWrap'),
   mapToggleButton: document.querySelector('#mapToggleButton'),
   mapContainer: document.querySelector('#map'),
-  mapHint: document.querySelector('#mapHint'),
-  jarticFogStatus: document.querySelector('#jarticFogStatus'),
-  jarticFogStatusText: document.querySelector('#jarticFogStatusText')
+  mapHint: document.querySelector('#mapHint')
 };
 
 const state = {
@@ -87,8 +83,7 @@ const state = {
   mapRefreshTimers: [],
   summaryBarVisible: true,
   visibilityImagesVisible: true,
-  mapVisible: true,
-  jarticStatusTimer: null
+  mapVisible: true
 };
 
 init().catch((error) => {
@@ -112,7 +107,6 @@ async function init() {
 
   await loadPrefecture(prefectureId);
   startClock();
-  startJarticFogMonitor();
 }
 
 async function fetchJson(url) {
@@ -1198,63 +1192,6 @@ function stopAutoScroll() {
   cancelAnimationFrame(state.scrollFrame);
   clearTimeout(state.scrollReturnTimer);
   state.scrollReturnTimer = null;
-}
-
-function startJarticFogMonitor() {
-  loadJarticFogStatus();
-  clearInterval(state.jarticStatusTimer);
-  state.jarticStatusTimer = window.setInterval(loadJarticFogStatus, JARTIC_CHECK_INTERVAL_MS);
-}
-
-async function loadJarticFogStatus() {
-  if (!elements.jarticFogStatus || !elements.jarticFogStatusText) return;
-
-  try {
-    const response = await fetch(`${JARTIC_STATUS_URL}?_ts=${Date.now()}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    updateJarticFogStatus(data);
-  } catch (error) {
-    console.warn('JARTIC濃霧規制ステータスを取得できませんでした。', error);
-    updateJarticFogStatus({ status: 'unavailable', restrictions: [] });
-  }
-}
-
-function updateJarticFogStatus(data) {
-  const allRestrictions = Array.isArray(data?.restrictions) ? data.restrictions : [];
-  const prefectureName = state.prefecture?.name;
-  const restrictions = allRestrictions.filter((item) => {
-    if (!prefectureName || !item?.prefecture) return true;
-    return String(item.prefecture) === prefectureName;
-  });
-
-  elements.jarticFogStatus.classList.remove('is-active', 'is-clear', 'is-unavailable');
-
-  if (restrictions.length > 0 || data?.status === 'active') {
-    const count = restrictions.length || allRestrictions.length;
-    elements.jarticFogStatus.classList.add('is-active');
-    elements.jarticFogStatusText.textContent = `濃霧速度規制 ${count}件`;
-    const detail = restrictions
-      .slice(0, 5)
-      .map((item) => [item.road, item.section, item.limit].filter(Boolean).join(' '))
-      .filter(Boolean)
-      .join(' / ');
-    elements.jarticFogStatus.title = detail
-      ? `${detail}（JARTICトップページを開く）`
-      : '濃霧による速度規制があります。JARTICトップページを開きます。';
-    return;
-  }
-
-  if (data?.status === 'clear') {
-    elements.jarticFogStatus.classList.add('is-clear');
-    elements.jarticFogStatusText.textContent = '濃霧規制なし';
-    elements.jarticFogStatus.title = '取得済みの情報では濃霧による速度規制はありません。';
-    return;
-  }
-
-  elements.jarticFogStatus.classList.add('is-unavailable');
-  elements.jarticFogStatusText.textContent = 'JARTIC確認';
-  elements.jarticFogStatus.title = data?.note || 'JARTICトップページを開きます。';
 }
 
 function bindEvents() {
