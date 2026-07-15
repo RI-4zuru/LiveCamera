@@ -18,8 +18,13 @@ const elements = {
   summaryBar: document.querySelector('#summaryBar'),
   summaryToggleButton: document.querySelector('#summaryToggleButton'),
   prefectureName: document.querySelector('#prefectureName'),
-  primaryPrefectureSelect: document.querySelector('#primaryPrefectureSelect'),
-  secondaryPrefectureSelect: document.querySelector('#secondaryPrefectureSelect'),
+  prefectureSelectionSummary: document.querySelector('#prefectureSelectionSummary'),
+  primaryPrefectureName: document.querySelector('#primaryPrefectureName'),
+  secondaryPrefectureName: document.querySelector('#secondaryPrefectureName'),
+  panelPrimaryPrefectureName: document.querySelector('#panelPrimaryPrefectureName'),
+  panelSecondaryPrefectureName: document.querySelector('#panelSecondaryPrefectureName'),
+  primaryPrefectureTarget: document.querySelector('#primaryPrefectureTarget'),
+  secondaryPrefectureTarget: document.querySelector('#secondaryPrefectureTarget'),
   youtubeToggle: document.querySelector('#youtubeToggle'),
   youtubeToggleLabel: document.querySelector('#youtubeToggleLabel'),
   content: document.querySelector('#content'),
@@ -101,6 +106,7 @@ const state = {
   secondaryPrefecture: null,
   secondaryHiddenCameraIds: new Set(),
   secondaryPrefectureId: null,
+  prefectureTargetSlot: 'primary',
   liveYoutubeIds: new Set(),
   youtubeStatusReady: false,
   youtubeStatusTimer: null
@@ -119,7 +125,7 @@ async function init() {
   setupStickyStackObserver();
   state.prefectures = await fetchJson(`${DATA_ROOT}/prefectures.json`);
   renderPrefectureNavigation();
-  renderPrefectureSlotOptions();
+  updatePrefectureSelectionUI();
 
   const requested = new URLSearchParams(location.search).get('pref');
   const savedPrimary = localStorage.getItem(PRIMARY_PREFECTURE_KEY);
@@ -176,7 +182,7 @@ async function loadPrefecture(prefectureId) {
   renderVisibilityEditor();
   renderHiddenImages();
   setVisibilityTab('settings');
-  highlightNavigation(prefectureId);
+  highlightNavigation();
   hideStatus();
 
   const url = new URL(location.href);
@@ -203,11 +209,7 @@ function updatePageMeta() {
   elements.prefectureName.textContent = state.compareMode && state.secondaryPrefecture
     ? `${state.prefecture.name} × ${state.secondaryPrefecture.name}`
     : state.prefecture.name;
-  if (elements.primaryPrefectureSelect) elements.primaryPrefectureSelect.value = state.prefecture.id;
-  if (elements.secondaryPrefectureSelect && state.secondaryPrefectureId) {
-    elements.secondaryPrefectureSelect.value = state.secondaryPrefectureId;
-  }
-  updatePrefectureSlotDisabledOptions();
+  updatePrefectureSelectionUI();
   elements.youtubeToggle.hidden = !hasYoutube;
 }
 
@@ -238,10 +240,19 @@ function renderPrefectureNavigation() {
       button.type = 'button';
       button.className = 'prefectureButton';
       button.dataset.prefectureId = prefecture.id;
-      button.textContent = prefecture.name;
+
+      const name = document.createElement('span');
+      name.className = 'prefectureButtonName';
+      name.textContent = prefecture.name;
+
+      const slots = document.createElement('span');
+      slots.className = 'prefectureButtonSlots';
+      slots.setAttribute('aria-hidden', 'true');
+
+      button.append(name, slots);
       button.disabled = !prefecture.enabled;
       if (prefecture.enabled) {
-        button.addEventListener('click', () => loadPrefecture(prefecture.id));
+        button.addEventListener('click', () => assignPrefectureToSlot(prefecture.id));
       }
       list.appendChild(button);
     }
@@ -251,11 +262,27 @@ function renderPrefectureNavigation() {
   }
 
   elements.prefectureNavigation.replaceChildren(fragment);
+  highlightNavigation();
 }
 
-function highlightNavigation(prefectureId) {
+function highlightNavigation() {
   document.querySelectorAll('.prefectureButton').forEach((button) => {
-    button.classList.toggle('active', button.dataset.prefectureId === prefectureId);
+    const id = button.dataset.prefectureId;
+    const isPrimary = id === state.prefecture?.id;
+    const isSecondary = id === state.secondaryPrefectureId;
+    button.classList.toggle('is-primary', isPrimary);
+    button.classList.toggle('is-secondary', isSecondary);
+    button.classList.toggle('active', isPrimary || isSecondary);
+
+    const slots = button.querySelector('.prefectureButtonSlots');
+    if (slots) {
+      slots.textContent = `${isPrimary ? '①' : ''}${isSecondary ? '②' : ''}`;
+    }
+    const label = button.querySelector('.prefectureButtonName')?.textContent || '';
+    if (isPrimary && isSecondary) button.setAttribute('aria-label', `${label} 第1県・第2県`);
+    else if (isPrimary) button.setAttribute('aria-label', `${label} 第1県`);
+    else if (isSecondary) button.setAttribute('aria-label', `${label} 第2県`);
+    else button.removeAttribute('aria-label');
   });
 }
 
@@ -334,7 +361,7 @@ function updateMapVisibility() {
   elements.mapToggleButton.setAttribute('aria-pressed', String(state.mapVisible));
   elements.mapToggleButton.textContent = state.mapVisible ? '地図表示' : '地図非表示';
   elements.mapToggleButton.title = state.mapVisible ? '地図を非表示にします' : '地図を表示します';
-  if (elements.gridColumnControl) elements.gridColumnControl.hidden = effectiveMapVisible || state.compareMode;
+  if (elements.gridColumnControl) elements.gridColumnControl.hidden = state.compareMode;
 
   if (effectiveMapVisible) {
     window.setTimeout(() => scheduleMapRefresh(new Set(state.markers.keys())), 0);
@@ -1226,6 +1253,7 @@ function openPrefecturePanel() {
   elements.prefecturePanel.classList.add('open');
   elements.prefecturePanel.setAttribute('aria-hidden', 'false');
   elements.prefectureMenuButton.setAttribute('aria-expanded', 'true');
+  elements.prefectureSelectionSummary?.setAttribute('aria-expanded', 'true');
   elements.panelBackdrop.hidden = false;
   stopAutoScroll();
 }
@@ -1234,6 +1262,7 @@ function closePrefecturePanel(updateBackdrop = true) {
   elements.prefecturePanel.classList.remove('open');
   elements.prefecturePanel.setAttribute('aria-hidden', 'true');
   elements.prefectureMenuButton.setAttribute('aria-expanded', 'false');
+  elements.prefectureSelectionSummary?.setAttribute('aria-expanded', 'false');
   if (updateBackdrop) updatePanelBackdrop();
 }
 
@@ -1391,19 +1420,9 @@ function bindEvents() {
     updateMapVisibility();
   });
   elements.comparisonToggleButton?.addEventListener('click', toggleComparisonMode);
-  elements.primaryPrefectureSelect?.addEventListener('change', async (event) => {
-    const nextPrimary = event.target.value;
-    const previousPrimary = state.prefecture?.id;
-    if (nextPrimary === state.secondaryPrefectureId && previousPrimary) {
-      state.secondaryPrefectureId = previousPrimary;
-      localStorage.setItem(COMPARE_PREFECTURE_KEY, previousPrimary);
-    }
-    await loadPrefecture(nextPrimary);
-  });
-  elements.secondaryPrefectureSelect?.addEventListener('change', async (event) => {
-    await loadSecondaryPrefecture(event.target.value);
-    updateYoutubeToggle();
-  });
+  elements.prefectureSelectionSummary?.addEventListener('click', openPrefecturePanel);
+  elements.primaryPrefectureTarget?.addEventListener('change', () => setPrefectureTargetSlot('primary'));
+  elements.secondaryPrefectureTarget?.addEventListener('change', () => setPrefectureTargetSlot('secondary'));
 
   elements.refreshButton.addEventListener('click', refreshImages);
   elements.mapToggleButton?.addEventListener('click', toggleMapVisibility);
@@ -1445,24 +1464,52 @@ function enabledPrefectures() {
   return state.prefectures?.regions.flatMap((region) => region.prefectures).filter((prefecture) => prefecture.enabled) || [];
 }
 
-function renderPrefectureSlotOptions() {
-  const enabled = enabledPrefectures();
-  const primaryOptions = enabled.map((prefecture) => new Option(prefecture.name, prefecture.id));
-  const secondaryOptions = enabled.map((prefecture) => new Option(prefecture.name, prefecture.id));
-  elements.primaryPrefectureSelect?.replaceChildren(...primaryOptions);
-  elements.secondaryPrefectureSelect?.replaceChildren(...secondaryOptions);
-  updatePrefectureSlotDisabledOptions();
+function setPrefectureTargetSlot(slot) {
+  state.prefectureTargetSlot = slot === 'secondary' ? 'secondary' : 'primary';
+  if (elements.primaryPrefectureTarget) elements.primaryPrefectureTarget.checked = state.prefectureTargetSlot === 'primary';
+  if (elements.secondaryPrefectureTarget) elements.secondaryPrefectureTarget.checked = state.prefectureTargetSlot === 'secondary';
+  document.querySelectorAll('.prefectureTargetOption').forEach((label) => {
+    const input = label.querySelector('input[name="prefectureTarget"]');
+    label.classList.toggle('is-active', Boolean(input?.checked));
+  });
 }
 
-function updatePrefectureSlotDisabledOptions() {
-  const primaryId = state.prefecture?.id || elements.primaryPrefectureSelect?.value;
-  const secondaryId = state.secondaryPrefectureId || elements.secondaryPrefectureSelect?.value;
-  elements.primaryPrefectureSelect?.querySelectorAll('option').forEach((option) => {
-    option.disabled = false;
-  });
-  elements.secondaryPrefectureSelect?.querySelectorAll('option').forEach((option) => {
-    option.disabled = option.value === primaryId;
-  });
+function updatePrefectureSelectionUI() {
+  const primaryName = state.prefecture?.name || '未選択';
+  const secondaryName = state.secondaryPrefecture?.name || '未選択';
+  if (elements.primaryPrefectureName) elements.primaryPrefectureName.textContent = primaryName;
+  if (elements.secondaryPrefectureName) elements.secondaryPrefectureName.textContent = secondaryName;
+  if (elements.panelPrimaryPrefectureName) elements.panelPrimaryPrefectureName.textContent = primaryName;
+  if (elements.panelSecondaryPrefectureName) elements.panelSecondaryPrefectureName.textContent = secondaryName;
+  setPrefectureTargetSlot(state.prefectureTargetSlot);
+  highlightNavigation();
+}
+
+async function assignPrefectureToSlot(prefectureId) {
+  if (!findEnabledPrefecture(prefectureId)) return;
+
+  if (state.prefectureTargetSlot === 'secondary') {
+    if (prefectureId === state.prefecture?.id) {
+      showStatus('第2県には、第1県とは別の都道府県を選んでください。');
+      return;
+    }
+    await loadSecondaryPrefecture(prefectureId);
+    updatePrefectureSelectionUI();
+    closePrefecturePanel();
+    return;
+  }
+
+  const previousPrimaryId = state.prefecture?.id;
+  if (prefectureId === previousPrimaryId) {
+    closePrefecturePanel();
+    return;
+  }
+
+  if (prefectureId === state.secondaryPrefectureId && previousPrimaryId) {
+    state.secondaryPrefectureId = previousPrimaryId;
+    localStorage.setItem(COMPARE_PREFECTURE_KEY, previousPrimaryId);
+  }
+  await loadPrefecture(prefectureId);
 }
 
 async function ensureSecondaryPrefecture(primaryId) {
@@ -1483,8 +1530,7 @@ async function loadSecondaryPrefecture(prefectureId, rerender = true) {
   state.secondaryPrefectureId = prefectureId;
   state.secondaryHiddenCameraIds = loadHiddenCameraIds(prefectureId, state.secondaryPrefecture.cameras);
   localStorage.setItem(COMPARE_PREFECTURE_KEY, prefectureId);
-  if (elements.secondaryPrefectureSelect) elements.secondaryPrefectureSelect.value = prefectureId;
-  updatePrefectureSlotDisabledOptions();
+  updatePrefectureSelectionUI();
   updateComparisonControls();
   if (rerender) {
     updatePageMeta();
@@ -1511,10 +1557,7 @@ function updateComparisonControls() {
   elements.comparisonToggleButton.setAttribute('aria-pressed', String(state.compareMode));
   elements.comparisonToggleButton.textContent = state.compareMode ? '1県表示' : '2県表示';
   if (elements.areaControl) elements.areaControl.hidden = state.compareMode;
-  if (elements.secondaryPrefectureSelect && state.secondaryPrefectureId) {
-    elements.secondaryPrefectureSelect.value = state.secondaryPrefectureId;
-  }
-  updatePrefectureSlotDisabledOptions();
+  updatePrefectureSelectionUI();
   updateMapVisibility();
 }
 
