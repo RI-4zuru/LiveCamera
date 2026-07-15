@@ -7,6 +7,8 @@ const JAPANESE_COLLATOR = new Intl.Collator('ja-JP', { numeric: true, sensitivit
 
 const elements = {
   pageSubtitle: document.querySelector('#pageSubtitle'),
+  summaryBar: document.querySelector('#summaryBar'),
+  summaryToggleButton: document.querySelector('#summaryToggleButton'),
   prefectureName: document.querySelector('#prefectureName'),
   youtubeToggle: document.querySelector('#youtubeToggle'),
   youtubeToggleLabel: document.querySelector('#youtubeToggleLabel'),
@@ -63,7 +65,8 @@ const state = {
   stickyObserver: null,
   mapResizeObserver: null,
   mapRefreshFrame: null,
-  mapRefreshTimers: []
+  mapRefreshTimers: [],
+  summaryBarVisible: true
 };
 
 init().catch((error) => {
@@ -74,6 +77,7 @@ init().catch((error) => {
 async function init() {
   if (!Leaflet) throw new Error('Leafletを読み込めませんでした。');
   bindEvents();
+  initializeSummaryBar();
   setupStickyStackObserver();
   state.prefectures = await fetchJson(`${DATA_ROOT}/prefectures.json`);
   renderPrefectureNavigation();
@@ -232,6 +236,38 @@ function initializeOrResetMap() {
   scheduleMapRefresh();
 }
 
+function initializeSummaryBar() {
+  const mobile = window.matchMedia('(max-width: 620px)').matches;
+  const saved = localStorage.getItem('liveCameraSummaryBarVisible');
+
+  // スマートフォンでは画像領域を広く取るため初期状態を非表示にする。
+  // 一度切り替えた後は、その端末での選択を保存する。
+  state.summaryBarVisible = saved === null ? !mobile : saved === 'true';
+  updateSummaryBarVisibility();
+}
+
+function toggleSummaryBar() {
+  state.summaryBarVisible = !state.summaryBarVisible;
+  localStorage.setItem('liveCameraSummaryBarVisible', String(state.summaryBarVisible));
+  updateSummaryBarVisibility();
+}
+
+function updateSummaryBarVisibility() {
+  if (!elements.summaryBar || !elements.summaryToggleButton) return;
+
+  elements.summaryBar.classList.toggle('is-collapsed', !state.summaryBarVisible);
+  elements.summaryToggleButton.setAttribute('aria-expanded', String(state.summaryBarVisible));
+  elements.summaryToggleButton.textContent = state.summaryBarVisible ? '操作欄 ON' : '操作欄 OFF';
+  elements.summaryToggleButton.title = state.summaryBarVisible
+    ? 'エリア・YouTube・表示編集・絞り込みを隠します'
+    : 'エリア・YouTube・表示編集・絞り込みを表示します';
+
+  requestAnimationFrame(() => {
+    updateStickyStackHeight();
+    scheduleMapRefresh(new Set(state.markers.keys()));
+  });
+}
+
 function setupStickyStackObserver() {
   updateStickyStackHeight();
   if ('ResizeObserver' in window && elements.stickyStack) {
@@ -300,34 +336,28 @@ function renderCameras() {
     areaTitle.textContent = area.name;
     section.appendChild(areaTitle);
 
-    const municipalityGroups = new Map();
+    const grid = document.createElement('div');
+    grid.className = 'cameraGrid';
+
+    let previousMunicipality = '';
     for (const camera of areaCameras) {
       const municipality = municipalityName(camera.city);
-      if (!municipalityGroups.has(municipality)) municipalityGroups.set(municipality, []);
-      municipalityGroups.get(municipality).push(camera);
-    }
+      const card = createCameraCard(camera, area);
 
-    for (const [municipality, municipalityCameras] of municipalityGroups) {
-      const group = document.createElement('div');
-      group.className = 'municipalityGroup';
-      group.id = `city-${area.id}-${slugForId(municipality)}`;
-
-      const municipalityTitle = document.createElement('h3');
-      municipalityTitle.className = 'municipalityTitle';
-      municipalityTitle.textContent = municipality;
-
-      const grid = document.createElement('div');
-      grid.className = 'cameraGrid';
-
-      for (const camera of municipalityCameras) {
-        grid.appendChild(createCameraCard(camera, area));
-        addMarker(camera, area);
-        visibleIds.add(camera.id);
+      // エリア内は一つのグリッドを保ち、市町村順に連続して配置する。
+      // 市町村が変わる最初のカードだけ印を付けるが、改行や別グリッドにはしない。
+      if (municipality !== previousMunicipality) {
+        card.classList.add('municipalityStart');
+        card.dataset.municipality = municipality;
+        previousMunicipality = municipality;
       }
 
-      group.append(municipalityTitle, grid);
-      section.appendChild(group);
+      grid.appendChild(card);
+      addMarker(camera, area);
+      visibleIds.add(camera.id);
     }
+
+    section.appendChild(grid);
 
     fragment.appendChild(section);
   }
@@ -923,6 +953,8 @@ function stopAutoScroll() {
 }
 
 function bindEvents() {
+  elements.summaryToggleButton?.addEventListener('click', toggleSummaryBar);
+
   elements.areaSelect.addEventListener('change', (event) => {
     state.area = event.target.value;
     renderCameras();
@@ -960,6 +992,7 @@ function bindEvents() {
   window.addEventListener('wheel', stopAutoScroll, { passive: true });
   window.addEventListener('touchstart', stopAutoScroll, { passive: true });
   window.addEventListener('resize', () => {
+    updateSummaryBarVisibility();
     updateStickyStackHeight();
     scheduleMapRefresh(new Set(state.markers.keys()));
   });
