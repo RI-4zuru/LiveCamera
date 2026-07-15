@@ -1035,3 +1035,64 @@ a { color: inherit; }
   .layout.mapHidden.gridColumns4 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .layout.mapHidden.gridColumns6 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* v12: 第1県・第2県の常設選択とライブ中YouTubeのみ表示 */
+.visuallyHidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.prefectureSlotGroup {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.prefectureSlotControl {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.prefectureSlotControl select {
+  min-width: 112px;
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.prefectureSlotControl select option:disabled {
+  color: #a0aaba;
+}
+
+@media (max-width: 620px) {
+  .prefectureSlotGroup {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .prefectureSlotControl {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .prefectureSlotControl select {
+    width: 100%;
+    min-width: 0;
+    min-height: 34px;
+  }
+}
