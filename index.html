@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260715-12">
+  <link rel="stylesheet" href="./css/style.css?v=20260715-13">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -41,17 +41,11 @@
     </header>
 
     <section id="summaryBar" class="summaryBar" aria-label="表示情報">
-      <div class="prefectureSlotGroup" aria-label="表示する都道府県">
-        <label class="prefectureSlotControl">
-          <span class="summaryLabel">第1県</span>
-          <select id="primaryPrefectureSelect" aria-label="優先して表示する都道府県"></select>
-        </label>
-        <label class="prefectureSlotControl">
-          <span class="summaryLabel">第2県</span>
-          <select id="secondaryPrefectureSelect" aria-label="2県表示の右側に表示する都道府県"></select>
-        </label>
+      <button id="prefectureSelectionSummary" class="prefectureSelectionSummary" type="button" aria-controls="prefecturePanel" aria-expanded="false" title="第1県・第2県を選択します">
+        <span><span class="summaryLabel">第1県</span><strong id="primaryPrefectureName">-</strong></span>
+        <span><span class="summaryLabel">第2県</span><strong id="secondaryPrefectureName">-</strong></span>
         <strong id="prefectureName" class="visuallyHidden" aria-live="polite">-</strong>
-      </div>
+      </button>
       <label id="areaControl">
         <span class="summaryLabel">エリア</span>
         <select id="areaSelect">
@@ -89,10 +83,24 @@
     <div class="panelHeader">
       <div>
         <strong>都道府県を選択</strong>
-        <p>灰色の項目はデータ準備中です。</p>
+        <p>先に第1県または第2県を選び、そのあと表示したい都道府県を押してください。</p>
       </div>
       <button id="prefectureMenuClose" class="iconButton" type="button" aria-label="都道府県メニューを閉じる">×</button>
     </div>
+    <fieldset class="prefectureTargetSelector">
+      <legend>選択先</legend>
+      <label class="prefectureTargetOption">
+        <input id="primaryPrefectureTarget" type="radio" name="prefectureTarget" value="primary" checked>
+        <span>第1県</span>
+        <strong id="panelPrimaryPrefectureName">-</strong>
+      </label>
+      <label class="prefectureTargetOption">
+        <input id="secondaryPrefectureTarget" type="radio" name="prefectureTarget" value="secondary">
+        <span>第2県</span>
+        <strong id="panelSecondaryPrefectureName">-</strong>
+      </label>
+    </fieldset>
+    <p class="prefecturePanelNote">灰色の項目はデータ準備中です。第2県は「2県表示」にしたとき右側へ表示されます。</p>
     <nav id="prefectureNavigation" class="prefectureNavigation" aria-label="都道府県一覧"></nav>
   </aside>
 
@@ -182,6 +190,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260715-12"></script>
+  <script type="module" src="./js/app.js?v=20260715-13"></script>
 </body>
 </html>
