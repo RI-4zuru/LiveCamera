@@ -8,7 +8,7 @@
     "longitude": 135.84
   },
   "zoom": 9,
-  "refreshIntervalMinutes": 5,
+  "refreshIntervalMinutes": 10,
   "areas": [
     {
       "id": "northwest",
@@ -1738,6 +1738,30 @@
       "mediaType": "image",
       "provider": "奈良県 河川情報システム",
       "riverName": "八幡川"
+    },
+    {
+      "id": "nara-youtube-004",
+      "area": "gojo",
+      "city": "吉野町",
+      "place": "金峯山寺 蔵王堂ライブカメラ",
+      "mediaType": "youtube",
+      "provider": "YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=pFeUUhpc6oc",
+      "youtubeId": "pFeUUhpc6oc",
+      "latitude": 34.3684,
+      "longitude": 135.8578
+    },
+    {
+      "id": "nara-youtube-005",
+      "area": "northwest",
+      "city": "生駒市",
+      "place": "生駒山 宝山寺ライブカメラ",
+      "mediaType": "youtube",
+      "provider": "YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=q3PaBFivEVE",
+      "youtubeId": "q3PaBFivEVE",
+      "latitude": 34.6865,
+      "longitude": 135.6876
     }
   ]
 }
