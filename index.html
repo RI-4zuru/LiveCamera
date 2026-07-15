@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260715-13">
+  <link rel="stylesheet" href="./css/style.css?v=20260715-14">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -41,11 +41,15 @@
     </header>
 
     <section id="summaryBar" class="summaryBar" aria-label="表示情報">
-      <button id="prefectureSelectionSummary" class="prefectureSelectionSummary" type="button" aria-controls="prefecturePanel" aria-expanded="false" title="第1県・第2県を選択します">
-        <span><span class="summaryLabel">第1県</span><strong id="primaryPrefectureName">-</strong></span>
-        <span><span class="summaryLabel">第2県</span><strong id="secondaryPrefectureName">-</strong></span>
+      <div id="prefectureSelectionSummary" class="prefectureSelectionSummary" aria-label="第1県と第2県">
+        <button id="primaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-controls="prefecturePanel" aria-expanded="false" title="第1県を選択します。2県表示中は左右を入れ替えます。">
+          <span class="summaryLabel">第1県</span><strong id="primaryPrefectureName">-</strong>
+        </button>
+        <button id="secondaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-controls="prefecturePanel" aria-expanded="false" title="第2県を選択します。2県表示中は左右を入れ替えます。">
+          <span class="summaryLabel">第2県</span><strong id="secondaryPrefectureName">-</strong>
+        </button>
         <strong id="prefectureName" class="visuallyHidden" aria-live="polite">-</strong>
-      </button>
+      </div>
       <label id="areaControl">
         <span class="summaryLabel">エリア</span>
         <select id="areaSelect">
@@ -112,6 +116,15 @@
       </div>
       <button id="visibilityPanelClose" class="iconButton" type="button" aria-label="表示編集を閉じる">×</button>
     </div>
+    <div id="visibilityPrefectureSwitcher" class="visibilityPrefectureSwitcher" aria-label="編集する都道府県" hidden>
+      <button id="visibilityPrimaryPrefectureButton" class="visibilityPrefectureButton is-active" type="button">
+        <span>第1県</span><strong id="visibilityPrimaryPrefectureName">-</strong>
+      </button>
+      <button id="visibilitySecondaryPrefectureButton" class="visibilityPrefectureButton" type="button">
+        <span>第2県</span><strong id="visibilitySecondaryPrefectureName">-</strong>
+      </button>
+    </div>
+
     <div class="visibilityTabs" role="tablist" aria-label="表示編集メニュー">
       <button id="visibilitySettingsTab" class="visibilityTab is-active" type="button" role="tab" aria-selected="true" aria-controls="visibilitySettingsPane">
         表示設定
@@ -190,6 +203,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260715-13"></script>
+  <script type="module" src="./js/app.js?v=20260715-14"></script>
 </body>
 </html>
