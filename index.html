@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260715-14">
+  <link rel="stylesheet" href="./css/style.css?v=20260715-15">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -17,12 +17,12 @@
           <div class="siteTitle">全国ライブカメラ</div>
           <div id="pageSubtitle" class="pageSubtitle">データを読み込み中...</div>
         </div>
-        <button id="summaryToggleButton" class="summaryToggleButton" type="button" aria-controls="summaryBar" aria-expanded="false">
-          操作欄 OFF
-        </button>
       </div>
 
       <div class="headerTools">
+        <button id="summaryToggleButton" class="summaryToggleButton" type="button" aria-controls="summaryBar" aria-expanded="false">
+          設定表示
+        </button>
         <label class="compactControl">
           <span>自動スクロール</span>
           <select id="scrollSpeedSelect">
@@ -42,10 +42,10 @@
 
     <section id="summaryBar" class="summaryBar" aria-label="表示情報">
       <div id="prefectureSelectionSummary" class="prefectureSelectionSummary" aria-label="第1県と第2県">
-        <button id="primaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-controls="prefecturePanel" aria-expanded="false" title="第1県を選択します。2県表示中は左右を入れ替えます。">
+        <button id="primaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="true" title="1県表示中は第1県を表示します。2県表示中は左右を入れ替えます。">
           <span class="summaryLabel">第1県</span><strong id="primaryPrefectureName">-</strong>
         </button>
-        <button id="secondaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-controls="prefecturePanel" aria-expanded="false" title="第2県を選択します。2県表示中は左右を入れ替えます。">
+        <button id="secondaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="false" title="1県表示中は第2県を表示します。2県表示中は左右を入れ替えます。">
           <span class="summaryLabel">第2県</span><strong id="secondaryPrefectureName">-</strong>
         </button>
         <strong id="prefectureName" class="visuallyHidden" aria-live="polite">-</strong>
@@ -68,7 +68,7 @@
       </button>
       <label id="gridColumnControl" class="gridColumnControl" hidden>
         <span class="summaryLabel">画像列数</span>
-        <select id="gridColumnSelect" aria-label="地図非表示時の画像列数">
+        <select id="gridColumnSelect" aria-label="画像の列数">
           <option value="4">4列</option>
           <option value="6">6列</option>
         </select>
@@ -104,7 +104,7 @@
         <strong id="panelSecondaryPrefectureName">-</strong>
       </label>
     </fieldset>
-    <p class="prefecturePanelNote">灰色の項目はデータ準備中です。第2県は「2県表示」にしたとき右側へ表示されます。</p>
+    <p class="prefecturePanelNote">灰色の項目はデータ準備中です。第2県は、1県表示中に上部の「第2県」を押して表示することも、2県表示で右側に並べることもできます。</p>
     <nav id="prefectureNavigation" class="prefectureNavigation" aria-label="都道府県一覧"></nav>
   </aside>
 
@@ -203,6 +203,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260715-14"></script>
+  <script type="module" src="./js/app.js?v=20260715-15"></script>
 </body>
 </html>
