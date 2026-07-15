@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260715-8">
+  <link rel="stylesheet" href="./css/style.css?v=20260715-9">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -58,6 +58,13 @@
       <button id="visibilityEditButton" class="editButton" type="button" aria-controls="visibilityPanel" aria-expanded="false">
         表示編集
       </button>
+      <a id="jarticFogStatus" class="jarticFogStatus is-unavailable" href="https://www.jartic.or.jp/" target="_blank" rel="noopener noreferrer" title="JARTICトップページを開く">
+        <span class="jarticFogLabel">JARTIC</span>
+        <span id="jarticFogStatusText">確認</span>
+      </a>
+      <button id="mapToggleButton" class="mapToggleButton" type="button" aria-pressed="true" title="地図の表示を切り替えます">
+        地図表示
+      </button>
       <label class="searchBox">
         <span class="summaryLabel">絞り込み</span>
         <input id="cameraSearch" type="search" placeholder="市町村名・地点名" autocomplete="off">
@@ -96,6 +103,13 @@
     <section id="visibilitySettingsPane" class="visibilityTabPane" role="tabpanel" aria-labelledby="visibilitySettingsTab">
       <div class="visibilityTools">
         <input id="visibilitySearch" type="search" placeholder="市町村名・地点名を検索" autocomplete="off">
+        <label class="visibilityImageControl">
+          <span>一覧画像</span>
+          <select id="visibilityImageMode" aria-label="表示設定内の画像表示を切り替える">
+            <option value="show">画像表示</option>
+            <option value="hide">画像非表示</option>
+          </select>
+        </label>
         <button id="showAllCamerasButton" class="secondaryButton" type="button">すべて表示</button>
       </div>
       <div id="visibilityList" class="visibilityList"></div>
@@ -118,7 +132,7 @@
     <div class="layout">
       <div id="content" class="cameraContent"></div>
 
-      <aside class="mapWrap" aria-label="ライブカメラ地図">
+      <aside id="mapWrap" class="mapWrap" aria-label="ライブカメラ地図">
         <div class="mapHeader">
           <div>
             <strong>カメラ位置</strong>
@@ -155,6 +169,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260715-8"></script>
+  <script type="module" src="./js/app.js?v=20260715-9"></script>
 </body>
 </html>
