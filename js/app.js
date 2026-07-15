@@ -30,6 +30,13 @@ const elements = {
   visibilitySearch: document.querySelector('#visibilitySearch'),
   visibilityList: document.querySelector('#visibilityList'),
   showAllCamerasButton: document.querySelector('#showAllCamerasButton'),
+  visibilitySettingsTab: document.querySelector('#visibilitySettingsTab'),
+  hiddenImagesTab: document.querySelector('#hiddenImagesTab'),
+  visibilitySettingsPane: document.querySelector('#visibilitySettingsPane'),
+  hiddenImagesPane: document.querySelector('#hiddenImagesPane'),
+  hiddenImageCount: document.querySelector('#hiddenImageCount'),
+  hiddenImageList: document.querySelector('#hiddenImageList'),
+  refreshHiddenImagesButton: document.querySelector('#refreshHiddenImagesButton'),
   panelBackdrop: document.querySelector('#panelBackdrop'),
   prefectureNavigation: document.querySelector('#prefectureNavigation'),
   viewer: document.querySelector('#viewer'),
@@ -61,6 +68,8 @@ const state = {
   scrollFrame: null,
   scrollReturnTimer: null,
   previousScrollTime: 0,
+  scrollRemainder: 0,
+  visibilityTab: 'settings',
   countdownTimer: null,
   stickyObserver: null,
   mapResizeObserver: null,
@@ -111,6 +120,7 @@ async function loadPrefecture(prefectureId) {
   state.area = 'all';
   state.search = '';
   state.visibilitySearch = '';
+  state.visibilityTab = 'settings';
   state.showYoutube = false;
   state.selectedCameraId = null;
   state.hiddenCameraIds = loadHiddenCameraIds(prefectureId, data.cameras);
@@ -127,6 +137,8 @@ async function loadPrefecture(prefectureId) {
   initializeOrResetMap();
   renderCameras();
   renderVisibilityEditor();
+  renderHiddenImages();
+  setVisibilityTab('settings');
   highlightNavigation(prefectureId);
   hideStatus();
 
@@ -147,7 +159,7 @@ function updatePageMeta() {
 function updateYoutubeToggle() {
   elements.youtubeToggle.setAttribute('aria-pressed', String(state.showYoutube));
   elements.youtubeToggle.classList.toggle('is-active', state.showYoutube);
-  elements.youtubeToggleLabel.textContent = state.showYoutube ? 'YouTube ON' : 'YouTube OFF';
+  elements.youtubeToggleLabel.textContent = 'YouTube';
   elements.youtubeToggle.title = state.showYoutube
     ? 'YouTubeライブカメラを非表示にします'
     : 'YouTubeライブカメラを表示します';
@@ -425,6 +437,7 @@ function createCameraCard(camera, area) {
   image.loading = 'lazy';
   image.decoding = 'async';
   image.dataset.cameraId = camera.id;
+  image.dataset.liveCameraImage = 'true';
 
   setCameraImageSource(image, camera, 0);
 
@@ -495,10 +508,10 @@ function naraRiverImageUrl(stationId, attempt = 0) {
 }
 
 function refreshImages() {
-  document.querySelectorAll('.cameraImage[data-camera-id]').forEach((image) => {
+  document.querySelectorAll('[data-live-camera-image][data-camera-id]').forEach((image) => {
     const camera = state.prefecture?.cameras.find((item) => item.id === image.dataset.cameraId);
     if (!camera) return;
-    image.closest('.cameraMedia')?.classList.remove('error');
+    image.closest('.cameraMedia, .hiddenImageMedia')?.classList.remove('error');
     setCameraImageSource(image, camera, 0);
   });
 }
@@ -819,6 +832,7 @@ function renderVisibilityEditor() {
   }
 
   elements.visibilityList.replaceChildren(fragment);
+  updateHiddenImageCount();
 }
 
 function createVisibilityRow(camera) {
@@ -851,12 +865,126 @@ function createVisibilityRow(camera) {
     } else {
       state.hiddenCameraIds.add(camera.id);
     }
-    row.classList.toggle('is-hidden', !checkbox.checked);
     saveHiddenCameraIds();
+    renderVisibilityEditor();
+    renderHiddenImages();
     renderCameras();
   });
 
   return row;
+}
+
+function setVisibilityTab(tabName) {
+  state.visibilityTab = tabName === 'hidden' ? 'hidden' : 'settings';
+  const hiddenActive = state.visibilityTab === 'hidden';
+
+  elements.visibilitySettingsTab.classList.toggle('is-active', !hiddenActive);
+  elements.visibilitySettingsTab.setAttribute('aria-selected', String(!hiddenActive));
+  elements.hiddenImagesTab.classList.toggle('is-active', hiddenActive);
+  elements.hiddenImagesTab.setAttribute('aria-selected', String(hiddenActive));
+  elements.visibilitySettingsPane.hidden = hiddenActive;
+  elements.hiddenImagesPane.hidden = !hiddenActive;
+
+  if (hiddenActive) {
+    renderHiddenImages();
+  } else {
+    window.setTimeout(() => elements.visibilitySearch.focus(), 0);
+  }
+}
+
+function updateHiddenImageCount() {
+  if (!elements.hiddenImageCount || !state.prefecture) return;
+  const count = state.prefecture.cameras.filter((camera) =>
+    cameraMediaType(camera) === 'image' && state.hiddenCameraIds.has(camera.id)
+  ).length;
+  elements.hiddenImageCount.textContent = String(count);
+}
+
+function renderHiddenImages() {
+  if (!state.prefecture || !elements.hiddenImageList) return;
+
+  const cameras = state.prefecture.cameras
+    .filter((camera) => cameraMediaType(camera) === 'image' && state.hiddenCameraIds.has(camera.id))
+    .sort(compareCamerasByAreaAndMunicipality);
+  const fragment = document.createDocumentFragment();
+
+  for (const camera of cameras) {
+    fragment.appendChild(createHiddenImageCard(camera));
+  }
+
+  if (!cameras.length) {
+    const empty = document.createElement('div');
+    empty.className = 'hiddenImageEmpty';
+    empty.textContent = '非表示にしている静止画カメラはありません。';
+    fragment.appendChild(empty);
+  }
+
+  elements.hiddenImageList.replaceChildren(fragment);
+  updateHiddenImageCount();
+}
+
+function createHiddenImageCard(camera) {
+  const card = document.createElement('article');
+  card.className = 'hiddenImageCard';
+  card.dataset.cameraId = camera.id;
+
+  const media = document.createElement('div');
+  media.className = 'hiddenImageMedia';
+
+  const image = document.createElement('img');
+  image.className = 'hiddenCameraImage';
+  image.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のライブカメラ画像`;
+  image.loading = 'lazy';
+  image.decoding = 'async';
+  image.dataset.cameraId = camera.id;
+  image.dataset.liveCameraImage = 'true';
+  setCameraImageSource(image, camera, 0);
+  image.addEventListener('click', () => openViewer(camera, image.currentSrc || image.src));
+  image.addEventListener('load', () => media.classList.remove('error'));
+  image.addEventListener('error', () => handleCameraImageError(image, media, camera));
+
+  const error = document.createElement('div');
+  error.className = 'imageError';
+  error.textContent = '現在は画像を取得できません';
+  media.append(image, error);
+
+  const text = document.createElement('div');
+  text.className = 'hiddenImageText';
+
+  const city = document.createElement('strong');
+  city.textContent = municipalityName(camera.city);
+
+  const source = document.createElement('a');
+  source.href = camera.pageUrl;
+  source.target = '_blank';
+  source.rel = 'noopener noreferrer';
+  source.textContent = stripTerrainPrefix(camera.place);
+  source.title = '提供元ページを開く';
+  text.append(city, source);
+
+  const restore = document.createElement('button');
+  restore.className = 'hiddenImageRestore';
+  restore.type = 'button';
+  restore.textContent = '表示に戻す';
+  restore.addEventListener('click', () => {
+    state.hiddenCameraIds.delete(camera.id);
+    saveHiddenCameraIds();
+    renderVisibilityEditor();
+    renderHiddenImages();
+    renderCameras();
+  });
+
+  card.append(media, text, restore);
+  return card;
+}
+
+function refreshHiddenImages() {
+  elements.hiddenImageList.querySelectorAll('[data-live-camera-image][data-camera-id]').forEach((image) => {
+    const camera = state.prefecture?.cameras.find((item) => item.id === image.dataset.cameraId);
+    if (!camera) return;
+    image.closest('.hiddenImageMedia')?.classList.remove('error');
+    setCameraImageSource(image, camera, 0);
+  });
 }
 
 function openPrefecturePanel() {
@@ -878,12 +1006,16 @@ function closePrefecturePanel(updateBackdrop = true) {
 function openVisibilityPanel() {
   closePrefecturePanel(false);
   renderVisibilityEditor();
+  renderHiddenImages();
+  setVisibilityTab(state.visibilityTab);
   elements.visibilityPanel.classList.add('open');
   elements.visibilityPanel.setAttribute('aria-hidden', 'false');
   elements.visibilityEditButton.setAttribute('aria-expanded', 'true');
   elements.panelBackdrop.hidden = false;
   stopAutoScroll();
-  window.setTimeout(() => elements.visibilitySearch.focus(), 220);
+  if (state.visibilityTab === 'settings') {
+    window.setTimeout(() => elements.visibilitySearch.focus(), 220);
+  }
 }
 
 function closeVisibilityPanel(updateBackdrop = true) {
@@ -907,45 +1039,69 @@ function updatePanelBackdrop() {
 
 function setScrollSpeed(value) {
   state.scrollSpeed = Number(value) || 0;
-  state.previousScrollTime = performance.now();
+  state.previousScrollTime = 0;
+  state.scrollRemainder = 0;
   cancelAnimationFrame(state.scrollFrame);
   clearTimeout(state.scrollReturnTimer);
   state.scrollReturnTimer = null;
-  if (state.scrollSpeed > 0) state.scrollFrame = requestAnimationFrame(autoScroll);
+
+  if (state.scrollSpeed > 0) {
+    state.scrollFrame = requestAnimationFrame(autoScroll);
+  }
 }
 
 function autoScroll(timestamp) {
   if (state.scrollSpeed <= 0) return;
 
-  const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-  if (maxScroll <= 0) {
+  const scroller = document.scrollingElement || document.documentElement;
+  const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+
+  if (state.previousScrollTime === 0) {
     state.previousScrollTime = timestamp;
     state.scrollFrame = requestAnimationFrame(autoScroll);
     return;
   }
 
-  const elapsed = Math.min(100, timestamp - state.previousScrollTime) / 1000;
-  state.previousScrollTime = timestamp;
-  const next = window.scrollY + state.scrollSpeed * elapsed;
+  if (maxScroll <= 1) {
+    state.previousScrollTime = timestamp;
+    state.scrollFrame = requestAnimationFrame(autoScroll);
+    return;
+  }
 
-  if (next >= maxScroll - 1) {
-    window.scrollTo({ top: maxScroll, behavior: 'auto' });
+  const elapsedSeconds = Math.min(0.12, Math.max(0, timestamp - state.previousScrollTime) / 1000);
+  state.previousScrollTime = timestamp;
+  state.scrollRemainder += state.scrollSpeed * elapsedSeconds;
+
+  const movePixels = Math.floor(state.scrollRemainder);
+  state.scrollRemainder -= movePixels;
+  const remaining = maxScroll - scroller.scrollTop;
+
+  if (remaining <= Math.max(2, movePixels)) {
+    scroller.scrollTop = maxScroll;
+    state.previousScrollTime = 0;
+    state.scrollRemainder = 0;
     state.scrollReturnTimer = window.setTimeout(() => {
       state.scrollReturnTimer = null;
       if (state.scrollSpeed <= 0) return;
-      window.scrollTo({ top: 0, behavior: 'auto' });
-      state.previousScrollTime = performance.now();
+
+      scroller.scrollTop = 0;
+      state.previousScrollTime = 0;
+      state.scrollRemainder = 0;
       state.scrollFrame = requestAnimationFrame(autoScroll);
     }, 1000);
     return;
   }
 
-  window.scrollTo({ top: next, behavior: 'auto' });
+  if (movePixels > 0) {
+    scroller.scrollTop = Math.min(maxScroll, scroller.scrollTop + movePixels);
+  }
   state.scrollFrame = requestAnimationFrame(autoScroll);
 }
 
 function stopAutoScroll() {
   state.scrollSpeed = 0;
+  state.previousScrollTime = 0;
+  state.scrollRemainder = 0;
   elements.scrollSpeedSelect.value = '0';
   cancelAnimationFrame(state.scrollFrame);
   clearTimeout(state.scrollReturnTimer);
@@ -975,6 +1131,9 @@ function bindEvents() {
 
   elements.visibilityEditButton.addEventListener('click', openVisibilityPanel);
   elements.visibilityPanelClose.addEventListener('click', () => closeVisibilityPanel());
+  elements.visibilitySettingsTab.addEventListener('click', () => setVisibilityTab('settings'));
+  elements.hiddenImagesTab.addEventListener('click', () => setVisibilityTab('hidden'));
+  elements.refreshHiddenImagesButton.addEventListener('click', refreshHiddenImages);
   elements.visibilitySearch.addEventListener('input', (event) => {
     state.visibilitySearch = event.target.value;
     renderVisibilityEditor();
@@ -983,6 +1142,7 @@ function bindEvents() {
     state.hiddenCameraIds.clear();
     saveHiddenCameraIds();
     renderVisibilityEditor();
+    renderHiddenImages();
     renderCameras();
   });
 
