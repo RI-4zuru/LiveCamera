@@ -65,9 +65,11 @@ a { color: inherit; }
 .pageSubtitle { margin-top: 2px; color: var(--muted); font-size: 12px; }
 
 .summaryToggleButton {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
-  margin-left: auto;
+  margin-left: 0;
   padding: 7px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -163,6 +165,19 @@ a { color: inherit; }
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   scrollbar-width: thin;
+  transition: max-height 0.2s ease, margin 0.2s ease, padding 0.2s ease, opacity 0.15s ease, border-width 0.2s ease;
+}
+
+.summaryBar.is-collapsed {
+  max-height: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .summaryBar > div,
@@ -675,17 +690,6 @@ a { color: inherit; }
     overflow: visible;
     opacity: 1;
     transition: max-height 0.2s ease, margin 0.2s ease, padding 0.2s ease, opacity 0.15s ease, border-width 0.2s ease;
-  }
-  .summaryBar.is-collapsed {
-    max-height: 0;
-    margin-top: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: hidden;
-    border-top-width: 0;
-    border-bottom-width: 0;
-    opacity: 0;
-    pointer-events: none;
   }
   .searchBox { width: 100%; margin-left: 0; }
   .searchBox input { width: 100%; }
@@ -1385,4 +1389,37 @@ a { color: inherit; }
   }
   .visibilityPrefectureSwitcher { grid-template-columns: 1fr; }
   .cameraMapTooltip { width: 190px; }
+}
+
+
+/* v15: 設定バー開閉・1県表示切替・2県表示6/8/10列 */
+.prefectureSummarySlot.is-viewing {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+
+.layout.comparisonColumns6 .comparisonPane .cameraGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.layout.comparisonColumns8 .comparisonPane .cameraGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.layout.comparisonColumns10 .comparisonPane .cameraGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 700px) {
+  .layout.comparisonColumns6 .comparisonPane .cameraGrid,
+  .layout.comparisonColumns8 .comparisonPane .cameraGrid,
+  .layout.comparisonColumns10 .comparisonPane .cameraGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .headerTools .summaryToggleButton {
+    order: -1;
+  }
 }
