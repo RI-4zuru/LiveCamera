@@ -935,3 +935,103 @@ a { color: inherit; }
   .visibilityRow.has-preview { grid-template-columns: 1fr; }
   .visibilityPreview { max-width: 210px; }
 }
+
+
+/* v11: 地図非表示時の4/6列切替・2県比較表示 */
+.gridColumnControl,
+.comparisonPrefectureControl {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 6px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.gridColumnControl select,
+.comparisonPrefectureControl select {
+  min-height: 36px;
+  padding: 6px 9px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.comparisonToggleButton {
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid #7c3aed;
+  border-radius: 8px;
+  background: #f3e8ff;
+  color: #6d28d9;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.comparisonToggleButton:hover { background: #ead7ff; }
+.comparisonToggleButton.is-active {
+  background: #7c3aed;
+  color: #fff;
+}
+.layout.mapHidden.gridColumns4 .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.layout.mapHidden.gridColumns6 .cameraGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; }
+.layout.comparisonMode { display: block; }
+.comparisonShell {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.comparisonPane {
+  min-width: 0;
+  padding: 12px;
+  background: color-mix(in srgb, var(--surface) 92%, #eef2ff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.comparisonPrefectureTitle {
+  position: sticky;
+  top: calc(var(--sticky-stack-height) + 6px);
+  z-index: 30;
+  margin: -4px -4px 14px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 4px 12px rgba(15,23,42,.08);
+  font-size: 17px;
+}
+.comparisonPane .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.comparisonPane .areaSection { margin-bottom: 22px; }
+.comparisonPane .areaTitle { font-size: 15px; }
+.comparisonPane .cardHeader { padding: 6px 7px; }
+.comparisonPane .cardFooter { padding: 6px 7px 8px; }
+.comparisonPane .city { font-size: 11px; }
+.comparisonPane .placeLink { font-size: 10px; }
+.youtubeGalleryPrefecture {
+  display: block;
+  margin-bottom: 3px;
+  color: #7c3aed;
+  font-size: 10px;
+  font-weight: 800;
+}
+@media (max-width: 900px) {
+  .comparisonShell { gap: 10px; }
+  .comparisonPane { padding: 8px; }
+  .comparisonPane .cameraGrid { gap: 6px; }
+}
+@media (max-width: 700px) {
+  .comparisonShell { grid-template-columns: 1fr; }
+  .comparisonPrefectureTitle { position: relative; top: auto; }
+  .comparisonPane .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .gridColumnControl,
+  .comparisonPrefectureControl { grid-template-columns: 1fr; gap: 2px; }
+  .gridColumnControl select,
+  .comparisonPrefectureControl select,
+  .comparisonToggleButton { min-height: 34px; padding: 6px 8px; }
+  .layout.mapHidden.gridColumns4 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .layout.mapHidden.gridColumns6 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
