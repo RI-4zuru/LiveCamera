@@ -16,7 +16,7 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: auto; }
 
 body {
   margin: 0;
@@ -225,6 +225,49 @@ a { color: inherit; }
 }
 .visibilityPanel.open { transform: translateX(0); }
 
+.visibilityTabs {
+  position: sticky;
+  top: -18px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 16px -4px 0;
+  padding: 12px 4px 8px;
+  background: var(--surface);
+}
+
+.visibilityTab {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+.visibilityTab:hover { border-color: #94a3b8; }
+.visibilityTab.is-active,
+.visibilityTab[aria-selected="true"] {
+  border-color: #334155;
+  background: #334155;
+  color: #fff;
+}
+.visibilityTabCount {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 3px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+}
+.visibilityTab:not(.is-active) .visibilityTabCount { background: #e2e8f0; color: #334155; }
+.visibilityTabPane[hidden] { display: none !important; }
+
 .panelBackdrop {
   position: fixed;
   inset: 0;
@@ -258,7 +301,7 @@ a { color: inherit; }
 
 .visibilityTools {
   position: sticky;
-  top: -18px;
+  top: 48px;
   z-index: 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -271,7 +314,7 @@ a { color: inherit; }
 .visibilityList { display: grid; gap: 6px; padding-bottom: 24px; }
 .visibilityGroupTitle {
   position: sticky;
-  top: 56px;
+  top: 112px;
   z-index: 1;
   margin: 12px 0 4px;
   padding: 6px 4px;
@@ -298,6 +341,77 @@ a { color: inherit; }
 .visibilityCity { font-size: 12px; font-weight: 800; }
 .visibilityPlace { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
 .visibilityEmpty { padding: 30px 8px; color: var(--muted); font-size: 13px; text-align: center; }
+
+.hiddenImagesTools {
+  position: sticky;
+  top: 48px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 -4px 10px;
+  padding: 11px 4px 9px;
+  background: var(--surface);
+}
+.hiddenImagesTools p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.hiddenImagesTools .secondaryButton { flex: 0 0 auto; }
+
+.hiddenImageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  padding-bottom: 28px;
+}
+
+.hiddenImageCard {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 4px 13px rgba(15, 23, 42, 0.08);
+}
+.hiddenImageMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #dfe5ec;
+}
+.hiddenCameraImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+.hiddenImageMedia .imageError { font-size: 10px; }
+.hiddenImageMedia.error .imageError { display: grid; }
+.hiddenImageText { display: grid; gap: 3px; padding: 8px 9px 5px; }
+.hiddenImageText strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.hiddenImageText a { color: #1769aa; font-size: 11px; line-height: 1.35; text-decoration: none; }
+.hiddenImageText a:hover { text-decoration: underline; }
+.hiddenImageRestore {
+  width: calc(100% - 18px);
+  margin: 3px 9px 9px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--success);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.hiddenImageRestore:hover { filter: brightness(0.94); }
+.hiddenImageEmpty {
+  grid-column: 1 / -1;
+  padding: 34px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
 
 .pageShell {
   width: 100%;
@@ -588,6 +702,7 @@ a { color: inherit; }
   .siteTitle { font-size: 15px; }
   .summaryToggleButton { padding: 6px 8px; font-size: 10px; }
   .cameraGrid { grid-template-columns: 1fr; }
+  .hiddenImageGrid { grid-template-columns: 1fr; }
 }
 
 /* v5: YouTubeは埋め込まず、全画面の選択一覧として表示 */
