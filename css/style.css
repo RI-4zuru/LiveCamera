@@ -974,8 +974,8 @@ a { color: inherit; }
   background: #7c3aed;
   color: #fff;
 }
-.layout.mapHidden.gridColumns4 .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.layout.mapHidden.gridColumns6 .cameraGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; }
+.layout.gridColumns4 .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.layout.gridColumns6 .cameraGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; }
 .layout.comparisonMode { display: block; }
 .comparisonShell {
   display: grid;
@@ -1032,8 +1032,8 @@ a { color: inherit; }
   .gridColumnControl select,
   .comparisonPrefectureControl select,
   .comparisonToggleButton { min-height: 34px; padding: 6px 8px; }
-  .layout.mapHidden.gridColumns4 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .layout.mapHidden.gridColumns6 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .layout.gridColumns4 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .layout.gridColumns6 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* v12: 第1県・第2県の常設選択とライブ中YouTubeのみ表示 */
@@ -1095,4 +1095,125 @@ a { color: inherit; }
     min-width: 0;
     min-height: 34px;
   }
+}
+
+
+/* v13: 地図表示中の6列表示と、都道府県パネル内の第1県・第2県選択 */
+.prefectureSelectionSummary {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-muted);
+  color: var(--text);
+  text-align: left;
+  white-space: nowrap;
+}
+.prefectureSelectionSummary:hover,
+.prefectureSelectionSummary[aria-expanded="true"] {
+  border-color: #94a3b8;
+  background: #eef2f7;
+}
+.prefectureSelectionSummary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.prefectureSelectionSummary strong { font-size: 12px; }
+
+.prefectureTargetSelector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+.prefectureTargetSelector legend {
+  padding: 0 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+.prefectureTargetOption {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.prefectureTargetOption.is-active {
+  border-color: #7c3aed;
+  background: #f3e8ff;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.12);
+}
+.prefectureTargetOption input { margin: 0; accent-color: #7c3aed; }
+.prefectureTargetOption span { color: var(--muted); font-size: 11px; font-weight: 800; }
+.prefectureTargetOption strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prefecturePanelNote { margin: 9px 2px 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+.prefectureButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+.prefectureButtonName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prefectureButtonSlots {
+  flex: 0 0 auto;
+  min-width: 0;
+  color: #7c3aed;
+  font-size: 11px;
+  font-weight: 900;
+}
+.prefectureButton.is-primary {
+  border-color: var(--accent);
+  background: #fff4ed;
+  color: var(--accent-dark);
+}
+.prefectureButton.is-secondary {
+  box-shadow: inset 0 0 0 1px #7c3aed;
+}
+.prefectureButton.is-primary.is-secondary {
+  background: linear-gradient(135deg, #fff4ed 0 50%, #f3e8ff 50% 100%);
+}
+
+@media (max-width: 620px) {
+  .prefectureSelectionSummary {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .prefectureSelectionSummary > span {
+    min-width: 0;
+  }
+  .prefectureSelectionSummary strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .prefectureTargetSelector { grid-template-columns: 1fr; }
 }
