@@ -1,0 +1,7 @@
+{
+  "status": "setup-required",
+  "updatedAt": null,
+  "scope": "national",
+  "restrictions": [],
+  "note": "JARTICの許諾済みリアルタイムデータ配信を接続すると、濃霧による速度規制を表示できます。"
+}
