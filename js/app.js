@@ -8,13 +8,18 @@ const VISIBILITY_IMAGE_MODE_KEY = 'national-live-camera:visibility-image-mode:v1
 const MAP_VISIBILITY_KEY = 'national-live-camera:map-visible:v1';
 const GRID_COLUMNS_KEY = 'national-live-camera:grid-columns:v1';
 const COMPARE_MODE_KEY = 'national-live-camera:compare-mode:v1';
+const PRIMARY_PREFECTURE_KEY = 'national-live-camera:primary-prefecture:v1';
 const COMPARE_PREFECTURE_KEY = 'national-live-camera:compare-prefecture:v1';
+const YOUTUBE_LIVE_REFRESH_MS = 5 * 60 * 1000;
+const YOUTUBE_LIVE_PROBE_TIMEOUT_MS = 8000;
 
 const elements = {
   pageSubtitle: document.querySelector('#pageSubtitle'),
   summaryBar: document.querySelector('#summaryBar'),
   summaryToggleButton: document.querySelector('#summaryToggleButton'),
   prefectureName: document.querySelector('#prefectureName'),
+  primaryPrefectureSelect: document.querySelector('#primaryPrefectureSelect'),
+  secondaryPrefectureSelect: document.querySelector('#secondaryPrefectureSelect'),
   youtubeToggle: document.querySelector('#youtubeToggle'),
   youtubeToggleLabel: document.querySelector('#youtubeToggleLabel'),
   content: document.querySelector('#content'),
@@ -61,9 +66,7 @@ const elements = {
   areaControl: document.querySelector('#areaControl'),
   gridColumnControl: document.querySelector('#gridColumnControl'),
   gridColumnSelect: document.querySelector('#gridColumnSelect'),
-  comparisonToggleButton: document.querySelector('#comparisonToggleButton'),
-  comparisonPrefectureControl: document.querySelector('#comparisonPrefectureControl'),
-  comparisonPrefectureSelect: document.querySelector('#comparisonPrefectureSelect')
+  comparisonToggleButton: document.querySelector('#comparisonToggleButton')
 };
 
 const state = {
@@ -97,7 +100,10 @@ const state = {
   compareMode: false,
   secondaryPrefecture: null,
   secondaryHiddenCameraIds: new Set(),
-  secondaryPrefectureId: null
+  secondaryPrefectureId: null,
+  liveYoutubeIds: new Set(),
+  youtubeStatusReady: false,
+  youtubeStatusTimer: null
 };
 
 init().catch((error) => {
@@ -113,15 +119,19 @@ async function init() {
   setupStickyStackObserver();
   state.prefectures = await fetchJson(`${DATA_ROOT}/prefectures.json`);
   renderPrefectureNavigation();
-  renderComparisonPrefectureOptions();
+  renderPrefectureSlotOptions();
 
   const requested = new URLSearchParams(location.search).get('pref');
+  const savedPrimary = localStorage.getItem(PRIMARY_PREFECTURE_KEY);
   const prefectureId = findEnabledPrefecture(requested)
     ? requested
-    : state.prefectures.defaultPrefecture;
+    : findEnabledPrefecture(savedPrimary)
+      ? savedPrimary
+      : state.prefectures.defaultPrefecture;
 
   await loadPrefecture(prefectureId);
   startClock();
+  startYoutubeLivePolling();
 }
 
 async function fetchJson(url) {
@@ -155,9 +165,7 @@ async function loadPrefecture(prefectureId) {
   elements.cameraSearch.value = '';
   elements.visibilitySearch.value = '';
 
-  if (state.compareMode) {
-    await ensureSecondaryPrefecture(prefectureId);
-  }
+  await ensureSecondaryPrefecture(prefectureId);
 
   updatePageMeta();
   updateYoutubeToggle();
@@ -174,13 +182,16 @@ async function loadPrefecture(prefectureId) {
   const url = new URL(location.href);
   url.searchParams.set('pref', prefectureId);
   history.replaceState(null, '', url);
+  localStorage.setItem(PRIMARY_PREFECTURE_KEY, prefectureId);
   closeAllSidePanels();
+
+  refreshYoutubeLiveStatus();
 }
 
 function updatePageMeta() {
   const prefectures = activePrefectures();
   const hasYoutube = prefectures.some((prefecture) =>
-    prefecture?.cameras.some((camera) => cameraMediaType(camera) === 'youtube')
+    prefecture?.cameras.some((camera) => cameraMediaType(camera) === 'youtube' && isYoutubeCurrentlyLive(camera))
   );
   const titleName = state.compareMode && state.secondaryPrefecture
     ? `${state.prefecture.name}・${state.secondaryPrefecture.name}`
@@ -192,6 +203,11 @@ function updatePageMeta() {
   elements.prefectureName.textContent = state.compareMode && state.secondaryPrefecture
     ? `${state.prefecture.name} × ${state.secondaryPrefecture.name}`
     : state.prefecture.name;
+  if (elements.primaryPrefectureSelect) elements.primaryPrefectureSelect.value = state.prefecture.id;
+  if (elements.secondaryPrefectureSelect && state.secondaryPrefectureId) {
+    elements.secondaryPrefectureSelect.value = state.secondaryPrefectureId;
+  }
+  updatePrefectureSlotDisabledOptions();
   elements.youtubeToggle.hidden = !hasYoutube;
 }
 
@@ -413,9 +429,7 @@ function renderCameras() {
   }
 
   const imageCameras = filteredCameras('image').sort(compareCamerasByAreaAndMunicipality);
-  const youtubeCameras = state.showYoutube
-    ? filteredCameras('youtube').sort(compareCamerasByAreaAndMunicipality)
-    : [];
+  const youtubeCameras = filteredCameras('youtube').sort(compareCamerasByAreaAndMunicipality);
   const fragment = document.createDocumentFragment();
   const visibleIds = new Set();
 
@@ -541,6 +555,7 @@ function filteredCamerasFor(prefecture, hiddenIds, mediaType = 'image') {
   const keyword = normalizeText(state.search);
   return prefecture.cameras.filter((camera) => {
     if (cameraMediaType(camera) !== mediaType || hiddenIds.has(camera.id)) return false;
+    if (mediaType === 'youtube' && !isYoutubeCurrentlyLive(camera)) return false;
     if (!keyword) return true;
     return normalizeText([
       camera.city, municipalityName(camera.city), stripTerrainPrefix(camera.place),
@@ -561,6 +576,7 @@ function filteredCameras(mediaType = 'image') {
 
   return state.prefecture.cameras.filter((camera) => {
     if (cameraMediaType(camera) !== mediaType) return false;
+    if (mediaType === 'youtube' && !isYoutubeCurrentlyLive(camera)) return false;
     if (state.hiddenCameraIds.has(camera.id)) return false;
     if (state.area !== 'all' && camera.area !== state.area) return false;
     if (!keyword) return true;
@@ -882,7 +898,7 @@ function renderYoutubeGallery(focusCameraId = null) {
     media.className = 'youtubeGalleryMedia';
 
     const thumbnail = document.createElement('img');
-    thumbnail.src = camera.thumbnailUrl || youtubeThumbnailUrl(camera.youtubeId);
+    thumbnail.src = camera.thumbnailUrl || youtubeLiveThumbnailUrl(camera.youtubeId);
     thumbnail.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のYouTubeサムネイル`;
     thumbnail.loading = 'lazy';
     thumbnail.decoding = 'async';
@@ -965,15 +981,18 @@ function renderVisibilityEditor() {
   }
 
   const keyword = normalizeText(state.visibilitySearch);
-  const cameras = state.prefecture.cameras.filter((camera) => {
-    if (!keyword) return true;
-    return normalizeText([
-      camera.city,
-      stripTerrainPrefix(camera.place),
-      camera.provider,
-      camera.riverName
-    ].filter(Boolean).join(' ')).includes(keyword);
-  });
+  const cameras = state.prefecture.cameras
+    .filter((camera) => cameraMediaType(camera) !== 'youtube' || isYoutubeCurrentlyLive(camera))
+    .filter((camera) => {
+      if (!keyword) return true;
+      return normalizeText([
+        camera.city,
+        stripTerrainPrefix(camera.place),
+        camera.provider,
+        camera.riverName
+      ].filter(Boolean).join(' ')).includes(keyword);
+    })
+    .sort(compareCamerasByAreaAndMunicipality);
 
   const fragment = document.createDocumentFragment();
   const groups = [
@@ -1025,7 +1044,7 @@ function createVisibilityRow(camera) {
     previewImage.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のカメラ画像`;
 
     if (cameraMediaType(camera) === 'youtube') {
-      previewImage.src = camera.thumbnailUrl || youtubeThumbnailUrl(camera.youtubeId);
+      previewImage.src = camera.thumbnailUrl || youtubeLiveThumbnailUrl(camera.youtubeId);
       previewImage.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -1372,11 +1391,18 @@ function bindEvents() {
     updateMapVisibility();
   });
   elements.comparisonToggleButton?.addEventListener('click', toggleComparisonMode);
-  elements.comparisonPrefectureSelect?.addEventListener('change', async (event) => {
+  elements.primaryPrefectureSelect?.addEventListener('change', async (event) => {
+    const nextPrimary = event.target.value;
+    const previousPrimary = state.prefecture?.id;
+    if (nextPrimary === state.secondaryPrefectureId && previousPrimary) {
+      state.secondaryPrefectureId = previousPrimary;
+      localStorage.setItem(COMPARE_PREFECTURE_KEY, previousPrimary);
+    }
+    await loadPrefecture(nextPrimary);
+  });
+  elements.secondaryPrefectureSelect?.addEventListener('change', async (event) => {
     await loadSecondaryPrefecture(event.target.value);
-    updatePageMeta();
     updateYoutubeToggle();
-    renderCameras();
   });
 
   elements.refreshButton.addEventListener('click', refreshImages);
@@ -1419,10 +1445,24 @@ function enabledPrefectures() {
   return state.prefectures?.regions.flatMap((region) => region.prefectures).filter((prefecture) => prefecture.enabled) || [];
 }
 
-function renderComparisonPrefectureOptions() {
-  if (!elements.comparisonPrefectureSelect) return;
-  const options = enabledPrefectures().map((prefecture) => new Option(prefecture.name, prefecture.id));
-  elements.comparisonPrefectureSelect.replaceChildren(...options);
+function renderPrefectureSlotOptions() {
+  const enabled = enabledPrefectures();
+  const primaryOptions = enabled.map((prefecture) => new Option(prefecture.name, prefecture.id));
+  const secondaryOptions = enabled.map((prefecture) => new Option(prefecture.name, prefecture.id));
+  elements.primaryPrefectureSelect?.replaceChildren(...primaryOptions);
+  elements.secondaryPrefectureSelect?.replaceChildren(...secondaryOptions);
+  updatePrefectureSlotDisabledOptions();
+}
+
+function updatePrefectureSlotDisabledOptions() {
+  const primaryId = state.prefecture?.id || elements.primaryPrefectureSelect?.value;
+  const secondaryId = state.secondaryPrefectureId || elements.secondaryPrefectureSelect?.value;
+  elements.primaryPrefectureSelect?.querySelectorAll('option').forEach((option) => {
+    option.disabled = false;
+  });
+  elements.secondaryPrefectureSelect?.querySelectorAll('option').forEach((option) => {
+    option.disabled = option.value === primaryId;
+  });
 }
 
 async function ensureSecondaryPrefecture(primaryId) {
@@ -1443,9 +1483,14 @@ async function loadSecondaryPrefecture(prefectureId, rerender = true) {
   state.secondaryPrefectureId = prefectureId;
   state.secondaryHiddenCameraIds = loadHiddenCameraIds(prefectureId, state.secondaryPrefecture.cameras);
   localStorage.setItem(COMPARE_PREFECTURE_KEY, prefectureId);
-  if (elements.comparisonPrefectureSelect) elements.comparisonPrefectureSelect.value = prefectureId;
+  if (elements.secondaryPrefectureSelect) elements.secondaryPrefectureSelect.value = prefectureId;
+  updatePrefectureSlotDisabledOptions();
   updateComparisonControls();
-  if (rerender) renderCameras();
+  if (rerender) {
+    updatePageMeta();
+    renderCameras();
+    refreshYoutubeLiveStatus();
+  }
 }
 
 async function toggleComparisonMode() {
@@ -1457,6 +1502,7 @@ async function toggleComparisonMode() {
   updateYoutubeToggle();
   updateMapVisibility();
   renderCameras();
+  refreshYoutubeLiveStatus();
 }
 
 function updateComparisonControls() {
@@ -1464,11 +1510,11 @@ function updateComparisonControls() {
   elements.comparisonToggleButton.classList.toggle('is-active', state.compareMode);
   elements.comparisonToggleButton.setAttribute('aria-pressed', String(state.compareMode));
   elements.comparisonToggleButton.textContent = state.compareMode ? '1県表示' : '2県表示';
-  elements.comparisonPrefectureControl.hidden = !state.compareMode;
   if (elements.areaControl) elements.areaControl.hidden = state.compareMode;
-  if (elements.comparisonPrefectureSelect && state.secondaryPrefectureId) {
-    elements.comparisonPrefectureSelect.value = state.secondaryPrefectureId;
+  if (elements.secondaryPrefectureSelect && state.secondaryPrefectureId) {
+    elements.secondaryPrefectureSelect.value = state.secondaryPrefectureId;
   }
+  updatePrefectureSlotDisabledOptions();
   updateMapVisibility();
 }
 
@@ -1496,7 +1542,7 @@ function youtubeCamerasForCurrentView() {
   for (const prefecture of activePrefectures()) {
     const hiddenIds = prefecture.id === state.prefecture.id ? state.hiddenCameraIds : state.secondaryHiddenCameraIds;
     for (const camera of prefecture.cameras) {
-      if (cameraMediaType(camera) !== 'youtube' || hiddenIds.has(camera.id)) continue;
+      if (cameraMediaType(camera) !== 'youtube' || hiddenIds.has(camera.id) || !isYoutubeCurrentlyLive(camera)) continue;
       if (state.area !== 'all' && !state.compareMode && camera.area !== state.area) continue;
       const searchable = normalizeText([camera.city, camera.place, camera.provider].filter(Boolean).join(' '));
       if (!keyword || searchable.includes(keyword)) result.push(camera);
@@ -1533,6 +1579,61 @@ function compareCamerasByAreaAndMunicipality(a, b) {
   return (areaOrder.get(a.area) ?? Number.MAX_SAFE_INTEGER)
     - (areaOrder.get(b.area) ?? Number.MAX_SAFE_INTEGER)
     || compareCamerasByMunicipality(a, b);
+}
+
+function isYoutubeCurrentlyLive(camera) {
+  return cameraMediaType(camera) === 'youtube' && state.liveYoutubeIds.has(camera.id);
+}
+
+function youtubeLiveThumbnailUrl(videoId) {
+  const safeId = encodeURIComponent(videoId ?? '');
+  return `https://i.ytimg.com/vi/${safeId}/hqdefault_live.jpg?_ts=${Date.now()}`;
+}
+
+function probeYoutubeCamera(camera) {
+  return new Promise((resolve) => {
+    if (!camera?.youtubeId) {
+      resolve(false);
+      return;
+    }
+    const image = new Image();
+    let finished = false;
+    const finish = (result) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      image.onload = null;
+      image.onerror = null;
+      resolve(result);
+    };
+    const timer = window.setTimeout(() => finish(false), YOUTUBE_LIVE_PROBE_TIMEOUT_MS);
+    image.onload = () => finish(image.naturalWidth > 0 && image.naturalHeight > 0);
+    image.onerror = () => finish(false);
+    image.src = youtubeLiveThumbnailUrl(camera.youtubeId);
+  });
+}
+
+async function refreshYoutubeLiveStatus() {
+  const candidates = [];
+  for (const prefecture of activePrefectures()) {
+    for (const camera of prefecture?.cameras || []) {
+      if (cameraMediaType(camera) === 'youtube') candidates.push(camera);
+    }
+  }
+
+  const results = await Promise.all(candidates.map(async (camera) => [camera.id, await probeYoutubeCamera(camera)]));
+  state.liveYoutubeIds = new Set(results.filter(([, live]) => live).map(([id]) => id));
+  state.youtubeStatusReady = true;
+  updatePageMeta();
+  updateYoutubeToggle();
+  renderCameras();
+  renderVisibilityEditor();
+  if (state.showYoutube) renderYoutubeGallery();
+}
+
+function startYoutubeLivePolling() {
+  clearInterval(state.youtubeStatusTimer);
+  state.youtubeStatusTimer = window.setInterval(refreshYoutubeLiveStatus, YOUTUBE_LIVE_REFRESH_MS);
 }
 
 function youtubeThumbnailUrl(videoId) {
