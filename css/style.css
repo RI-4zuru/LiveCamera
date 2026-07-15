@@ -831,3 +831,129 @@ a { color: inherit; }
 @media (max-width: 420px) {
   .youtubeGalleryGrid { grid-template-columns: 1fr; }
 }
+
+/* v9: 表示設定の画像プレビュー・地図切り替え・JARTIC状態表示 */
+.jarticFogStatus,
+.mapToggleButton {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.jarticFogStatus {
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #475569;
+  text-decoration: none;
+}
+.jarticFogStatus:hover { border-color: #94a3b8; background: #e2e8f0; }
+.jarticFogStatus.is-clear { border-color: #86c9a5; background: #ecfdf3; color: #166534; }
+.jarticFogStatus.is-active {
+  border-color: #b91c1c;
+  background: #dc2626;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.16);
+  animation: jartic-alert-pulse 1.5s ease-in-out infinite;
+}
+.jarticFogLabel { font-size: 10px; letter-spacing: .04em; opacity: .82; }
+@keyframes jartic-alert-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12); }
+  50% { box-shadow: 0 0 0 7px rgba(220, 38, 38, 0.04); }
+}
+
+.mapToggleButton {
+  border: 1px solid #2f6f9f;
+  background: #eaf5fc;
+  color: #15517d;
+}
+.mapToggleButton:hover { background: #d9edf9; }
+.mapToggleButton.is-off {
+  border-color: #94a3b8;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.layout.mapHidden { grid-template-columns: minmax(0, 1fr); }
+.mapWrap[hidden] { display: none !important; }
+
+.visibilityTools {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+}
+.visibilityImageControl {
+  display: grid;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.visibilityImageControl select {
+  min-height: 34px;
+  padding: 6px 8px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.visibilityRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  cursor: default;
+}
+.visibilityRow.has-preview { grid-template-columns: 112px minmax(0, 1fr); }
+.visibilityRowControl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+  cursor: pointer;
+}
+.visibilityRowControl input {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: var(--success);
+}
+.visibilityPreview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #dfe5ec;
+}
+.visibilityPreview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+.visibilityPreview.error .imageError { display: grid; }
+.visibilityPreview .imageError { padding: 6px; font-size: 9px; }
+
+@media (max-width: 620px) {
+  .visibilityTools { grid-template-columns: minmax(0, 1fr) auto; }
+  .visibilityTools .secondaryButton { grid-column: 1 / -1; }
+  .visibilityRow.has-preview { grid-template-columns: 96px minmax(0, 1fr); }
+  .jarticFogStatus,
+  .mapToggleButton { min-height: 34px; padding: 6px 9px; }
+}
+
+@media (max-width: 390px) {
+  .visibilityRow.has-preview { grid-template-columns: 1fr; }
+  .visibilityPreview { max-width: 210px; }
+}
