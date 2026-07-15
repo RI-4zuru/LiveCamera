@@ -1,208 +1,1388 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
-  <title>全国ライブカメラ</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260715-14">
-</head>
-<body>
-  <div id="stickyStack" class="stickyStack">
-    <header class="topbar">
-      <div class="brandArea">
-        <button id="prefectureMenuButton" class="iconButton" type="button" aria-controls="prefecturePanel" aria-expanded="false" aria-label="都道府県メニューを開く">☰</button>
-        <div class="brandText">
-          <div class="siteTitle">全国ライブカメラ</div>
-          <div id="pageSubtitle" class="pageSubtitle">データを読み込み中...</div>
-        </div>
-        <button id="summaryToggleButton" class="summaryToggleButton" type="button" aria-controls="summaryBar" aria-expanded="false">
-          操作欄 OFF
-        </button>
-      </div>
+:root {
+  color-scheme: light;
+  --bg: #f2f5f9;
+  --surface: #ffffff;
+  --surface-muted: #f7f9fc;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #dbe3ee;
+  --accent: #e96b2c;
+  --accent-dark: #c94f16;
+  --success: #16834c;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --radius: 12px;
+  --sticky-stack-height: 132px;
+}
 
-      <div class="headerTools">
-        <label class="compactControl">
-          <span>自動スクロール</span>
-          <select id="scrollSpeedSelect">
-            <option value="0" selected>停止</option>
-            <option value="180">遅い</option>
-            <option value="360">普通</option>
-            <option value="540">速い</option>
-          </select>
-        </label>
-        <div class="timeInfo" aria-live="polite">
-          <div id="clock">現在時刻 --:--:--</div>
-          <div id="countdown">次回更新まで --秒</div>
-        </div>
-        <button id="refreshButton" class="primaryButton" type="button">画像を更新</button>
-      </div>
-    </header>
+* { box-sizing: border-box; }
 
-    <section id="summaryBar" class="summaryBar" aria-label="表示情報">
-      <div id="prefectureSelectionSummary" class="prefectureSelectionSummary" aria-label="第1県と第2県">
-        <button id="primaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-controls="prefecturePanel" aria-expanded="false" title="第1県を選択します。2県表示中は左右を入れ替えます。">
-          <span class="summaryLabel">第1県</span><strong id="primaryPrefectureName">-</strong>
-        </button>
-        <button id="secondaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-controls="prefecturePanel" aria-expanded="false" title="第2県を選択します。2県表示中は左右を入れ替えます。">
-          <span class="summaryLabel">第2県</span><strong id="secondaryPrefectureName">-</strong>
-        </button>
-        <strong id="prefectureName" class="visuallyHidden" aria-live="polite">-</strong>
-      </div>
-      <label id="areaControl">
-        <span class="summaryLabel">エリア</span>
-        <select id="areaSelect">
-          <option value="all">全域</option>
-        </select>
-      </label>
-      <button id="youtubeToggle" class="youtubeToggle" type="button" aria-pressed="false" title="YouTubeライブカメラの表示を切り替えます">
-        <span class="youtubePlay" aria-hidden="true">▶</span>
-        <span id="youtubeToggleLabel">YouTube</span>
-      </button>
-      <button id="visibilityEditButton" class="editButton" type="button" aria-controls="visibilityPanel" aria-expanded="false">
-        表示編集
-      </button>
-      <button id="mapToggleButton" class="mapToggleButton" type="button" aria-pressed="true" title="地図の表示を切り替えます">
-        地図表示
-      </button>
-      <label id="gridColumnControl" class="gridColumnControl" hidden>
-        <span class="summaryLabel">画像列数</span>
-        <select id="gridColumnSelect" aria-label="地図非表示時の画像列数">
-          <option value="4">4列</option>
-          <option value="6">6列</option>
-        </select>
-      </label>
-      <button id="comparisonToggleButton" class="comparisonToggleButton" type="button" aria-pressed="false" title="2つの都道府県を左右に並べます">
-        2県表示
-      </button>
-      <label class="searchBox">
-        <span class="summaryLabel">絞り込み</span>
-        <input id="cameraSearch" type="search" placeholder="市町村名・地点名" autocomplete="off">
-      </label>
-    </section>
-  </div>
+html { scroll-behavior: auto; }
 
-  <aside id="prefecturePanel" class="sidePanel prefecturePanel" aria-hidden="true">
-    <div class="panelHeader">
-      <div>
-        <strong>都道府県を選択</strong>
-        <p>先に第1県または第2県を選び、そのあと表示したい都道府県を押してください。</p>
-      </div>
-      <button id="prefectureMenuClose" class="iconButton" type="button" aria-label="都道府県メニューを閉じる">×</button>
-    </div>
-    <fieldset class="prefectureTargetSelector">
-      <legend>選択先</legend>
-      <label class="prefectureTargetOption">
-        <input id="primaryPrefectureTarget" type="radio" name="prefectureTarget" value="primary" checked>
-        <span>第1県</span>
-        <strong id="panelPrimaryPrefectureName">-</strong>
-      </label>
-      <label class="prefectureTargetOption">
-        <input id="secondaryPrefectureTarget" type="radio" name="prefectureTarget" value="secondary">
-        <span>第2県</span>
-        <strong id="panelSecondaryPrefectureName">-</strong>
-      </label>
-    </fieldset>
-    <p class="prefecturePanelNote">灰色の項目はデータ準備中です。第2県は「2県表示」にしたとき右側へ表示されます。</p>
-    <nav id="prefectureNavigation" class="prefectureNavigation" aria-label="都道府県一覧"></nav>
-  </aside>
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+}
 
-  <aside id="visibilityPanel" class="sidePanel visibilityPanel" aria-hidden="true">
-    <div class="panelHeader">
-      <div>
-        <strong>カメラの表示編集</strong>
-        <p>チェックを外したカメラは、一覧と地図から非表示になります。設定はこのブラウザに保存されます。</p>
-      </div>
-      <button id="visibilityPanelClose" class="iconButton" type="button" aria-label="表示編集を閉じる">×</button>
-    </div>
-    <div id="visibilityPrefectureSwitcher" class="visibilityPrefectureSwitcher" aria-label="編集する都道府県" hidden>
-      <button id="visibilityPrimaryPrefectureButton" class="visibilityPrefectureButton is-active" type="button">
-        <span>第1県</span><strong id="visibilityPrimaryPrefectureName">-</strong>
-      </button>
-      <button id="visibilitySecondaryPrefectureButton" class="visibilityPrefectureButton" type="button">
-        <span>第2県</span><strong id="visibilitySecondaryPrefectureName">-</strong>
-      </button>
-    </div>
+button, select, input { font: inherit; }
+button, select { cursor: pointer; }
+a { color: inherit; }
 
-    <div class="visibilityTabs" role="tablist" aria-label="表示編集メニュー">
-      <button id="visibilitySettingsTab" class="visibilityTab is-active" type="button" role="tab" aria-selected="true" aria-controls="visibilitySettingsPane">
-        表示設定
-      </button>
-      <button id="hiddenImagesTab" class="visibilityTab" type="button" role="tab" aria-selected="false" aria-controls="hiddenImagesPane">
-        非表示画像 <span id="hiddenImageCount" class="visibilityTabCount">0</span>
-      </button>
-    </div>
+.stickyStack {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 2000;
+  padding-bottom: 9px;
+  background: linear-gradient(to bottom, rgba(242, 245, 249, 1) 0%, rgba(242, 245, 249, 0.98) 88%, rgba(242, 245, 249, 0));
+}
 
-    <section id="visibilitySettingsPane" class="visibilityTabPane" role="tabpanel" aria-labelledby="visibilitySettingsTab">
-      <div class="visibilityTools">
-        <input id="visibilitySearch" type="search" placeholder="市町村名・地点名を検索" autocomplete="off">
-        <label class="visibilityImageControl">
-          <span>一覧画像</span>
-          <select id="visibilityImageMode" aria-label="表示設定内の画像表示を切り替える">
-            <option value="show">画像表示</option>
-            <option value="hide">画像非表示</option>
-          </select>
-        </label>
-        <button id="showAllCamerasButton" class="secondaryButton" type="button">すべて表示</button>
-      </div>
-      <div id="visibilityList" class="visibilityList"></div>
-    </section>
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 64px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
 
-    <section id="hiddenImagesPane" class="visibilityTabPane" role="tabpanel" aria-labelledby="hiddenImagesTab" hidden>
-      <div class="hiddenImagesTools">
-        <p>非表示中の静止画を読み込み、復旧しているか確認できます。</p>
-        <button id="refreshHiddenImagesButton" class="secondaryButton" type="button">画像を再確認</button>
-      </div>
-      <div id="hiddenImageList" class="hiddenImageGrid"></div>
-    </section>
-  </aside>
+.brandArea,
+.headerTools,
+.compactControl,
+.summaryBar,
+.mapHeader {
+  display: flex;
+  align-items: center;
+}
 
-  <div id="panelBackdrop" class="panelBackdrop" hidden></div>
+.brandArea { gap: 10px; min-width: 230px; }
+.brandText { min-width: 0; }
+.siteTitle { font-size: 18px; font-weight: 800; letter-spacing: 0.02em; }
+.pageSubtitle { margin-top: 2px; color: var(--muted); font-size: 12px; }
 
-  <main class="pageShell">
-    <div id="statusMessage" class="statusMessage" role="status">データを読み込んでいます。</div>
+.summaryToggleButton {
+  display: none;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.summaryToggleButton[aria-expanded="true"] {
+  border-color: #64748b;
+  background: #334155;
+  color: #fff;
+}
 
-    <div class="layout">
-      <div id="content" class="cameraContent"></div>
+.headerTools { justify-content: flex-end; gap: 12px; }
+.compactControl { gap: 7px; color: var(--muted); font-size: 12px; }
+.compactControl select,
+.summaryBar select,
+.summaryBar input,
+.visibilityTools input {
+  min-height: 34px;
+  padding: 6px 9px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
 
-      <aside id="mapWrap" class="mapWrap" aria-label="ライブカメラ地図">
-        <div class="mapHeader">
-          <div>
-            <strong>カメラ位置</strong>
-            <span id="mapHint">画像またはピンを選択できます</span>
-          </div>
-          <button id="resetMapButton" class="secondaryButton" type="button">全域表示</button>
-        </div>
-        <div id="map"></div>
-      </aside>
-    </div>
-  </main>
+.timeInfo {
+  min-width: 160px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+}
 
-  <div id="viewer" class="viewer" role="dialog" aria-modal="true" aria-label="ライブカメラ拡大表示" aria-hidden="true">
-    <button id="viewerClose" class="viewerClose" type="button" aria-label="拡大表示を閉じる">×</button>
-    <figure class="viewerFigure">
-      <img id="viewerImage" alt="">
-      <figcaption id="viewerCaption"></figcaption>
-    </figure>
-  </div>
+.iconButton,
+.primaryButton,
+.secondaryButton,
+.editButton {
+  border: 0;
+  border-radius: 8px;
+}
+
+.iconButton {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 22px;
+}
+
+.primaryButton {
+  padding: 9px 13px;
+  background: var(--success);
+  color: white;
+  font-weight: 700;
+}
+.primaryButton:hover { filter: brightness(0.94); }
+
+.secondaryButton {
+  padding: 7px 10px;
+  background: #edf2f7;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+.secondaryButton:hover { background: #e2e8f0; }
+
+.editButton {
+  min-height: 36px;
+  padding: 7px 12px;
+  background: #334155;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.editButton:hover,
+.editButton[aria-expanded="true"] { background: #1e293b; }
+
+.summaryBar {
+  flex-wrap: nowrap;
+  gap: 18px;
+  margin: 8px 16px 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  scrollbar-width: thin;
+}
+
+.summaryBar > div,
+.summaryBar label {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.summaryBar strong,
+.youtubeToggle,
+.editButton { white-space: nowrap; }
+.summaryLabel { color: var(--muted); font-size: 12px; }
+.searchBox { margin-left: auto; }
+.searchBox input { width: min(260px, 42vw); }
+
+.youtubeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #b91c1c;
+  border-radius: 9px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.youtubeToggle:hover { border-color: #7f1d1d; background: #b91c1c; transform: translateY(-1px); }
+.youtubeToggle[aria-pressed="true"],
+.youtubeToggle.is-active {
+  border-color: #7f1d1d;
+  background: #991b1b;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}
+.youtubePlay { font-size: 10px; }
+
+.sidePanel {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 3100;
+  width: min(450px, 94vw);
+  padding: 18px;
+  overflow-y: auto;
+  background: var(--surface);
+  box-shadow: 18px 0 50px rgba(15, 23, 42, 0.2);
+  transform: translateX(-105%);
+  transition: transform 0.22s ease;
+}
+.sidePanel.open { transform: translateX(0); }
+
+.visibilityPanel {
+  inset: 0 0 0 auto;
+  box-shadow: -18px 0 50px rgba(15, 23, 42, 0.2);
+  transform: translateX(105%);
+}
+.visibilityPanel.open { transform: translateX(0); }
+
+.visibilityTabs {
+  position: sticky;
+  top: -18px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 16px -4px 0;
+  padding: 12px 4px 8px;
+  background: var(--surface);
+}
+
+.visibilityTab {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+.visibilityTab:hover { border-color: #94a3b8; }
+.visibilityTab.is-active,
+.visibilityTab[aria-selected="true"] {
+  border-color: #334155;
+  background: #334155;
+  color: #fff;
+}
+.visibilityTabCount {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 3px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+}
+.visibilityTab:not(.is-active) .visibilityTabCount { background: #e2e8f0; color: #334155; }
+.visibilityTabPane[hidden] { display: none !important; }
+
+.panelBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.panelHeader p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+.prefectureNavigation { margin-top: 18px; }
+.regionGroup + .regionGroup { margin-top: 18px; }
+.regionGroup h2 { margin: 0 0 8px; font-size: 14px; }
+.prefectureList { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.prefectureButton {
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+}
+.prefectureButton:hover:not(:disabled),
+.prefectureButton.active { border-color: var(--accent); background: #fff4ed; color: var(--accent-dark); }
+.prefectureButton:disabled { cursor: not-allowed; background: #f1f5f9; color: #a4afbd; }
+
+.visibilityTools {
+  position: sticky;
+  top: 48px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin: 16px -4px 10px;
+  padding: 12px 4px 8px;
+  background: var(--surface);
+}
+.visibilityTools input { width: 100%; }
+.visibilityList { display: grid; gap: 6px; padding-bottom: 24px; }
+.visibilityGroupTitle {
+  position: sticky;
+  top: 112px;
+  z-index: 1;
+  margin: 12px 0 4px;
+  padding: 6px 4px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+}
+.visibilityRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  cursor: pointer;
+}
+.visibilityRow:hover { border-color: #94a3b8; }
+.visibilityRow.is-hidden { opacity: 0.58; background: #eef2f7; }
+.visibilityRow input { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--success); }
+.visibilityName { min-width: 0; }
+.visibilityCity { font-size: 12px; font-weight: 800; }
+.visibilityPlace { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.visibilityEmpty { padding: 30px 8px; color: var(--muted); font-size: 13px; text-align: center; }
+
+.hiddenImagesTools {
+  position: sticky;
+  top: 48px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 -4px 10px;
+  padding: 11px 4px 9px;
+  background: var(--surface);
+}
+.hiddenImagesTools p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.hiddenImagesTools .secondaryButton { flex: 0 0 auto; }
+
+.hiddenImageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  padding-bottom: 28px;
+}
+
+.hiddenImageCard {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 4px 13px rgba(15, 23, 42, 0.08);
+}
+.hiddenImageMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #dfe5ec;
+}
+.hiddenCameraImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+.hiddenImageMedia .imageError { font-size: 10px; }
+.hiddenImageMedia.error .imageError { display: grid; }
+.hiddenImageText { display: grid; gap: 3px; padding: 8px 9px 5px; }
+.hiddenImageText strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.hiddenImageText a { color: #1769aa; font-size: 11px; line-height: 1.35; text-decoration: none; }
+.hiddenImageText a:hover { text-decoration: underline; }
+.hiddenImageRestore {
+  width: calc(100% - 18px);
+  margin: 3px 9px 9px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--success);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.hiddenImageRestore:hover { filter: brightness(0.94); }
+.hiddenImageEmpty {
+  grid-column: 1 / -1;
+  padding: 34px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.pageShell {
+  width: 100%;
+  margin: 0 auto;
+  padding: calc(var(--sticky-stack-height) + 12px) 16px 24px;
+}
+
+.statusMessage {
+  display: none;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 9px;
+  color: #9a3412;
+  font-size: 13px;
+}
+.statusMessage.visible { display: block; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 31vw, 520px);
+  gap: 16px;
+  align-items: start;
+}
+
+.cameraContent { min-width: 0; }
+.areaSection { margin-bottom: 28px; scroll-margin-top: calc(var(--sticky-stack-height) + 12px); }
+.areaTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  padding: 0 3px;
+  font-size: 17px;
+}
+.areaTitle::before {
+  width: 5px;
+  height: 23px;
+  border-radius: 4px;
+  background: var(--area-color, #64748b);
+  content: "";
+}
+
+.cameraGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* 市町村が変わっても別の列・行にはせず、カード間の小さな目印だけ付ける */
+.cameraCard.municipalityStart:not(:first-child) {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--area-color, #64748b) 55%, white),
+              0 3px 12px rgba(15, 23, 42, 0.055);
+}
+
+.cameraCard {
+  min-width: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.055);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  scroll-margin-top: calc(var(--sticky-stack-height) + 12px);
+}
+.cameraCard:hover,
+.cameraCard.selected {
+  border-color: color-mix(in srgb, var(--area-color, #64748b) 70%, white);
+  box-shadow: 0 9px 24px rgba(15, 23, 42, 0.13);
+  transform: translateY(-2px);
+}
+.cardHeader { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 8px 9px; }
+.city { min-width: 0; overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.youtubeBadge {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.cameraMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #dfe5ec;
+}
+.cameraImage { display: block; width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; transition: transform 0.18s ease; }
+.cameraCard:hover .cameraImage { transform: scale(1.015); }
+.imageError {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 18px;
+  color: #64748b;
+  background: repeating-linear-gradient(135deg, #eef2f7, #eef2f7 12px, #e4eaf1 12px, #e4eaf1 24px);
+  font-size: 12px;
+  text-align: center;
+}
+.cameraMedia.error .imageError { display: grid; }
+
+.youtubeSection { padding-top: 2px; }
+.youtubeMedia { background: #111827; }
+.youtubeFrame { width: 100%; height: 100%; border: 0; }
+.youtubeFallback {
+  position: absolute;
+  inset: auto 8px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 9px;
+  border-radius: 7px;
+  background: rgba(220, 38, 38, 0.92);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.cardFooter { padding: 8px 9px 10px; }
+.placeLink { display: block; color: #1769aa; font-size: 12px; line-height: 1.45; text-decoration: none; }
+.placeLink:hover { text-decoration: underline; }
+
+.emptyState {
+  padding: 50px 20px;
+  background: var(--surface);
+  border: 1px dashed #bac5d3;
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-align: center;
+}
+
+.mapWrap {
+  position: sticky;
+  top: calc(var(--sticky-stack-height) + 8px);
+  max-height: calc(100vh - var(--sticky-stack-height) - 16px);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.mapHeader { justify-content: space-between; gap: 12px; padding: 10px 12px; }
+.mapHeader strong { display: block; font-size: 13px; }
+#mapHint { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+#map {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: calc(100vh - var(--sticky-stack-height) - 74px);
+  min-height: 360px;
+  overflow: hidden;
+  background: #dce6ee;
+}
+
+/* LeafletのCSSが他のスタイルに上書きされてもタイルが崩れないための保険 */
+#map .leaflet-pane,
+#map .leaflet-tile,
+#map .leaflet-marker-icon,
+#map .leaflet-marker-shadow,
+#map .leaflet-tile-container,
+#map .leaflet-pane > svg,
+#map .leaflet-pane > canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+#map .leaflet-tile { max-width: none !important; max-height: none !important; }
+#map .leaflet-container { width: 100%; height: 100%; }
+.leaflet-tooltip { max-width: 260px; white-space: normal; }
+
+.cameraMarkerWrapper { background: transparent; border: 0; }
+.cameraMapPin {
+  position: relative;
+  display: block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--pin-color, #2a7be4);
+  box-shadow: 0 3px 9px rgba(15, 23, 42, 0.42);
+  transform: rotate(-45deg);
+}
+.cameraMapPin::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+  transform: translate(-50%, -50%);
+}
+.youtubeMarker {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  background: rgba(2, 6, 23, 0.9);
+}
+.viewer.open { display: flex; }
+.viewerClose { position: absolute; top: 16px; right: 20px; border: 0; background: transparent; color: white; font-size: 38px; line-height: 1; }
+.viewerFigure { margin: 0; max-width: 94vw; text-align: center; }
+.viewerFigure img { display: block; max-width: 94vw; max-height: 82vh; margin: 0 auto; object-fit: contain; background: #0f172a; }
+.viewerFigure figcaption { margin-top: 10px; color: white; font-size: 14px; }
+
+@media (max-width: 1000px) {
+  .compactControl > span { display: none; }
+  .headerTools { gap: 8px; }
+  .timeInfo { min-width: 145px; }
+  .summaryBar { gap: 12px; }
+  .searchBox input { width: 200px; }
+}
+
+/* PCではブラウザを半幅にしても、地図を右・カメラを4列のまま維持する */
+@media (min-width: 621px) {
+  .layout { grid-template-columns: minmax(0, 1fr) clamp(300px, 31vw, 520px); }
+  .mapWrap { order: initial; }
+  .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* スマートフォン相当の幅でのみ縦並びへ切り替える */
+@media (max-width: 620px) {
+  .stickyStack { padding-bottom: 7px; }
+  .topbar { display: block; padding: 8px 10px; }
+  .brandArea { width: 100%; min-width: 0; }
+  .brandText { min-width: 0; }
+  .summaryToggleButton { display: inline-flex; align-items: center; justify-content: center; }
+  .headerTools { justify-content: flex-start; margin-top: 8px; gap: 8px; }
+  .timeInfo { display: none; }
+  .primaryButton { margin-left: auto; }
+  .pageSubtitle { display: none; }
+  .summaryBar {
+    flex-wrap: wrap;
+    gap: 9px 12px;
+    max-height: 320px;
+    margin: 7px 10px 0;
+    overflow: visible;
+    opacity: 1;
+    transition: max-height 0.2s ease, margin 0.2s ease, padding 0.2s ease, opacity 0.15s ease, border-width 0.2s ease;
+  }
+  .summaryBar.is-collapsed {
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .searchBox { width: 100%; margin-left: 0; }
+  .searchBox input { width: 100%; }
+  .pageShell { padding-right: 10px; padding-left: 10px; }
+  .layout { grid-template-columns: 1fr; }
+  .mapWrap { position: relative; top: auto; max-height: none; order: -1; }
+  #map { height: 46vh; min-height: 320px; }
+  .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .prefectureList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .viewer { padding: 16px; }
+}
+
+@media (max-width: 420px) {
+  .siteTitle { font-size: 15px; }
+  .summaryToggleButton { padding: 6px 8px; font-size: 10px; }
+  .cameraGrid { grid-template-columns: 1fr; }
+  .hiddenImageGrid { grid-template-columns: 1fr; }
+}
+
+/* v5: YouTubeは埋め込まず、全画面の選択一覧として表示 */
+.viewerFigure img { cursor: zoom-out; }
+
+.youtubeGalleryPanel {
+  width: min(1100px, 94vw);
+  max-height: 86vh;
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+}
+
+.youtubeGalleryHeader h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 22px;
+}
+
+.youtubeGalleryHeader p {
+  margin: 5px 0 18px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.youtubeGalleryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.youtubeGalleryCard {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #dbe3ee;
+  border-radius: 11px;
+  background: #ffffff;
+  color: #1e293b;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.youtubeGalleryCard:hover,
+.youtubeGalleryCard:focus-visible,
+.youtubeGalleryCard.is-focused {
+  border-color: #dc2626;
+  outline: none;
+  box-shadow: 0 10px 28px rgba(127, 29, 29, 0.2);
+  transform: translateY(-2px);
+}
+
+.youtubeGalleryMedia {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #111827;
+}
+
+.youtubeGalleryMedia img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.18s ease;
+}
+
+.youtubeGalleryCard:hover .youtubeGalleryMedia img { transform: scale(1.025); }
+
+.youtubeGalleryPlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 46px;
+  height: 34px;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(220, 38, 38, 0.94);
+  color: #ffffff;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  transform: translate(-50%, -50%);
+}
+
+.youtubeGalleryText {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px 12px;
+}
+
+.youtubeGalleryText strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.youtubeGalleryText span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.youtubeGalleryEmpty {
+  grid-column: 1 / -1;
+  padding: 45px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: #64748b;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .youtubeGalleryGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .youtubeGalleryPanel { width: 96vw; max-height: 88vh; padding: 14px; }
+  .youtubeGalleryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+}
+
+@media (max-width: 420px) {
+  .youtubeGalleryGrid { grid-template-columns: 1fr; }
+}
+
+/* 表示設定の画像プレビュー・地図切り替え */
+.mapToggleButton {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
 
 
-  <div id="youtubeViewer" class="viewer youtubeViewer" role="dialog" aria-modal="true" aria-label="YouTubeライブカメラ一覧" aria-hidden="true">
-    <button id="youtubeViewerClose" class="viewerClose" type="button" aria-label="YouTube一覧を閉じる">×</button>
-    <section class="youtubeGalleryPanel">
-      <div class="youtubeGalleryHeader">
-        <div>
-          <h2>YouTubeライブカメラ</h2>
-          <p>ライブ配信中と確認できたカメラだけを表示します。選ぶとYouTubeを別タブで開きます。</p>
-        </div>
-      </div>
-      <div id="youtubeGalleryList" class="youtubeGalleryGrid"></div>
-    </section>
-  </div>
+.mapToggleButton {
+  border: 1px solid #2f6f9f;
+  background: #eaf5fc;
+  color: #15517d;
+}
+.mapToggleButton:hover { background: #d9edf9; }
+.mapToggleButton.is-off {
+  border-color: #94a3b8;
+  background: #e2e8f0;
+  color: #475569;
+}
 
-  <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260715-14"></script>
-</body>
-</html>
+.layout.mapHidden { grid-template-columns: minmax(0, 1fr); }
+.mapWrap[hidden] { display: none !important; }
+
+.visibilityTools {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+}
+.visibilityImageControl {
+  display: grid;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.visibilityImageControl select {
+  min-height: 34px;
+  padding: 6px 8px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.visibilityRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  cursor: default;
+}
+.visibilityRow.has-preview { grid-template-columns: 112px minmax(0, 1fr); }
+.visibilityRowControl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+  cursor: pointer;
+}
+.visibilityRowControl input {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: var(--success);
+}
+.visibilityPreview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #dfe5ec;
+}
+.visibilityPreview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+.visibilityPreview.error .imageError { display: grid; }
+.visibilityPreview .imageError { padding: 6px; font-size: 9px; }
+
+@media (max-width: 620px) {
+  .visibilityTools { grid-template-columns: minmax(0, 1fr) auto; }
+  .visibilityTools .secondaryButton { grid-column: 1 / -1; }
+  .visibilityRow.has-preview { grid-template-columns: 96px minmax(0, 1fr); }
+  .mapToggleButton { min-height: 34px; padding: 6px 9px; }
+}
+
+@media (max-width: 390px) {
+  .visibilityRow.has-preview { grid-template-columns: 1fr; }
+  .visibilityPreview { max-width: 210px; }
+}
+
+
+/* v11: 地図非表示時の4/6列切替・2県比較表示 */
+.gridColumnControl,
+.comparisonPrefectureControl {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 6px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.gridColumnControl select,
+.comparisonPrefectureControl select {
+  min-height: 36px;
+  padding: 6px 9px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.comparisonToggleButton {
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid #7c3aed;
+  border-radius: 8px;
+  background: #f3e8ff;
+  color: #6d28d9;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.comparisonToggleButton:hover { background: #ead7ff; }
+.comparisonToggleButton.is-active {
+  background: #7c3aed;
+  color: #fff;
+}
+.layout.gridColumns4 .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.layout.gridColumns6 .cameraGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; }
+.layout.comparisonMode { display: block; }
+.comparisonShell {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.comparisonPane {
+  min-width: 0;
+  padding: 12px;
+  background: color-mix(in srgb, var(--surface) 92%, #eef2ff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.comparisonPrefectureTitle {
+  position: sticky;
+  top: calc(var(--sticky-stack-height) + 6px);
+  z-index: 30;
+  margin: -4px -4px 14px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 4px 12px rgba(15,23,42,.08);
+  font-size: 17px;
+}
+.comparisonPane .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.comparisonPane .areaSection { margin-bottom: 22px; }
+.comparisonPane .areaTitle { font-size: 15px; }
+.comparisonPane .cardHeader { padding: 6px 7px; }
+.comparisonPane .cardFooter { padding: 6px 7px 8px; }
+.comparisonPane .city { font-size: 11px; }
+.comparisonPane .placeLink { font-size: 10px; }
+.youtubeGalleryPrefecture {
+  display: block;
+  margin-bottom: 3px;
+  color: #7c3aed;
+  font-size: 10px;
+  font-weight: 800;
+}
+@media (max-width: 900px) {
+  .comparisonShell { gap: 10px; }
+  .comparisonPane { padding: 8px; }
+  .comparisonPane .cameraGrid { gap: 6px; }
+}
+@media (max-width: 700px) {
+  .comparisonShell { grid-template-columns: 1fr; }
+  .comparisonPrefectureTitle { position: relative; top: auto; }
+  .comparisonPane .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .gridColumnControl,
+  .comparisonPrefectureControl { grid-template-columns: 1fr; gap: 2px; }
+  .gridColumnControl select,
+  .comparisonPrefectureControl select,
+  .comparisonToggleButton { min-height: 34px; padding: 6px 8px; }
+  .layout.gridColumns4 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .layout.gridColumns6 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* v12: 第1県・第2県の常設選択とライブ中YouTubeのみ表示 */
+.visuallyHidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.prefectureSlotGroup {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.prefectureSlotControl {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.prefectureSlotControl select {
+  min-width: 112px;
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.prefectureSlotControl select option:disabled {
+  color: #a0aaba;
+}
+
+@media (max-width: 620px) {
+  .prefectureSlotGroup {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .prefectureSlotControl {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .prefectureSlotControl select {
+    width: 100%;
+    min-width: 0;
+    min-height: 34px;
+  }
+}
+
+
+/* v13: 地図表示中の6列表示と、都道府県パネル内の第1県・第2県選択 */
+.prefectureSelectionSummary {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-muted);
+  color: var(--text);
+  text-align: left;
+  white-space: nowrap;
+}
+.prefectureSelectionSummary:hover,
+.prefectureSelectionSummary[aria-expanded="true"] {
+  border-color: #94a3b8;
+  background: #eef2f7;
+}
+.prefectureSelectionSummary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.prefectureSelectionSummary strong { font-size: 12px; }
+
+.prefectureTargetSelector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+.prefectureTargetSelector legend {
+  padding: 0 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+.prefectureTargetOption {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.prefectureTargetOption.is-active {
+  border-color: #7c3aed;
+  background: #f3e8ff;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.12);
+}
+.prefectureTargetOption input { margin: 0; accent-color: #7c3aed; }
+.prefectureTargetOption span { color: var(--muted); font-size: 11px; font-weight: 800; }
+.prefectureTargetOption strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prefecturePanelNote { margin: 9px 2px 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+.prefectureButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+.prefectureButtonName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prefectureButtonSlots {
+  flex: 0 0 auto;
+  min-width: 0;
+  color: #7c3aed;
+  font-size: 11px;
+  font-weight: 900;
+}
+.prefectureButton.is-primary {
+  border-color: var(--accent);
+  background: #fff4ed;
+  color: var(--accent-dark);
+}
+.prefectureButton.is-secondary {
+  box-shadow: inset 0 0 0 1px #7c3aed;
+}
+.prefectureButton.is-primary.is-secondary {
+  background: linear-gradient(135deg, #fff4ed 0 50%, #f3e8ff 50% 100%);
+}
+
+@media (max-width: 620px) {
+  .prefectureSelectionSummary {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .prefectureSelectionSummary > span {
+    min-width: 0;
+  }
+  .prefectureSelectionSummary strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .prefectureTargetSelector { grid-template-columns: 1fr; }
+}
+
+/* v14: 地図プレビュー、第1県・第2県の入れ替え、表示編集の県切替 */
+.prefectureSelectionSummary {
+  padding: 0;
+  overflow: hidden;
+}
+.prefectureSummarySlot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  white-space: nowrap;
+}
+.prefectureSummarySlot + .prefectureSummarySlot {
+  border-left: 1px solid var(--border);
+}
+.prefectureSummarySlot:hover,
+.prefectureSummarySlot[aria-expanded="true"] {
+  background: #e8eef5;
+}
+.prefectureSummarySlot strong { font-size: 12px; }
+
+.visibilityPrefectureSwitcher {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin: 14px 0 2px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+.visibilityPrefectureSwitcher[hidden] { display: none; }
+.visibilityPrefectureButton {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  text-align: left;
+}
+.visibilityPrefectureButton span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+.visibilityPrefectureButton strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.visibilityPrefectureButton.is-active {
+  border-color: #7c3aed;
+  background: #f3e8ff;
+  color: #5b21b6;
+  box-shadow: inset 0 0 0 1px #7c3aed;
+}
+
+/* 2県表示の県名は通常の見出しとして一緒にスクロールする */
+.comparisonPrefectureTitle {
+  position: relative;
+  top: auto;
+  z-index: auto;
+}
+
+.leaflet-tooltip.cameraPreviewTooltip {
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22);
+  white-space: normal;
+}
+.leaflet-tooltip.cameraPreviewTooltip::before { display: none; }
+.cameraMapTooltip {
+  width: 220px;
+  padding: 8px;
+  color: var(--text);
+  pointer-events: none;
+}
+.cameraMapTooltipCity,
+.cameraMapTooltipPlace {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cameraMapTooltipCity {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+.cameraMapTooltipPlace {
+  margin-top: 2px;
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.cameraMapTooltipMedia {
+  position: relative;
+  width: 100%;
+  margin-top: 7px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  background: #dbe3ee;
+}
+.cameraMapTooltipMedia img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cameraMapTooltipError {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: #64748b;
+  background: #eef2f7;
+  font-size: 10px;
+  text-align: center;
+}
+.cameraMapTooltipMedia.error img { display: none; }
+.cameraMapTooltipMedia.error .cameraMapTooltipError { display: flex; }
+.cameraMapTooltipYoutube {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: rgba(185, 28, 28, 0.92);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+@media (max-width: 620px) {
+  .prefectureSelectionSummary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .prefectureSummarySlot {
+    min-width: 0;
+    justify-content: space-between;
+  }
+  .prefectureSummarySlot strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .visibilityPrefectureSwitcher { grid-template-columns: 1fr; }
+  .cameraMapTooltip { width: 190px; }
+}
