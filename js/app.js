@@ -4,6 +4,10 @@ const NARA_RIVER_SOURCE = 'naraPrefectureRiver';
 const NARA_RIVER_INTERVAL_MS = 10 * 60 * 1000;
 const NARA_RIVER_MAX_FALLBACKS = 6;
 const JAPANESE_COLLATOR = new Intl.Collator('ja-JP', { numeric: true, sensitivity: 'base' });
+const JARTIC_STATUS_URL = './data/jartic/fog-speed.json';
+const JARTIC_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+const VISIBILITY_IMAGE_MODE_KEY = 'national-live-camera:visibility-image-mode:v1';
+const MAP_VISIBILITY_KEY = 'national-live-camera:map-visible:v1';
 
 const elements = {
   pageSubtitle: document.querySelector('#pageSubtitle'),
@@ -28,6 +32,7 @@ const elements = {
   visibilityEditButton: document.querySelector('#visibilityEditButton'),
   visibilityPanelClose: document.querySelector('#visibilityPanelClose'),
   visibilitySearch: document.querySelector('#visibilitySearch'),
+  visibilityImageMode: document.querySelector('#visibilityImageMode'),
   visibilityList: document.querySelector('#visibilityList'),
   showAllCamerasButton: document.querySelector('#showAllCamerasButton'),
   visibilitySettingsTab: document.querySelector('#visibilitySettingsTab'),
@@ -47,8 +52,13 @@ const elements = {
   youtubeGalleryList: document.querySelector('#youtubeGalleryList'),
   youtubeViewerClose: document.querySelector('#youtubeViewerClose'),
   stickyStack: document.querySelector('#stickyStack'),
+  layout: document.querySelector('.layout'),
+  mapWrap: document.querySelector('#mapWrap'),
+  mapToggleButton: document.querySelector('#mapToggleButton'),
   mapContainer: document.querySelector('#map'),
-  mapHint: document.querySelector('#mapHint')
+  mapHint: document.querySelector('#mapHint'),
+  jarticFogStatus: document.querySelector('#jarticFogStatus'),
+  jarticFogStatusText: document.querySelector('#jarticFogStatusText')
 };
 
 const state = {
@@ -75,7 +85,10 @@ const state = {
   mapResizeObserver: null,
   mapRefreshFrame: null,
   mapRefreshTimers: [],
-  summaryBarVisible: true
+  summaryBarVisible: true,
+  visibilityImagesVisible: true,
+  mapVisible: true,
+  jarticStatusTimer: null
 };
 
 init().catch((error) => {
@@ -87,6 +100,7 @@ async function init() {
   if (!Leaflet) throw new Error('Leafletを読み込めませんでした。');
   bindEvents();
   initializeSummaryBar();
+  initializeDisplayPreferences();
   setupStickyStackObserver();
   state.prefectures = await fetchJson(`${DATA_ROOT}/prefectures.json`);
   renderPrefectureNavigation();
@@ -98,6 +112,7 @@ async function init() {
 
   await loadPrefecture(prefectureId);
   startClock();
+  startJarticFogMonitor();
 }
 
 async function fetchJson(url) {
@@ -248,6 +263,39 @@ function initializeOrResetMap() {
   scheduleMapRefresh();
 }
 
+function initializeDisplayPreferences() {
+  const savedImageMode = localStorage.getItem(VISIBILITY_IMAGE_MODE_KEY);
+  state.visibilityImagesVisible = savedImageMode !== 'hide';
+  if (elements.visibilityImageMode) {
+    elements.visibilityImageMode.value = state.visibilityImagesVisible ? 'show' : 'hide';
+  }
+
+  const savedMapVisibility = localStorage.getItem(MAP_VISIBILITY_KEY);
+  state.mapVisible = savedMapVisibility !== 'false';
+  updateMapVisibility();
+}
+
+function updateMapVisibility() {
+  if (!elements.mapWrap || !elements.layout || !elements.mapToggleButton) return;
+
+  elements.mapWrap.hidden = !state.mapVisible;
+  elements.layout.classList.toggle('mapHidden', !state.mapVisible);
+  elements.mapToggleButton.classList.toggle('is-off', !state.mapVisible);
+  elements.mapToggleButton.setAttribute('aria-pressed', String(state.mapVisible));
+  elements.mapToggleButton.textContent = state.mapVisible ? '地図表示' : '地図非表示';
+  elements.mapToggleButton.title = state.mapVisible ? '地図を非表示にします' : '地図を表示します';
+
+  if (state.mapVisible) {
+    window.setTimeout(() => scheduleMapRefresh(new Set(state.markers.keys())), 0);
+  }
+}
+
+function toggleMapVisibility() {
+  state.mapVisible = !state.mapVisible;
+  localStorage.setItem(MAP_VISIBILITY_KEY, String(state.mapVisible));
+  updateMapVisibility();
+}
+
 function initializeSummaryBar() {
   const mobile = window.matchMedia('(max-width: 620px)').matches;
   const saved = localStorage.getItem('liveCameraSummaryBarVisible');
@@ -302,7 +350,7 @@ function setupMapResizeObserver() {
 }
 
 function scheduleMapRefresh(visibleIds = null) {
-  if (!state.map) return;
+  if (!state.map || !state.mapVisible) return;
 
   cancelAnimationFrame(state.mapRefreshFrame);
   for (const timer of state.mapRefreshTimers) clearTimeout(timer);
@@ -511,7 +559,7 @@ function refreshImages() {
   document.querySelectorAll('[data-live-camera-image][data-camera-id]').forEach((image) => {
     const camera = state.prefecture?.cameras.find((item) => item.id === image.dataset.cameraId);
     if (!camera) return;
-    image.closest('.cameraMedia, .hiddenImageMedia')?.classList.remove('error');
+    image.closest('.cameraMedia, .hiddenImageMedia, .visibilityPreview')?.classList.remove('error');
     setCameraImageSource(image, camera, 0);
   });
 }
@@ -577,7 +625,7 @@ function focusCamera(cameraId, scrollToCard) {
   if (scrollToCard) card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   const marker = state.markers.get(cameraId);
-  if (marker && state.map) {
+  if (marker && state.map && state.mapVisible) {
     state.map.panTo(marker.getLatLng(), { animate: true, duration: 0.35 });
     marker.openTooltip();
   }
@@ -594,7 +642,7 @@ function releaseCameraFocus(cameraId) {
 }
 
 function fitMapToVisibleMarkers(visibleIds = new Set(state.markers.keys())) {
-  if (!state.map) return;
+  if (!state.map || !state.mapVisible) return;
 
   const latLngs = [...visibleIds]
     .map((id) => state.markers.get(id)?.getLatLng())
@@ -789,6 +837,9 @@ function saveHiddenCameraIds() {
 
 function renderVisibilityEditor() {
   if (!state.prefecture) return;
+  if (elements.visibilityImageMode) {
+    elements.visibilityImageMode.value = state.visibilityImagesVisible ? 'show' : 'hide';
+  }
 
   const keyword = normalizeText(state.visibilitySearch);
   const cameras = state.prefecture.cameras.filter((camera) => {
@@ -836,9 +887,49 @@ function renderVisibilityEditor() {
 }
 
 function createVisibilityRow(camera) {
-  const row = document.createElement('label');
+  const row = document.createElement('article');
   row.className = 'visibilityRow';
   row.classList.toggle('is-hidden', state.hiddenCameraIds.has(camera.id));
+  row.classList.toggle('has-preview', state.visibilityImagesVisible);
+
+  if (state.visibilityImagesVisible) {
+    const preview = document.createElement('div');
+    preview.className = 'visibilityPreview';
+
+    const previewImage = document.createElement('img');
+    previewImage.loading = 'lazy';
+    previewImage.decoding = 'async';
+    previewImage.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のカメラ画像`;
+
+    if (cameraMediaType(camera) === 'youtube') {
+      previewImage.src = camera.thumbnailUrl || youtubeThumbnailUrl(camera.youtubeId);
+      previewImage.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        window.open(camera.pageUrl, '_blank', 'noopener,noreferrer');
+      });
+    } else {
+      previewImage.dataset.cameraId = camera.id;
+      previewImage.dataset.liveCameraImage = 'true';
+      setCameraImageSource(previewImage, camera, 0);
+      previewImage.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openViewer(camera, previewImage.currentSrc || previewImage.src);
+      });
+      previewImage.addEventListener('load', () => preview.classList.remove('error'));
+      previewImage.addEventListener('error', () => handleCameraImageError(previewImage, preview, camera));
+    }
+
+    const error = document.createElement('div');
+    error.className = 'imageError';
+    error.textContent = '画像を取得できません';
+    preview.append(previewImage, error);
+    row.appendChild(preview);
+  }
+
+  const control = document.createElement('label');
+  control.className = 'visibilityRowControl';
 
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
@@ -857,7 +948,8 @@ function createVisibilityRow(camera) {
   place.textContent = stripTerrainPrefix(camera.place);
 
   name.append(city, place);
-  row.append(checkbox, name);
+  control.append(checkbox, name);
+  row.appendChild(control);
 
   checkbox.addEventListener('change', () => {
     if (checkbox.checked) {
@@ -1108,6 +1200,63 @@ function stopAutoScroll() {
   state.scrollReturnTimer = null;
 }
 
+function startJarticFogMonitor() {
+  loadJarticFogStatus();
+  clearInterval(state.jarticStatusTimer);
+  state.jarticStatusTimer = window.setInterval(loadJarticFogStatus, JARTIC_CHECK_INTERVAL_MS);
+}
+
+async function loadJarticFogStatus() {
+  if (!elements.jarticFogStatus || !elements.jarticFogStatusText) return;
+
+  try {
+    const response = await fetch(`${JARTIC_STATUS_URL}?_ts=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    updateJarticFogStatus(data);
+  } catch (error) {
+    console.warn('JARTIC濃霧規制ステータスを取得できませんでした。', error);
+    updateJarticFogStatus({ status: 'unavailable', restrictions: [] });
+  }
+}
+
+function updateJarticFogStatus(data) {
+  const allRestrictions = Array.isArray(data?.restrictions) ? data.restrictions : [];
+  const prefectureName = state.prefecture?.name;
+  const restrictions = allRestrictions.filter((item) => {
+    if (!prefectureName || !item?.prefecture) return true;
+    return String(item.prefecture) === prefectureName;
+  });
+
+  elements.jarticFogStatus.classList.remove('is-active', 'is-clear', 'is-unavailable');
+
+  if (restrictions.length > 0 || data?.status === 'active') {
+    const count = restrictions.length || allRestrictions.length;
+    elements.jarticFogStatus.classList.add('is-active');
+    elements.jarticFogStatusText.textContent = `濃霧速度規制 ${count}件`;
+    const detail = restrictions
+      .slice(0, 5)
+      .map((item) => [item.road, item.section, item.limit].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .join(' / ');
+    elements.jarticFogStatus.title = detail
+      ? `${detail}（JARTICトップページを開く）`
+      : '濃霧による速度規制があります。JARTICトップページを開きます。';
+    return;
+  }
+
+  if (data?.status === 'clear') {
+    elements.jarticFogStatus.classList.add('is-clear');
+    elements.jarticFogStatusText.textContent = '濃霧規制なし';
+    elements.jarticFogStatus.title = '取得済みの情報では濃霧による速度規制はありません。';
+    return;
+  }
+
+  elements.jarticFogStatus.classList.add('is-unavailable');
+  elements.jarticFogStatusText.textContent = 'JARTIC確認';
+  elements.jarticFogStatus.title = data?.note || 'JARTICトップページを開きます。';
+}
+
 function bindEvents() {
   elements.summaryToggleButton?.addEventListener('click', toggleSummaryBar);
 
@@ -1138,6 +1287,11 @@ function bindEvents() {
     state.visibilitySearch = event.target.value;
     renderVisibilityEditor();
   });
+  elements.visibilityImageMode?.addEventListener('change', (event) => {
+    state.visibilityImagesVisible = event.target.value === 'show';
+    localStorage.setItem(VISIBILITY_IMAGE_MODE_KEY, state.visibilityImagesVisible ? 'show' : 'hide');
+    renderVisibilityEditor();
+  });
   elements.showAllCamerasButton.addEventListener('click', () => {
     state.hiddenCameraIds.clear();
     saveHiddenCameraIds();
@@ -1147,6 +1301,7 @@ function bindEvents() {
   });
 
   elements.refreshButton.addEventListener('click', refreshImages);
+  elements.mapToggleButton?.addEventListener('click', toggleMapVisibility);
   elements.resetMapButton.addEventListener('click', resetMap);
   elements.scrollSpeedSelect.addEventListener('change', (event) => setScrollSpeed(event.target.value));
   window.addEventListener('wheel', stopAutoScroll, { passive: true });
