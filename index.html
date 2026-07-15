@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260715-7">
+  <link rel="stylesheet" href="./css/style.css?v=20260715-8">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -53,7 +53,7 @@
       </label>
       <button id="youtubeToggle" class="youtubeToggle" type="button" aria-pressed="false" title="YouTubeライブカメラの表示を切り替えます">
         <span class="youtubePlay" aria-hidden="true">▶</span>
-        <span id="youtubeToggleLabel">YouTube OFF</span>
+        <span id="youtubeToggleLabel">YouTube</span>
       </button>
       <button id="visibilityEditButton" class="editButton" type="button" aria-controls="visibilityPanel" aria-expanded="false">
         表示編集
@@ -84,11 +84,30 @@
       </div>
       <button id="visibilityPanelClose" class="iconButton" type="button" aria-label="表示編集を閉じる">×</button>
     </div>
-    <div class="visibilityTools">
-      <input id="visibilitySearch" type="search" placeholder="市町村名・地点名を検索" autocomplete="off">
-      <button id="showAllCamerasButton" class="secondaryButton" type="button">すべて表示</button>
+    <div class="visibilityTabs" role="tablist" aria-label="表示編集メニュー">
+      <button id="visibilitySettingsTab" class="visibilityTab is-active" type="button" role="tab" aria-selected="true" aria-controls="visibilitySettingsPane">
+        表示設定
+      </button>
+      <button id="hiddenImagesTab" class="visibilityTab" type="button" role="tab" aria-selected="false" aria-controls="hiddenImagesPane">
+        非表示画像 <span id="hiddenImageCount" class="visibilityTabCount">0</span>
+      </button>
     </div>
-    <div id="visibilityList" class="visibilityList"></div>
+
+    <section id="visibilitySettingsPane" class="visibilityTabPane" role="tabpanel" aria-labelledby="visibilitySettingsTab">
+      <div class="visibilityTools">
+        <input id="visibilitySearch" type="search" placeholder="市町村名・地点名を検索" autocomplete="off">
+        <button id="showAllCamerasButton" class="secondaryButton" type="button">すべて表示</button>
+      </div>
+      <div id="visibilityList" class="visibilityList"></div>
+    </section>
+
+    <section id="hiddenImagesPane" class="visibilityTabPane" role="tabpanel" aria-labelledby="hiddenImagesTab" hidden>
+      <div class="hiddenImagesTools">
+        <p>非表示中の静止画を読み込み、復旧しているか確認できます。</p>
+        <button id="refreshHiddenImagesButton" class="secondaryButton" type="button">画像を再確認</button>
+      </div>
+      <div id="hiddenImageList" class="hiddenImageGrid"></div>
+    </section>
   </aside>
 
   <div id="panelBackdrop" class="panelBackdrop" hidden></div>
@@ -136,6 +155,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260715-7"></script>
+  <script type="module" src="./js/app.js?v=20260715-8"></script>
 </body>
 </html>
