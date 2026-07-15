@@ -5,107 +5,295 @@
       "id": "hokkaido",
       "name": "北海道",
       "prefectures": [
-        { "id": "hokkaido", "name": "北海道", "enabled": false }
+        {
+          "id": "hokkaido",
+          "name": "北海道",
+          "enabled": false
+        }
       ]
     },
     {
       "id": "tohoku",
       "name": "東北",
       "prefectures": [
-        { "id": "aomori", "name": "青森県", "enabled": false },
-        { "id": "iwate", "name": "岩手県", "enabled": false },
-        { "id": "miyagi", "name": "宮城県", "enabled": false },
-        { "id": "akita", "name": "秋田県", "enabled": false },
-        { "id": "yamagata", "name": "山形県", "enabled": false },
-        { "id": "fukushima", "name": "福島県", "enabled": false }
+        {
+          "id": "aomori",
+          "name": "青森県",
+          "enabled": false
+        },
+        {
+          "id": "iwate",
+          "name": "岩手県",
+          "enabled": false
+        },
+        {
+          "id": "miyagi",
+          "name": "宮城県",
+          "enabled": false
+        },
+        {
+          "id": "akita",
+          "name": "秋田県",
+          "enabled": false
+        },
+        {
+          "id": "yamagata",
+          "name": "山形県",
+          "enabled": false
+        },
+        {
+          "id": "fukushima",
+          "name": "福島県",
+          "enabled": false
+        }
       ]
     },
     {
       "id": "kanto",
       "name": "関東",
       "prefectures": [
-        { "id": "ibaraki", "name": "茨城県", "enabled": false },
-        { "id": "tochigi", "name": "栃木県", "enabled": false },
-        { "id": "gunma", "name": "群馬県", "enabled": false },
-        { "id": "saitama", "name": "埼玉県", "enabled": false },
-        { "id": "chiba", "name": "千葉県", "enabled": false },
-        { "id": "tokyo", "name": "東京都", "enabled": false },
-        { "id": "kanagawa", "name": "神奈川県", "enabled": false }
+        {
+          "id": "ibaraki",
+          "name": "茨城県",
+          "enabled": false
+        },
+        {
+          "id": "tochigi",
+          "name": "栃木県",
+          "enabled": false
+        },
+        {
+          "id": "gunma",
+          "name": "群馬県",
+          "enabled": false
+        },
+        {
+          "id": "saitama",
+          "name": "埼玉県",
+          "enabled": false
+        },
+        {
+          "id": "chiba",
+          "name": "千葉県",
+          "enabled": false
+        },
+        {
+          "id": "tokyo",
+          "name": "東京都",
+          "enabled": false
+        },
+        {
+          "id": "kanagawa",
+          "name": "神奈川県",
+          "enabled": false
+        }
       ]
     },
     {
       "id": "koshinetsu-hokuriku",
       "name": "甲信越・北陸",
       "prefectures": [
-        { "id": "niigata", "name": "新潟県", "enabled": false },
-        { "id": "toyama", "name": "富山県", "enabled": false },
-        { "id": "ishikawa", "name": "石川県", "enabled": false },
-        { "id": "fukui", "name": "福井県", "enabled": false },
-        { "id": "yamanashi", "name": "山梨県", "enabled": false },
-        { "id": "nagano", "name": "長野県", "enabled": false }
+        {
+          "id": "niigata",
+          "name": "新潟県",
+          "enabled": false
+        },
+        {
+          "id": "toyama",
+          "name": "富山県",
+          "enabled": false
+        },
+        {
+          "id": "ishikawa",
+          "name": "石川県",
+          "enabled": false
+        },
+        {
+          "id": "fukui",
+          "name": "福井県",
+          "enabled": false
+        },
+        {
+          "id": "yamanashi",
+          "name": "山梨県",
+          "enabled": false
+        },
+        {
+          "id": "nagano",
+          "name": "長野県",
+          "enabled": false
+        }
       ]
     },
     {
       "id": "tokai",
       "name": "東海",
       "prefectures": [
-        { "id": "gifu", "name": "岐阜県", "enabled": false },
-        { "id": "shizuoka", "name": "静岡県", "enabled": false },
-        { "id": "aichi", "name": "愛知県", "enabled": false },
-        { "id": "mie", "name": "三重県", "enabled": false }
+        {
+          "id": "gifu",
+          "name": "岐阜県",
+          "enabled": false
+        },
+        {
+          "id": "shizuoka",
+          "name": "静岡県",
+          "enabled": false
+        },
+        {
+          "id": "aichi",
+          "name": "愛知県",
+          "enabled": false
+        },
+        {
+          "id": "mie",
+          "name": "三重県",
+          "enabled": false
+        }
       ]
     },
     {
       "id": "kinki",
       "name": "近畿",
       "prefectures": [
-        { "id": "shiga", "name": "滋賀県", "enabled": false },
-        { "id": "kyoto", "name": "京都府", "enabled": false },
-        { "id": "osaka", "name": "大阪府", "enabled": false },
-        { "id": "hyogo", "name": "兵庫県", "enabled": false },
-        { "id": "nara", "name": "奈良県", "enabled": true },
-        { "id": "wakayama", "name": "和歌山県", "enabled": false }
+        {
+          "id": "shiga",
+          "name": "滋賀県",
+          "enabled": false
+        },
+        {
+          "id": "kyoto",
+          "name": "京都府",
+          "enabled": false
+        },
+        {
+          "id": "osaka",
+          "name": "大阪府",
+          "enabled": false
+        },
+        {
+          "id": "hyogo",
+          "name": "兵庫県",
+          "enabled": false
+        },
+        {
+          "id": "nara",
+          "name": "奈良県",
+          "enabled": true
+        },
+        {
+          "id": "wakayama",
+          "name": "和歌山県",
+          "enabled": true
+        }
       ]
     },
     {
       "id": "chugoku",
       "name": "中国",
       "prefectures": [
-        { "id": "tottori", "name": "鳥取県", "enabled": false },
-        { "id": "shimane", "name": "島根県", "enabled": false },
-        { "id": "okayama", "name": "岡山県", "enabled": false },
-        { "id": "hiroshima", "name": "広島県", "enabled": false },
-        { "id": "yamaguchi", "name": "山口県", "enabled": false }
+        {
+          "id": "tottori",
+          "name": "鳥取県",
+          "enabled": false
+        },
+        {
+          "id": "shimane",
+          "name": "島根県",
+          "enabled": false
+        },
+        {
+          "id": "okayama",
+          "name": "岡山県",
+          "enabled": false
+        },
+        {
+          "id": "hiroshima",
+          "name": "広島県",
+          "enabled": false
+        },
+        {
+          "id": "yamaguchi",
+          "name": "山口県",
+          "enabled": false
+        }
       ]
     },
     {
       "id": "shikoku",
       "name": "四国",
       "prefectures": [
-        { "id": "tokushima", "name": "徳島県", "enabled": false },
-        { "id": "kagawa", "name": "香川県", "enabled": false },
-        { "id": "ehime", "name": "愛媛県", "enabled": false },
-        { "id": "kochi", "name": "高知県", "enabled": false }
+        {
+          "id": "tokushima",
+          "name": "徳島県",
+          "enabled": false
+        },
+        {
+          "id": "kagawa",
+          "name": "香川県",
+          "enabled": false
+        },
+        {
+          "id": "ehime",
+          "name": "愛媛県",
+          "enabled": false
+        },
+        {
+          "id": "kochi",
+          "name": "高知県",
+          "enabled": false
+        }
       ]
     },
     {
       "id": "kyushu",
       "name": "九州",
       "prefectures": [
-        { "id": "fukuoka", "name": "福岡県", "enabled": false },
-        { "id": "saga", "name": "佐賀県", "enabled": false },
-        { "id": "nagasaki", "name": "長崎県", "enabled": false },
-        { "id": "kumamoto", "name": "熊本県", "enabled": false },
-        { "id": "oita", "name": "大分県", "enabled": false },
-        { "id": "miyazaki", "name": "宮崎県", "enabled": false },
-        { "id": "kagoshima", "name": "鹿児島県", "enabled": false }
+        {
+          "id": "fukuoka",
+          "name": "福岡県",
+          "enabled": false
+        },
+        {
+          "id": "saga",
+          "name": "佐賀県",
+          "enabled": false
+        },
+        {
+          "id": "nagasaki",
+          "name": "長崎県",
+          "enabled": false
+        },
+        {
+          "id": "kumamoto",
+          "name": "熊本県",
+          "enabled": false
+        },
+        {
+          "id": "oita",
+          "name": "大分県",
+          "enabled": false
+        },
+        {
+          "id": "miyazaki",
+          "name": "宮崎県",
+          "enabled": false
+        },
+        {
+          "id": "kagoshima",
+          "name": "鹿児島県",
+          "enabled": false
+        }
       ]
     },
     {
       "id": "okinawa",
       "name": "沖縄",
       "prefectures": [
-        { "id": "okinawa", "name": "沖縄県", "enabled": false }
+        {
+          "id": "okinawa",
+          "name": "沖縄県",
+          "enabled": false
+        }
       ]
     }
   ]
