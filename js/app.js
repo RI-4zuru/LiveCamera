@@ -3,6 +3,7 @@ const Leaflet = window.L;
 const NARA_RIVER_SOURCE = 'naraPrefectureRiver';
 const NARA_RIVER_INTERVAL_MS = 10 * 60 * 1000;
 const NARA_RIVER_MAX_FALLBACKS = 6;
+const WSRV_IMAGE_PROXY = 'wsrv';
 const JAPANESE_COLLATOR = new Intl.Collator('ja-JP', { numeric: true, sensitivity: 'base' });
 const VISIBILITY_IMAGE_MODE_KEY = 'national-live-camera:visibility-image-mode:v1';
 const MAP_VISIBILITY_KEY = 'national-live-camera:map-visible:v1';
@@ -131,6 +132,7 @@ const elements = {
   customPrefectureFilter: document.querySelector('#customPrefectureFilter'),
   customCameraSearch: document.querySelector('#customCameraSearch'),
   customSelectedCount: document.querySelector('#customSelectedCount'),
+  customSelectVisibleButton: document.querySelector('#customSelectVisibleButton'),
   customClearSelectionButton: document.querySelector('#customClearSelectionButton'),
   customCameraList: document.querySelector('#customCameraList'),
   customNormalViewButton: document.querySelector('#customNormalViewButton'),
@@ -204,6 +206,7 @@ init().catch((error) => {
 
 async function init() {
   if (!Leaflet) throw new Error('Leafletを読み込めませんでした。');
+  initializeCustomSelectVisibleButton();
   bindEvents();
   initializeSummaryBar();
   initializeDisplayPreferences();
@@ -233,6 +236,21 @@ async function fetchJson(url) {
   const data = await response.json();
   normalizeYoutubeCameraIds(data);
   return data;
+}
+
+
+function initializeCustomSelectVisibleButton() {
+  if (elements.customSelectVisibleButton || !elements.customClearSelectionButton) return;
+
+  const button = document.createElement('button');
+  button.id = 'customSelectVisibleButton';
+  button.className = 'secondaryButton';
+  button.type = 'button';
+  button.textContent = '表示中を全選択';
+  button.title = '都道府県と検索条件に一致して現在表示されているカメラを、まとめて選択します。';
+
+  elements.customClearSelectionButton.parentElement?.insertBefore(button, elements.customClearSelectionButton);
+  elements.customSelectVisibleButton = button;
 }
 
 function normalizeYoutubeCameraIds(data) {
@@ -543,6 +561,17 @@ async function renderCustomCameraEditor() {
   const imageEntries = entries.filter((entry) => cameraMediaType(entry.camera) !== 'youtube');
   const youtubeEntries = entries.filter((entry) => cameraMediaType(entry.camera) === 'youtube');
   const orderedEntries = [...imageEntries, ...youtubeEntries];
+
+  if (elements.customSelectVisibleButton) {
+    const visibleKeys = orderedEntries.map((entry) => entry.key);
+    const selectedVisibleCount = visibleKeys.filter((key) => selected.has(key)).length;
+    const allVisibleSelected = visibleKeys.length > 0 && selectedVisibleCount === visibleKeys.length;
+    elements.customSelectVisibleButton.disabled = visibleKeys.length === 0 || allVisibleSelected;
+    elements.customSelectVisibleButton.textContent = allVisibleSelected ? '表示中は選択済み' : '表示中を全選択';
+    elements.customSelectVisibleButton.title = visibleKeys.length
+      ? `現在表示中の${visibleKeys.length}件をまとめて選択します。`
+      : '現在の条件で表示されているカメラはありません。';
+  }
 
   for (const [entryIndex, entry] of orderedEntries.entries()) {
     const isYoutube = cameraMediaType(entry.camera) === 'youtube';
@@ -2004,6 +2033,7 @@ function createCameraCard(camera, area, { mapFocus = true, prefectureName = '', 
 
 function setCameraImageSource(image, camera, attempt) {
   image.dataset.attempt = String(attempt);
+  if (camera.referrerPolicy) image.referrerPolicy = camera.referrerPolicy;
   image.src = cameraImageUrl(camera, attempt);
 }
 
@@ -2020,7 +2050,26 @@ function cameraImageUrl(camera, attempt = 0) {
   if (camera.imageSource === NARA_RIVER_SOURCE) {
     return naraRiverImageUrl(camera.stationId, attempt);
   }
+  if (camera.imageProxy === WSRV_IMAGE_PROXY) {
+    return wsrvImageUrl(camera.imageUrl, camera.imageRefreshSeconds);
+  }
   return cacheBustedUrl(camera.imageUrl);
+}
+
+function wsrvImageUrl(sourceUrl, refreshSeconds = 60) {
+  const seconds = Math.max(1, Number(refreshSeconds) || 60);
+  const cacheKey = Math.floor(Date.now() / (seconds * 1000));
+  let origin = String(sourceUrl || '').trim();
+
+  // wsrv.nl はスキームなしをHTTP取得として扱う。HTTPS配信元だけはスキームを残す。
+  if (origin.startsWith('http://')) origin = origin.slice('http://'.length);
+  origin += `${origin.includes('?') ? '&' : '?'}_ts=${cacheKey}`;
+
+  const params = new URLSearchParams({
+    url: origin,
+    output: 'jpg'
+  });
+  return `https://wsrv.nl/?${params.toString()}`;
 }
 
 function naraRiverImageUrl(stationId, attempt = 0) {
@@ -2940,6 +2989,19 @@ function bindEvents() {
   elements.customOverwriteButton?.addEventListener('click', overwriteCustomSlot);
   elements.customRenameButton?.addEventListener('click', renameCustomSlot);
   elements.customDeleteButton?.addEventListener('click', deleteCustomSlot);
+  elements.customSelectVisibleButton?.addEventListener('click', async () => {
+    const visibleKeys = [...elements.customCameraList.querySelectorAll('.customCameraOption input[type="checkbox"][value]')]
+      .map((checkbox) => checkbox.value)
+      .filter(Boolean);
+    if (!visibleKeys.length) return;
+
+    state.customSelection = normalizeCustomKeys(
+      [...state.customSelection, ...visibleKeys],
+      state.customOrderCustomized
+    );
+    persistCustomSelection();
+    await renderCustomCameraEditor();
+  });
   elements.customClearSelectionButton?.addEventListener('click', async () => {
     state.customSelection = [];
     state.customOrderCustomized = false;
