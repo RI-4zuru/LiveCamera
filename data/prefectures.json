@@ -158,7 +158,7 @@
         {
           "id": "shiga",
           "name": "滋賀県",
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "kyoto",
