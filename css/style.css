@@ -1450,7 +1450,8 @@ body {
 .summaryBar .editButton,
 .summaryBar .mapToggleButton,
 .summaryBar .comparisonToggleButton,
-.summaryBar .customModeButton {
+.summaryBar .customModeButton,
+.summaryBar .customReorderButton {
   min-height: clamp(32px, 2.2vw, 36px);
   padding: clamp(5px, 0.45vw, 7px) clamp(7px, 0.7vw, 12px);
 }
@@ -1494,6 +1495,24 @@ body {
   color: #fff;
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
 }
+.customReorderButton {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid #7c3aed;
+  border-radius: 8px;
+  background: #f5f3ff;
+  color: #6d28d9;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.customReorderButton:hover { background: #ede9fe; }
+.customReorderButton.is-active {
+  background: #7c3aed;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, .16);
+}
+.customReorderButton[hidden] { display: none !important; }
 
 .customPanel {
   inset: 0 0 0 auto;
@@ -1939,6 +1958,8 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 
 .customCameraPreview.is-youtube { position: relative; }
 .customCameraPreview.is-youtube img { display: block; }
+.customCameraPreview.error .customYoutubeBadge { display: none !important; }
+.customCameraPreviewError { z-index: 1; }
 .customYoutubeBadge {
   position: absolute;
   inset: auto 4px 4px auto;
@@ -2117,3 +2138,36 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   background: #dc2626;
   transform: translate(-50%, -50%) scale(1.08);
 }
+
+
+/* カスタム表示のドラッグ並べ替え */
+.customCameraSection.is-reordering .cameraGrid {
+  padding: 7px;
+  border: 2px dashed rgba(124, 58, 237, .34);
+  border-radius: 12px;
+  background: rgba(245, 243, 255, .58);
+}
+.cameraCard.is-reorderable {
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+}
+.cameraCard.is-reorderable::after {
+  content: '↕ ドラッグ';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 3;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(76, 29, 149, .88);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  pointer-events: none;
+}
+.cameraCard.is-reorderable:active { cursor: grabbing; }
+.cameraCard.is-dragging { opacity: .35; transform: scale(.98); }
+.cameraCard.drag-before { box-shadow: -5px 0 0 #7c3aed, 0 4px 14px rgba(15, 23, 42, .14); }
+.cameraCard.drag-after { box-shadow: 5px 0 0 #7c3aed, 0 4px 14px rgba(15, 23, 42, .14); }
