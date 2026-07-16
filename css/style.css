@@ -567,7 +567,11 @@ a { color: inherit; }
 .mapWrap {
   position: sticky;
   top: calc(var(--sticky-stack-height) + 8px);
+  z-index: 20;
+  align-self: start;
+  height: fit-content;
   max-height: calc(100vh - var(--sticky-stack-height) - 16px);
+  max-height: calc(100dvh - var(--sticky-stack-height) - 16px);
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -695,8 +699,19 @@ a { color: inherit; }
   .searchBox input { width: 100%; }
   .pageShell { padding-right: 10px; padding-left: 10px; }
   .layout { grid-template-columns: 1fr; }
-  .mapWrap { position: relative; top: auto; max-height: none; order: -1; }
-  #map { height: 46vh; min-height: 320px; }
+  .mapWrap {
+    position: sticky;
+    top: calc(var(--sticky-stack-height) + 6px);
+    z-index: 40;
+    order: -1;
+    max-height: calc(100vh - var(--sticky-stack-height) - 12px);
+    max-height: calc(100dvh - var(--sticky-stack-height) - 12px);
+  }
+  #map {
+    height: clamp(220px, 38vh, 360px);
+    height: clamp(220px, 38dvh, 360px);
+    min-height: 220px;
+  }
   .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .prefectureList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .viewer { padding: 16px; }
