@@ -633,9 +633,11 @@
       "mediaType": "image",
       "provider": "能勢町",
       "pageUrl": "https://www.town.nose.osaka.jp/soshiki/soumuka/jinkensoumu/1271.html",
-      "imageUrl": "https://camsrv.town.nose.osaka.jp/webcam/kurinosato/01.jpg",
+      "imageUrl": "http://camsrv.town.nose.osaka.jp/webcam/kurinosato/01.jpg",
       "latitude": 34.9566,
-      "longitude": 135.401
+      "longitude": 135.401,
+      "imageProxy": "wsrv",
+      "imageRefreshSeconds": 10
     },
     {
       "id": "osaka-048",
@@ -645,9 +647,11 @@
       "mediaType": "image",
       "provider": "能勢町",
       "pageUrl": "https://www.town.nose.osaka.jp/soshiki/soumuka/jinkensoumu/1271.html",
-      "imageUrl": "https://camsrv.town.nose.osaka.jp/webcam/haragatawaTN/01.jpg",
+      "imageUrl": "http://camsrv.town.nose.osaka.jp/webcam/haragatawaTN/01.jpg",
       "latitude": 35.0205,
-      "longitude": 135.3346
+      "longitude": 135.3346,
+      "imageProxy": "wsrv",
+      "imageRefreshSeconds": 10
     },
     {
       "id": "osaka-053",
