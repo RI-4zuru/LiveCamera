@@ -22,6 +22,8 @@ const CUSTOM_ACTIVE_SLOT_KEY = 'national-live-camera:custom-active-slot:v1';
 const PRIMARY_CUSTOM_SLOT_KEY = 'national-live-camera:primary-custom-slot:v1';
 const SECONDARY_CUSTOM_SLOT_KEY = 'national-live-camera:secondary-custom-slot:v1';
 const COMPACT_COMPARE_GRID_COLUMNS_KEY = 'national-live-camera:compact-compare-grid-columns:v1';
+const PRIMARY_AREAS_KEY = 'national-live-camera:primary-areas:v1';
+const SECONDARY_AREAS_KEY = 'national-live-camera:secondary-areas:v1';
 
 const elements = {
   pageSubtitle: document.querySelector('#pageSubtitle'),
@@ -41,7 +43,15 @@ const elements = {
   youtubeToggleLabel: document.querySelector('#youtubeToggleLabel'),
   content: document.querySelector('#content'),
   status: document.querySelector('#statusMessage'),
-  areaSelect: document.querySelector('#areaSelect'),
+  areaControls: document.querySelector('#areaControls'),
+  primaryAreaControl: document.querySelector('#primaryAreaControl'),
+  secondaryAreaControl: document.querySelector('#secondaryAreaControl'),
+  primaryAreaLabel: document.querySelector('#primaryAreaLabel'),
+  secondaryAreaLabel: document.querySelector('#secondaryAreaLabel'),
+  primaryAreaSummary: document.querySelector('#primaryAreaSummary'),
+  secondaryAreaSummary: document.querySelector('#secondaryAreaSummary'),
+  primaryAreaOptions: document.querySelector('#primaryAreaOptions'),
+  secondaryAreaOptions: document.querySelector('#secondaryAreaOptions'),
   cameraSearch: document.querySelector('#cameraSearch'),
   refreshButton: document.querySelector('#refreshButton'),
   resetMapButton: document.querySelector('#resetMapButton'),
@@ -86,7 +96,7 @@ const elements = {
   mapToggleButton: document.querySelector('#mapToggleButton'),
   mapContainer: document.querySelector('#map'),
   mapHint: document.querySelector('#mapHint'),
-  areaControl: document.querySelector('#areaControl'),
+
   gridColumnControl: document.querySelector('#gridColumnControl'),
   gridColumnSelect: document.querySelector('#gridColumnSelect'),
   comparisonToggleButton: document.querySelector('#comparisonToggleButton'),
@@ -113,6 +123,8 @@ const state = {
   prefectures: null,
   prefecture: null,
   area: 'all',
+  primaryAreas: new Set(),
+  secondaryAreas: new Set(),
   search: '',
   visibilitySearch: '',
   showYoutube: false,
@@ -196,7 +208,34 @@ async function init() {
 async function fetchJson(url) {
   const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-  return response.json();
+  const data = await response.json();
+  normalizeYoutubeCameraIds(data);
+  return data;
+}
+
+function normalizeYoutubeCameraIds(data) {
+  if (!Array.isArray(data?.cameras)) return;
+  for (const camera of data.cameras) {
+    if (camera?.mediaType !== 'youtube' || camera.youtubeId) continue;
+    camera.youtubeId = extractYoutubeVideoId(camera.pageUrl || camera.youtubeUrl || '');
+  }
+}
+
+function extractYoutubeVideoId(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  try {
+    const url = new URL(text, location.href);
+    if (url.hostname === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || '';
+    if (url.hostname.endsWith('youtube.com')) {
+      if (url.pathname === '/watch') return url.searchParams.get('v') || '';
+      const match = url.pathname.match(/^\/(?:live|embed|shorts)\/([^/?#]+)/u);
+      return match?.[1] || '';
+    }
+  } catch {
+    // URLとして解釈できない値は、YouTube IDらしい文字列だけを採用する。
+  }
+  return /^[A-Za-z0-9_-]{11}$/u.test(text) ? text : '';
 }
 
 function findEnabledPrefecture(id) {
@@ -267,9 +306,7 @@ function allCustomCameraEntries() {
   for (const prefectureInfo of enabledPrefectures()) {
     const prefecture = state.customPrefectureData.get(prefectureInfo.id);
     if (!prefecture) continue;
-    const sorted = prefecture.cameras
-      .filter((camera) => cameraMediaType(camera) === 'image')
-      .sort(compareCamerasForPrefecture(prefecture));
+    const sorted = [...prefecture.cameras].sort(compareCamerasForPrefecture(prefecture));
     for (const camera of sorted) {
       entries.push({
         key: customCameraKey(prefecture.id, camera.id),
@@ -421,6 +458,7 @@ async function assignCustomSlotToTarget(slotId) {
   renderCameras();
   renderVisibilityEditor();
   renderHiddenImages();
+  await refreshYoutubeLiveStatus();
   showStatus(`「${slot.name}」を${target === 'secondary' ? '第2県' : '第1県'}へ設定しました。`);
 }
 
@@ -451,6 +489,7 @@ async function renderCustomCameraEditor() {
   const fragment = document.createDocumentFragment();
 
   for (const entry of entries) {
+    const isYoutube = cameraMediaType(entry.camera) === 'youtube';
     const label = document.createElement('label');
     label.className = 'customCameraOption';
     label.classList.toggle('is-selected', selected.has(entry.key));
@@ -471,26 +510,39 @@ async function renderCustomCameraEditor() {
     });
 
     const media = document.createElement('div');
-    media.className = 'customCameraPreview';
+    media.className = `customCameraPreview${isYoutube ? ' is-youtube' : ''}`;
     const image = document.createElement('img');
     image.loading = 'lazy';
     image.decoding = 'async';
     image.alt = `${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)}`;
-    setCameraImageSource(image, entry.camera, 0);
-    image.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      openViewer(entry.camera, image.currentSrc || image.src);
-    });
-    image.addEventListener('error', () => handleCameraImageError(image, media, entry.camera));
-    const imageError = document.createElement('span');
-    imageError.textContent = '画像取得不可';
-    media.append(image, imageError);
+    if (isYoutube) {
+      image.src = entry.camera.thumbnailUrl || `https://i.ytimg.com/vi/${encodeURIComponent(entry.camera.youtubeId || '')}/hqdefault.jpg`;
+      image.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        window.open(entry.camera.pageUrl, '_blank', 'noopener,noreferrer');
+      });
+      const badge = document.createElement('span');
+      badge.className = 'customYoutubeBadge';
+      badge.textContent = 'YouTube';
+      media.append(image, badge);
+    } else {
+      setCameraImageSource(image, entry.camera, 0);
+      image.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openViewer(entry.camera, image.currentSrc || image.src);
+      });
+      image.addEventListener('error', () => handleCameraImageError(image, media, entry.camera));
+      const imageError = document.createElement('span');
+      imageError.textContent = '画像取得不可';
+      media.append(image, imageError);
+    }
 
     const text = document.createElement('span');
     text.className = 'customCameraText';
     const prefecture = document.createElement('small');
-    prefecture.textContent = entry.prefecture.name;
+    prefecture.textContent = `${entry.prefecture.name}${isYoutube ? '・YouTube' : ''}`;
     const city = document.createElement('strong');
     city.textContent = municipalityName(entry.camera.city);
     const place = document.createElement('span');
@@ -504,7 +556,7 @@ async function renderCustomCameraEditor() {
   if (!entries.length) {
     const empty = document.createElement('div');
     empty.className = 'emptyState';
-    empty.textContent = '条件に一致する静止画カメラはありません。';
+    empty.textContent = '条件に一致するカメラはありません。';
     fragment.appendChild(empty);
   }
   elements.customCameraList.replaceChildren(fragment);
@@ -642,6 +694,7 @@ async function applyCustomSelection() {
   updatePageMeta();
   initializeOrResetMap();
   renderCameras();
+  await refreshYoutubeLiveStatus();
   hideStatus();
 }
 
@@ -683,6 +736,8 @@ async function loadPrefecture(prefectureId) {
   const data = await fetchJson(`${DATA_ROOT}/cameras/${prefectureId}.json`);
 
   state.prefecture = data;
+  state.primaryAreas.clear();
+  persistAreaSelection('primary');
   state.area = 'all';
   state.search = '';
   state.visibilitySearch = '';
@@ -729,9 +784,7 @@ function updatePageMeta() {
   const primarySource = slotSource('primary');
   const secondarySource = slotSource('secondary');
   const singleIsCustom = !state.compareMode && singleSource.type === 'custom';
-  const hasYoutube = !state.customMode && !singleIsCustom && activePrefectures().some((prefecture) =>
-    prefecture?.cameras.some((camera) => cameraMediaType(camera) === 'youtube' && isYoutubeCurrentlyLive(camera))
-  );
+  const hasYoutube = youtubeEntriesForCurrentView({ liveOnly: false }).length > 0;
   const titleName = state.customMode
     ? 'カスタム'
     : state.compareMode
@@ -752,7 +805,7 @@ function updatePageMeta() {
       : singleSource.name || '-';
   updatePrefectureSelectionUI();
   elements.youtubeToggle.hidden = !hasYoutube;
-  if (elements.areaControl) elements.areaControl.hidden = state.compareMode || state.customMode || singleIsCustom;
+  renderAreaSelect();
   if (elements.visibilityEditButton) elements.visibilityEditButton.hidden = state.customMode || singleIsCustom;
   if (elements.customModeButton) {
     elements.customModeButton.classList.toggle('is-active', state.customMode || singleIsCustom);
@@ -835,13 +888,122 @@ function highlightNavigation() {
 }
 
 function renderAreaSelect() {
-  const prefecture = displayedPrefecture();
-  const options = [new Option('全域', 'all')];
-  for (const area of prefecture?.areas || []) {
-    options.push(new Option(area.name, area.id));
+  const singleSource = currentSingleSource();
+  const customSingle = !state.compareMode && singleSource.type === 'custom';
+  const hideAll = state.customMode || customSingle;
+  if (elements.areaControls) elements.areaControls.hidden = hideAll;
+  if (hideAll) {
+    if (elements.primaryAreaControl) elements.primaryAreaControl.hidden = true;
+    if (elements.secondaryAreaControl) elements.secondaryAreaControl.hidden = true;
+    return;
   }
-  elements.areaSelect.replaceChildren(...options);
-  elements.areaSelect.value = 'all';
+
+  if (state.compareMode) {
+    const primarySource = slotSource('primary');
+    const secondarySource = slotSource('secondary');
+    renderAreaControl('primary', primarySource.type === 'prefecture' ? primarySource.prefecture : null, '第1県エリア');
+    renderAreaControl('secondary', secondarySource.type === 'prefecture' ? secondarySource.prefecture : null, '第2県エリア');
+  } else {
+    const slot = state.singleViewSlot === 'secondary' ? 'secondary' : 'primary';
+    renderAreaControl('primary', singleSource.type === 'prefecture' ? singleSource.prefecture : null, 'エリア', slot);
+    if (elements.secondaryAreaControl) elements.secondaryAreaControl.hidden = true;
+  }
+}
+
+function areaSelectionForSlot(slotName) {
+  return slotName === 'secondary' ? state.secondaryAreas : state.primaryAreas;
+}
+
+function areaStorageKey(slotName) {
+  return slotName === 'secondary' ? SECONDARY_AREAS_KEY : PRIMARY_AREAS_KEY;
+}
+
+function persistAreaSelection(slotName) {
+  localStorage.setItem(areaStorageKey(slotName), JSON.stringify([...areaSelectionForSlot(slotName)]));
+}
+
+function loadAreaSelection(key) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    return new Set(Array.isArray(parsed) ? parsed.filter((value) => typeof value === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function cameraMatchesAreaSelection(camera, slotName) {
+  const selected = areaSelectionForSlot(slotName);
+  return selected.size === 0 || selected.has(camera.area);
+}
+
+function areaSelectionText(prefecture, selected) {
+  if (!prefecture || selected.size === 0) return '全域';
+  const names = prefecture.areas.filter((area) => selected.has(area.id)).map((area) => area.name);
+  if (!names.length || names.length === prefecture.areas.length) return '全域';
+  if (names.length === 1) return names[0];
+  return `${names.length}エリア`;
+}
+
+function renderAreaControl(controlPosition, prefecture, labelText, selectionSlot = controlPosition) {
+  const isSecondaryPosition = controlPosition === 'secondary';
+  const control = isSecondaryPosition ? elements.secondaryAreaControl : elements.primaryAreaControl;
+  const label = isSecondaryPosition ? elements.secondaryAreaLabel : elements.primaryAreaLabel;
+  const summary = isSecondaryPosition ? elements.secondaryAreaSummary : elements.primaryAreaSummary;
+  const optionList = isSecondaryPosition ? elements.secondaryAreaOptions : elements.primaryAreaOptions;
+  if (!control || !optionList || !summary) return;
+  control.hidden = !prefecture;
+  if (!prefecture) return;
+  if (label) label.textContent = labelText;
+
+  const selected = areaSelectionForSlot(selectionSlot);
+  const validIds = new Set(prefecture.areas.map((area) => area.id));
+  for (const id of [...selected]) if (!validIds.has(id)) selected.delete(id);
+  if (selected.size === prefecture.areas.length) selected.clear();
+  persistAreaSelection(selectionSlot);
+  summary.textContent = areaSelectionText(prefecture, selected);
+
+  const fragment = document.createDocumentFragment();
+  const allLabel = document.createElement('label');
+  allLabel.className = 'areaOption is-all';
+  const allCheckbox = document.createElement('input');
+  allCheckbox.type = 'checkbox';
+  allCheckbox.checked = selected.size === 0;
+  const allText = document.createElement('span');
+  allText.textContent = '全域';
+  allLabel.append(allCheckbox, allText);
+  allCheckbox.addEventListener('change', () => {
+    selected.clear();
+    persistAreaSelection(selectionSlot);
+    renderAreaSelect();
+    renderCameras();
+    if (state.showYoutube) renderYoutubeGallery();
+  });
+  fragment.appendChild(allLabel);
+
+  for (const area of prefecture.areas) {
+    const option = document.createElement('label');
+    option.className = 'areaOption';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = selected.has(area.id);
+    const swatch = document.createElement('span');
+    swatch.className = 'areaOptionSwatch';
+    swatch.style.background = markerCssColor(area.color);
+    const text = document.createElement('span');
+    text.textContent = area.name;
+    option.append(checkbox, swatch, text);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) selected.add(area.id);
+      else selected.delete(area.id);
+      if (selected.size === prefecture.areas.length) selected.clear();
+      persistAreaSelection(selectionSlot);
+      renderAreaSelect();
+      renderCameras();
+      if (state.showYoutube) renderYoutubeGallery();
+    });
+    fragment.appendChild(option);
+  }
+  optionList.replaceChildren(fragment);
 }
 
 function initializeOrResetMap() {
@@ -889,22 +1051,17 @@ function initializeOrResetMap() {
 function initializeDisplayPreferences() {
   const savedImageMode = localStorage.getItem(VISIBILITY_IMAGE_MODE_KEY);
   state.visibilityImagesVisible = savedImageMode !== 'hide';
-  if (elements.visibilityImageMode) {
-    elements.visibilityImageMode.value = state.visibilityImagesVisible ? 'show' : 'hide';
-  }
+  if (elements.visibilityImageMode) elements.visibilityImageMode.value = state.visibilityImagesVisible ? 'show' : 'hide';
 
   state.isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
   state.isCompactGrid = window.matchMedia(COMPACT_GRID_MEDIA_QUERY).matches;
-  const savedMapVisibility = localStorage.getItem(MAP_VISIBILITY_KEY);
-  state.mapVisible = savedMapVisibility !== 'false';
+  state.mapVisible = localStorage.getItem(MAP_VISIBILITY_KEY) !== 'false';
   const savedColumns = Number(localStorage.getItem(GRID_COLUMNS_KEY));
-  state.gridColumns = savedColumns === 6 ? 6 : 4;
-  const savedMobileColumns = Number(localStorage.getItem(MOBILE_GRID_COLUMNS_KEY));
-  state.mobileGridColumns = [1, 2, 3].includes(savedMobileColumns) ? savedMobileColumns : 2;
+  state.gridColumns = [1, 2, 3, 4].includes(savedColumns) ? savedColumns : 4;
   const savedComparisonColumns = Number(localStorage.getItem(COMPARE_GRID_COLUMNS_KEY));
-  state.comparisonGridColumns = [6, 8].includes(savedComparisonColumns) ? savedComparisonColumns : 6;
-  const savedCompactComparisonColumns = Number(localStorage.getItem(COMPACT_COMPARE_GRID_COLUMNS_KEY));
-  state.compactComparisonGridColumns = [1, 2, 3].includes(savedCompactComparisonColumns) ? savedCompactComparisonColumns : 2;
+  state.comparisonGridColumns = [2, 4, 6, 8].includes(savedComparisonColumns) ? savedComparisonColumns : 6;
+  state.primaryAreas = loadAreaSelection(PRIMARY_AREAS_KEY);
+  state.secondaryAreas = loadAreaSelection(SECONDARY_AREAS_KEY);
   state.compareMode = !state.isMobile && localStorage.getItem(COMPARE_MODE_KEY) === 'true';
   state.secondaryPrefectureId = localStorage.getItem(COMPARE_PREFECTURE_KEY);
   updateMapVisibility();
@@ -919,20 +1076,14 @@ function updateMapVisibility() {
   elements.layout.classList.toggle('mapHidden', !effectiveMapVisible);
   elements.layout.classList.toggle('comparisonMode', state.compareMode);
   elements.layout.classList.toggle('customMode', state.customMode);
-  const compactSingleView = !state.compareMode && state.isCompactGrid;
-  const compactComparisonView = state.compareMode && state.isCompactGrid;
-  elements.layout.classList.toggle('gridColumns4', !state.compareMode && !state.isCompactGrid && state.gridColumns === 4);
-  elements.layout.classList.toggle('gridColumns6', !state.compareMode && !state.isCompactGrid && state.gridColumns === 6);
-  for (const columns of [1, 2, 3, 4]) {
-    elements.layout.classList.toggle(`compactColumns${columns}`, compactSingleView && state.mobileGridColumns === columns);
-    elements.layout.classList.remove(`mobileColumns${columns}`);
+  for (const columns of [1, 2, 3, 4, 6]) {
+    elements.layout.classList.toggle(`gridColumns${columns}`, !state.compareMode && state.gridColumns === columns);
+    elements.layout.classList.remove(`compactColumns${columns}`, `mobileColumns${columns}`);
   }
-  elements.layout.classList.toggle('comparisonColumns6', state.compareMode && !state.isCompactGrid && state.comparisonGridColumns === 6);
-  elements.layout.classList.toggle('comparisonColumns8', state.compareMode && !state.isCompactGrid && state.comparisonGridColumns === 8);
-  for (const columns of [1, 2, 3]) {
-    elements.layout.classList.toggle(`compactComparisonColumns${columns}`, compactComparisonView && state.compactComparisonGridColumns === columns);
+  for (const columns of [2, 4, 6, 8, 10]) {
+    elements.layout.classList.toggle(`comparisonColumns${columns}`, state.compareMode && state.comparisonGridColumns === columns);
   }
-  elements.layout.classList.remove('comparisonColumns10');
+  for (const columns of [1, 2, 3]) elements.layout.classList.remove(`compactComparisonColumns${columns}`);
   elements.mapToggleButton.hidden = state.compareMode;
   elements.mapToggleButton.classList.toggle('is-off', !state.mapVisible);
   elements.mapToggleButton.setAttribute('aria-pressed', String(state.mapVisible));
@@ -940,23 +1091,13 @@ function updateMapVisibility() {
   elements.mapToggleButton.title = state.mapVisible ? '地図を非表示にします' : '地図を表示します';
   updateGridColumnControl();
 
-  if (effectiveMapVisible) {
-    window.setTimeout(() => scheduleMapRefresh(new Set(state.markers.keys())), 0);
-  }
+  if (effectiveMapVisible) window.setTimeout(() => scheduleMapRefresh(new Set(state.markers.keys())), 0);
 }
 
 function updateGridColumnControl() {
   if (!elements.gridColumnControl || !elements.gridColumnSelect) return;
-  const compactSingleView = !state.compareMode && state.isCompactGrid;
-  const compactComparisonView = state.compareMode && state.isCompactGrid;
-  const values = compactSingleView || compactComparisonView ? [1, 2, 3] : state.compareMode ? [6, 8] : [4, 6];
-  const selected = compactSingleView
-    ? state.mobileGridColumns
-    : compactComparisonView
-      ? state.compactComparisonGridColumns
-      : state.compareMode
-        ? state.comparisonGridColumns
-        : state.gridColumns;
+  const values = state.compareMode ? [2, 4, 6, 8] : [1, 2, 3, 4];
+  const selected = state.compareMode ? state.comparisonGridColumns : state.gridColumns;
   const currentValues = [...elements.gridColumnSelect.options].map((option) => Number(option.value));
   if (currentValues.join(',') !== values.join(',')) {
     elements.gridColumnSelect.replaceChildren(...values.map((value) => new Option(`${value}列`, String(value))));
@@ -1181,6 +1322,8 @@ function renderCustomEntrySet(sourceEntries, titleText) {
     if (!keyword) return true;
     return normalizeText(`${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)} ${entry.camera.provider || ''}`).includes(keyword);
   });
+  const imageEntries = entries.filter((entry) => cameraMediaType(entry.camera) === 'image');
+  const youtubeEntries = entries.filter((entry) => cameraMediaType(entry.camera) === 'youtube' && isYoutubeCurrentlyLive(entry.camera));
   const visibleIds = new Set();
   const section = document.createElement('section');
   section.className = 'areaSection customCameraSection';
@@ -1192,18 +1335,23 @@ function renderCustomEntrySet(sourceEntries, titleText) {
   const grid = document.createElement('div');
   grid.className = 'cameraGrid';
 
-  for (const entry of entries) {
-    const card = createCameraCard(entry.camera, entry.area, { prefectureName: entry.prefecture.name });
-    grid.appendChild(card);
+  for (const entry of imageEntries) {
+    grid.appendChild(createCameraCard(entry.camera, entry.area, { prefectureName: entry.prefecture.name }));
+    addMarker(entry.camera, entry.area);
+    visibleIds.add(entry.camera.id);
+  }
+  for (const entry of youtubeEntries) {
     addMarker(entry.camera, entry.area);
     visibleIds.add(entry.camera.id);
   }
   section.append(title, grid);
 
-  if (!entries.length) {
+  if (!imageEntries.length) {
     const empty = document.createElement('div');
     empty.className = 'emptyState';
-    empty.textContent = 'カスタム表示に選択された画像がないか、絞り込み条件に一致しません。';
+    empty.textContent = youtubeEntries.length
+      ? '静止画は選択されていません。YouTubeボタンから選択中のライブ配信を表示できます。'
+      : 'カスタム表示に選択された静止画がないか、絞り込み条件に一致しません。';
     elements.content.replaceChildren(empty);
   } else {
     elements.content.replaceChildren(section);
@@ -1241,24 +1389,25 @@ function createComparisonPaneForSource(source) {
     const grid = document.createElement('div');
     grid.className = 'cameraGrid';
     const keyword = normalizeText(state.search);
-    const entries = source.entries.filter((entry) => !keyword || normalizeText(`${entry.prefecture.name} ${entry.camera.city} ${entry.camera.place}`).includes(keyword));
+    const entries = source.entries.filter((entry) => cameraMediaType(entry.camera) === 'image')
+      .filter((entry) => !keyword || normalizeText(`${entry.prefecture.name} ${entry.camera.city} ${entry.camera.place}`).includes(keyword));
     for (const entry of entries) {
-      grid.appendChild(createCameraCard(entry.camera, entry.area, { mapFocus: false, prefectureName: entry.prefecture.name }));
+      grid.appendChild(createCameraCard(entry.camera, entry.area, { mapFocus: false, prefectureName: entry.prefecture.name, cardIdPrefix: `${source.slotName}-` }));
     }
     section.append(areaTitle, grid);
     pane.appendChild(section);
     if (!entries.length) {
       const empty = document.createElement('div');
       empty.className = 'emptyState';
-      empty.textContent = '表示できるカスタム画像がありません。';
+      empty.textContent = '表示できるカスタム静止画がありません。';
       pane.appendChild(empty);
     }
     return pane;
   }
-  return createComparisonPane(source.prefecture, source.hiddenIds);
+  return createComparisonPane(source.prefecture, source.hiddenIds, source.slotName);
 }
 
-function createComparisonPane(prefecture, hiddenIds) {
+function createComparisonPane(prefecture, hiddenIds, slotName = 'primary') {
   const pane = document.createElement('section');
   pane.className = 'comparisonPane';
   pane.dataset.prefectureId = prefecture.id;
@@ -1267,7 +1416,7 @@ function createComparisonPane(prefecture, hiddenIds) {
   heading.textContent = prefecture.name;
   pane.appendChild(heading);
 
-  const imageCameras = filteredCamerasFor(prefecture, hiddenIds, 'image')
+  const imageCameras = filteredCamerasFor(prefecture, hiddenIds, 'image', slotName)
     .sort(compareCamerasForPrefecture(prefecture));
   for (const area of prefecture.areas) {
     const areaCameras = imageCameras.filter((camera) => camera.area === area.id);
@@ -1282,7 +1431,7 @@ function createComparisonPane(prefecture, hiddenIds) {
     grid.className = 'cameraGrid';
     let previousMunicipality = '';
     for (const camera of areaCameras) {
-      const card = createCameraCard(camera, area, { mapFocus: false });
+      const card = createCameraCard(camera, area, { mapFocus: false, cardIdPrefix: `${slotName}-` });
       const municipality = municipalityName(camera.city);
       if (municipality !== previousMunicipality) {
         card.classList.add('municipalityStart');
@@ -1302,10 +1451,11 @@ function createComparisonPane(prefecture, hiddenIds) {
   return pane;
 }
 
-function filteredCamerasFor(prefecture, hiddenIds, mediaType = 'image') {
+function filteredCamerasFor(prefecture, hiddenIds, mediaType = 'image', slotName = 'primary') {
   const keyword = normalizeText(state.search);
   return prefecture.cameras.filter((camera) => {
     if (cameraMediaType(camera) !== mediaType || hiddenIds.has(camera.id)) return false;
+    if (!cameraMatchesAreaSelection(camera, slotName)) return false;
     if (mediaType === 'youtube' && !isYoutubeCurrentlyLive(camera)) return false;
     if (!keyword) return true;
     return normalizeText([
@@ -1326,31 +1476,25 @@ function filteredCameras(mediaType = 'image') {
   const keyword = normalizeText(state.search);
   const prefecture = displayedPrefecture();
   const hiddenIds = displayedHiddenCameraIds();
+  const slotName = state.singleViewSlot === 'secondary' ? 'secondary' : 'primary';
   if (!prefecture) return [];
 
   return prefecture.cameras.filter((camera) => {
     if (cameraMediaType(camera) !== mediaType) return false;
     if (mediaType === 'youtube' && !isYoutubeCurrentlyLive(camera)) return false;
     if (hiddenIds.has(camera.id)) return false;
-    if (state.area !== 'all' && camera.area !== state.area) return false;
+    if (!cameraMatchesAreaSelection(camera, slotName)) return false;
     if (!keyword) return true;
-
-    const searchable = [
-      camera.city,
-      municipalityName(camera.city),
-      stripTerrainPrefix(camera.place),
-      camera.provider,
-      camera.riverName
-    ].filter(Boolean).join(' ');
-
+    const searchable = [camera.city, municipalityName(camera.city), stripTerrainPrefix(camera.place), camera.provider, camera.riverName]
+      .filter(Boolean).join(' ');
     return normalizeText(searchable).includes(keyword);
   });
 }
 
-function createCameraCard(camera, area, { mapFocus = true, prefectureName = '' } = {}) {
+function createCameraCard(camera, area, { mapFocus = true, prefectureName = '', cardIdPrefix = '' } = {}) {
   const card = document.createElement('article');
   card.className = 'cameraCard';
-  card.id = `camera-${camera.id}`;
+  card.id = `camera-${cardIdPrefix}${camera.id}`;
   card.dataset.cameraId = camera.id;
   card.style.setProperty('--area-color', markerCssColor(area.color));
 
@@ -1704,10 +1848,11 @@ function closeYoutubeGallery({ keepEnabled = false } = {}) {
 }
 
 function renderYoutubeGallery(focusCameraId = null) {
-  const cameras = youtubeCamerasForCurrentView().sort(compareCamerasByMunicipality);
+  const entries = youtubeEntriesForCurrentView();
   const fragment = document.createDocumentFragment();
 
-  for (const camera of cameras) {
+  for (const entry of entries) {
+    const camera = entry.camera;
     const link = document.createElement('a');
     link.className = 'youtubeGalleryCard';
     link.href = camera.pageUrl;
@@ -1718,13 +1863,11 @@ function renderYoutubeGallery(focusCameraId = null) {
 
     const media = document.createElement('div');
     media.className = 'youtubeGalleryMedia';
-
     const thumbnail = document.createElement('img');
     thumbnail.src = camera.thumbnailUrl || youtubeLiveThumbnailUrl(camera.youtubeId);
     thumbnail.alt = `${camera.city} ${stripTerrainPrefix(camera.place)}のYouTubeサムネイル`;
     thumbnail.loading = 'lazy';
     thumbnail.decoding = 'async';
-
     const play = document.createElement('span');
     play.className = 'youtubeGalleryPlay';
     play.textContent = '▶';
@@ -1733,32 +1876,25 @@ function renderYoutubeGallery(focusCameraId = null) {
 
     const text = document.createElement('div');
     text.className = 'youtubeGalleryText';
-
     const prefectureLabel = document.createElement('small');
     prefectureLabel.className = 'youtubeGalleryPrefecture';
-    prefectureLabel.textContent = prefectureNameForCamera(camera.id);
-
+    prefectureLabel.textContent = entry.prefecture.name;
     const city = document.createElement('strong');
     city.textContent = municipalityName(camera.city);
-
     const place = document.createElement('span');
     place.textContent = stripTerrainPrefix(camera.place);
-
     text.append(prefectureLabel, city, place);
     link.append(media, text);
-    link.addEventListener('click', () => {
-      window.setTimeout(() => closeYoutubeGallery({ keepEnabled: true }), 0);
-    });
+    link.addEventListener('click', () => window.setTimeout(() => closeYoutubeGallery({ keepEnabled: true }), 0));
     fragment.appendChild(link);
   }
 
-  if (!cameras.length) {
+  if (!entries.length) {
     const empty = document.createElement('div');
     empty.className = 'youtubeGalleryEmpty';
     empty.textContent = '現在の表示条件に一致するYouTubeライブカメラはありません。';
     fragment.appendChild(empty);
   }
-
   elements.youtubeGalleryList.replaceChildren(fragment);
 }
 
@@ -2235,11 +2371,6 @@ function stopAutoScroll() {
 function bindEvents() {
   elements.summaryToggleButton?.addEventListener('click', toggleSummaryBar);
 
-  elements.areaSelect.addEventListener('change', (event) => {
-    state.area = event.target.value;
-    renderCameras();
-  });
-
   elements.cameraSearch.addEventListener('input', (event) => {
     state.search = event.target.value;
     renderCameras();
@@ -2279,17 +2410,11 @@ function bindEvents() {
 
   elements.gridColumnSelect?.addEventListener('change', (event) => {
     const value = Number(event.target.value);
-    if (!state.compareMode && state.isCompactGrid) {
-      state.mobileGridColumns = [1, 2, 3].includes(value) ? value : 2;
-      localStorage.setItem(MOBILE_GRID_COLUMNS_KEY, String(state.mobileGridColumns));
-    } else if (state.compareMode && state.isCompactGrid) {
-      state.compactComparisonGridColumns = [1, 2, 3].includes(value) ? value : 2;
-      localStorage.setItem(COMPACT_COMPARE_GRID_COLUMNS_KEY, String(state.compactComparisonGridColumns));
-    } else if (state.compareMode) {
-      state.comparisonGridColumns = [6, 8].includes(value) ? value : 6;
+    if (state.compareMode) {
+      state.comparisonGridColumns = [2, 4, 6, 8].includes(value) ? value : 6;
       localStorage.setItem(COMPARE_GRID_COLUMNS_KEY, String(state.comparisonGridColumns));
     } else {
-      state.gridColumns = value === 6 ? 6 : 4;
+      state.gridColumns = [1, 2, 3, 4].includes(value) ? value : 4;
       localStorage.setItem(GRID_COLUMNS_KEY, String(state.gridColumns));
     }
     updateMapVisibility();
@@ -2417,11 +2542,9 @@ async function assignPrefectureToSlot(prefectureId) {
 
   if (state.prefectureTargetSlot === 'secondary' && !state.isMobile) {
     state.secondaryCustomSlotId = null;
+    state.secondaryAreas.clear();
+    persistAreaSelection('secondary');
     persistAssignedCustomSlots();
-    if (!state.primaryCustomSlotId && prefectureId === state.prefecture?.id) {
-      showStatus('第2県には、第1県とは別の都道府県を選んでください。');
-      return;
-    }
     await loadSecondaryPrefecture(prefectureId);
     updatePrefectureSelectionUI();
     closePrefecturePanel();
@@ -2431,9 +2554,12 @@ async function assignPrefectureToSlot(prefectureId) {
   const previousPrimaryId = state.prefecture?.id;
   const hadPrimaryCustom = Boolean(state.primaryCustomSlotId);
   state.primaryCustomSlotId = null;
+  state.primaryAreas.clear();
+  persistAreaSelection('primary');
   persistAssignedCustomSlots();
   if (prefectureId === previousPrimaryId && !hadPrimaryCustom) {
     closePrefecturePanel();
+    renderAreaSelect();
     return;
   }
   if (prefectureId === previousPrimaryId && hadPrimaryCustom) {
@@ -2446,27 +2572,18 @@ async function assignPrefectureToSlot(prefectureId) {
     renderCameras();
     return;
   }
-
-  if (prefectureId === state.secondaryPrefectureId && previousPrimaryId) {
-    state.secondaryPrefectureId = previousPrimaryId;
-    localStorage.setItem(COMPARE_PREFECTURE_KEY, previousPrimaryId);
-  }
   await loadPrefecture(prefectureId);
 }
 
 async function ensureSecondaryPrefecture(primaryId) {
   const enabled = enabledPrefectures();
   let target = state.secondaryPrefectureId;
-  if (!enabled.some((prefecture) => prefecture.id === target && target !== primaryId)) {
-    target = enabled.find((prefecture) => prefecture.id !== primaryId)?.id || primaryId;
-  }
+  if (!enabled.some((prefecture) => prefecture.id === target)) target = primaryId || enabled[0]?.id;
   await loadSecondaryPrefecture(target, false);
 }
 
 async function loadSecondaryPrefecture(prefectureId, rerender = true) {
-  if (!prefectureId || prefectureId === state.prefecture?.id) {
-    prefectureId = enabledPrefectures().find((prefecture) => prefecture.id !== state.prefecture?.id)?.id;
-  }
+  if (!prefectureId || !findEnabledPrefecture(prefectureId)) prefectureId = state.prefecture?.id || enabledPrefectures()[0]?.id;
   if (!prefectureId) return;
   state.secondaryPrefecture = await fetchJson(`${DATA_ROOT}/cameras/${prefectureId}.json`);
   state.secondaryPrefectureId = prefectureId;
@@ -2476,7 +2593,6 @@ async function loadSecondaryPrefecture(prefectureId, rerender = true) {
   updateComparisonControls();
   if (rerender) {
     if (!state.compareMode && state.singleViewSlot === 'secondary') {
-      state.area = 'all';
       state.search = '';
       elements.cameraSearch.value = '';
       renderAreaSelect();
@@ -2535,6 +2651,11 @@ async function swapComparisonPrefectures() {
   state.secondaryPrefectureId = previousPrimary.id;
   state.primaryCustomSlotId = state.secondaryCustomSlotId;
   state.secondaryCustomSlotId = previousPrimaryCustomSlotId;
+  const previousPrimaryAreas = state.primaryAreas;
+  state.primaryAreas = state.secondaryAreas;
+  state.secondaryAreas = previousPrimaryAreas;
+  persistAreaSelection('primary');
+  persistAreaSelection('secondary');
   persistAssignedCustomSlots();
   state.area = 'all';
   state.search = '';
@@ -2581,8 +2702,8 @@ function updateComparisonControls() {
   elements.comparisonToggleButton.classList.toggle('is-active', state.compareMode);
   elements.comparisonToggleButton.setAttribute('aria-pressed', String(state.compareMode));
   elements.comparisonToggleButton.textContent = state.compareMode ? '1県表示' : '2県表示';
-  if (elements.areaControl) elements.areaControl.hidden = state.compareMode || state.customMode || Boolean(displayedCustomSlot());
   if (elements.comparisonToggleButton) elements.comparisonToggleButton.hidden = state.isMobile || state.customMode;
+  renderAreaSelect();
   updateGridColumnControl();
   updatePrefectureSelectionUI();
   updateVisibilityPrefectureSwitcher();
@@ -2639,19 +2760,51 @@ function prefectureNameForCamera(cameraId) {
   return activePrefectures().find((prefecture) => prefecture?.cameras.some((camera) => camera.id === cameraId))?.name || '';
 }
 
-function youtubeCamerasForCurrentView() {
+function youtubeEntriesForCurrentView({ liveOnly = true } = {}) {
   const keyword = normalizeText(state.search);
+  const sources = state.customMode
+    ? [{ type: 'custom', slotName: 'primary', name: 'カスタム', entries: selectedCustomEntries() }]
+    : state.compareMode
+      ? [slotSource('primary'), slotSource('secondary')]
+      : [currentSingleSource()];
+  const prefectureOrder = new Map(enabledPrefectures().map((prefecture, index) => [prefecture.id, index]));
   const result = [];
-  for (const prefecture of activePrefectures()) {
-    const hiddenIds = prefecture.id === state.prefecture.id ? state.hiddenCameraIds : state.secondaryHiddenCameraIds;
-    for (const camera of prefecture.cameras) {
-      if (cameraMediaType(camera) !== 'youtube' || hiddenIds.has(camera.id) || !isYoutubeCurrentlyLive(camera)) continue;
-      if (state.area !== 'all' && !state.compareMode && camera.area !== state.area) continue;
-      const searchable = normalizeText([camera.city, camera.place, camera.provider].filter(Boolean).join(' '));
-      if (!keyword || searchable.includes(keyword)) result.push(camera);
+  const seen = new Set();
+
+  for (const source of sources) {
+    const entries = source.type === 'custom'
+      ? source.entries
+      : (source.prefecture?.cameras || []).map((camera) => ({
+          key: customCameraKey(source.prefecture.id, camera.id),
+          prefecture: source.prefecture,
+          camera,
+          area: source.prefecture.areas.find((area) => area.id === camera.area) || { id: camera.area, name: '', color: 'grey' }
+        }));
+    for (const entry of entries) {
+      const { camera, prefecture } = entry;
+      if (cameraMediaType(camera) !== 'youtube') continue;
+      const key = customCameraKey(prefecture.id, camera.id);
+      if (seen.has(key)) continue;
+      if (source.type === 'prefecture') {
+        if (source.hiddenIds?.has(camera.id)) continue;
+        if (!cameraMatchesAreaSelection(camera, source.slotName || 'primary')) continue;
+      }
+      if (liveOnly && !isYoutubeCurrentlyLive(camera)) continue;
+      const searchable = normalizeText([prefecture.name, camera.city, camera.place, camera.provider].filter(Boolean).join(' '));
+      if (keyword && !searchable.includes(keyword)) continue;
+      seen.add(key);
+      result.push({ ...entry, key });
     }
   }
+
+  result.sort((a, b) => (prefectureOrder.get(a.prefecture.id) ?? Number.MAX_SAFE_INTEGER)
+    - (prefectureOrder.get(b.prefecture.id) ?? Number.MAX_SAFE_INTEGER)
+    || compareCamerasForPrefecture(a.prefecture)(a.camera, b.camera));
   return result;
+}
+
+function youtubeCamerasForCurrentView() {
+  return youtubeEntriesForCurrentView().map((entry) => entry.camera);
 }
 
 function showStatus(message) {
