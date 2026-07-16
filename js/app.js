@@ -27,6 +27,8 @@ const SECONDARY_CUSTOM_SLOT_KEY = 'national-live-camera:secondary-custom-slot:v1
 const COMPACT_COMPARE_GRID_COLUMNS_KEY = 'national-live-camera:compact-compare-grid-columns:v1';
 const PRIMARY_AREAS_KEY = 'national-live-camera:primary-areas:v1';
 const SECONDARY_AREAS_KEY = 'national-live-camera:secondary-areas:v1';
+const COMPARISON_SCROLL_MODE_KEY = 'national-live-camera:comparison-scroll-mode:v1';
+const COMPARISON_SCROLL_PAUSE_MS = 1000;
 const CUSTOM_PREFECTURE_THEMES = [
   { accent: '#0f766e', soft: '#ccfbf1', text: '#115e59' },
   { accent: '#c2410c', soft: '#ffedd5', text: '#9a3412' },
@@ -117,6 +119,8 @@ const elements = {
   gridColumnControl: document.querySelector('#gridColumnControl'),
   gridColumnSelect: document.querySelector('#gridColumnSelect'),
   comparisonToggleButton: document.querySelector('#comparisonToggleButton'),
+  comparisonScrollModeControl: document.querySelector('#comparisonScrollModeControl'),
+  comparisonScrollModeSelect: document.querySelector('#comparisonScrollModeSelect'),
   customModeButton: document.querySelector('#customModeButton'),
   customReorderButton: document.querySelector('#customReorderButton'),
   customOrderResetButton: document.querySelector('#customOrderResetButton'),
@@ -159,6 +163,8 @@ const state = {
   scrollReturnTimer: null,
   previousScrollTime: 0,
   scrollRemainder: 0,
+  comparisonScrollMode: 'linked',
+  paneScrollStates: new Map(),
   visibilityTab: 'settings',
   countdownTimer: null,
   stickyObserver: null,
@@ -207,6 +213,7 @@ init().catch((error) => {
 async function init() {
   if (!Leaflet) throw new Error('Leafletを読み込めませんでした。');
   initializeCustomSelectVisibleButton();
+  initializeComparisonScrollModeControl();
   bindEvents();
   initializeSummaryBar();
   initializeDisplayPreferences();
@@ -251,6 +258,32 @@ function initializeCustomSelectVisibleButton() {
 
   elements.customClearSelectionButton.parentElement?.insertBefore(button, elements.customClearSelectionButton);
   elements.customSelectVisibleButton = button;
+}
+
+function initializeComparisonScrollModeControl() {
+  if (elements.comparisonScrollModeControl || !elements.summaryToggleButton) return;
+
+  const control = document.createElement('label');
+  control.id = 'comparisonScrollModeControl';
+  control.className = 'compactControl comparisonScrollModeControl';
+  control.hidden = true;
+  control.title = '2枠表示中の自動スクロール方法を切り替えます。';
+
+  const label = document.createElement('span');
+  label.textContent = '2枠自動';
+
+  const select = document.createElement('select');
+  select.id = 'comparisonScrollModeSelect';
+  select.setAttribute('aria-label', '2枠表示の自動スクロール方法');
+  select.append(
+    new Option('連動', 'linked'),
+    new Option('独立', 'independent')
+  );
+
+  control.append(label, select);
+  elements.summaryToggleButton.parentElement?.insertBefore(control, elements.summaryToggleButton);
+  elements.comparisonScrollModeControl = control;
+  elements.comparisonScrollModeSelect = select;
 }
 
 function normalizeYoutubeCameraIds(data) {
@@ -1179,6 +1212,9 @@ function initializeDisplayPreferences() {
   state.compactComparisonGridColumns = [1, 2, 3, 4].includes(savedCompactComparisonColumns) ? savedCompactComparisonColumns : 4;
   state.primaryAreas = loadAreaSelection(PRIMARY_AREAS_KEY);
   state.secondaryAreas = loadAreaSelection(SECONDARY_AREAS_KEY);
+  const savedComparisonScrollMode = localStorage.getItem(COMPARISON_SCROLL_MODE_KEY);
+  state.comparisonScrollMode = savedComparisonScrollMode === 'independent' ? 'independent' : 'linked';
+  if (elements.comparisonScrollModeSelect) elements.comparisonScrollModeSelect.value = state.comparisonScrollMode;
   state.compareMode = !state.isMobile && localStorage.getItem(COMPARE_MODE_KEY) === 'true';
   state.secondaryPrefectureId = localStorage.getItem(COMPARE_PREFECTURE_KEY);
   updateMapVisibility();
@@ -1269,6 +1305,7 @@ function updateResponsiveControls() {
   if (elements.visibilitySecondaryPrefectureButton) elements.visibilitySecondaryPrefectureButton.hidden = mobile;
   if (mobile && state.prefectureTargetSlot === 'secondary') setPrefectureTargetSlot('primary');
   updateGridColumnControl();
+  updateComparisonScrollModeControl();
 }
 
 function handleResponsiveChange() {
@@ -1793,6 +1830,7 @@ function renderCustomEntrySet(sourceEntries, titleText, reorderTarget = null) {
 function renderComparisonCameras() {
   state.markerLayer?.clearLayers();
   state.markers.clear();
+  const previousScrollPositions = captureComparisonPaneScrollPositions();
   const shell = document.createElement('div');
   shell.className = 'comparisonShell';
 
@@ -1801,20 +1839,100 @@ function renderComparisonCameras() {
     const slot = state.singleViewSlot === 'secondary' ? 'secondary' : 'primary';
     shell.append(createComparisonPaneForSource(slotSource(slot)));
   } else {
+    shell.classList.add('is-dual-scroll');
+    shell.dataset.scrollMode = state.comparisonScrollMode;
     shell.append(
       createComparisonPaneForSource(slotSource('primary')),
       createComparisonPaneForSource(slotSource('secondary'))
     );
+    bindComparisonPaneManualScroll(shell);
   }
 
   elements.content.replaceChildren(shell);
+  restoreComparisonPaneScrollPositions(previousScrollPositions);
+  updateComparisonScrollModeControl();
   updateMapVisibility();
+}
+
+function comparisonPanes() {
+  return [...elements.content.querySelectorAll('.comparisonShell.is-dual-scroll > .comparisonPane')];
+}
+
+function captureComparisonPaneScrollPositions() {
+  const positions = new Map();
+  for (const pane of comparisonPanes()) {
+    positions.set(pane.dataset.scrollSlot || String(positions.size), pane.scrollTop);
+  }
+  return positions;
+}
+
+function restoreComparisonPaneScrollPositions(positions) {
+  if (!positions?.size) return;
+  requestAnimationFrame(() => {
+    for (const pane of comparisonPanes()) {
+      const saved = positions.get(pane.dataset.scrollSlot || '');
+      if (!Number.isFinite(saved)) continue;
+      pane.scrollTop = Math.min(saved, comparisonPaneMaxScroll(pane));
+    }
+  });
+}
+
+function comparisonPaneMaxScroll(pane) {
+  return Math.max(0, pane.scrollHeight - pane.clientHeight);
+}
+
+function bindComparisonPaneManualScroll(shell) {
+  let synchronizing = false;
+  const panes = [...shell.querySelectorAll(':scope > .comparisonPane')];
+
+  for (const pane of panes) {
+    pane.addEventListener('pointerdown', () => {
+      if (state.scrollSpeed > 0) stopAutoScroll();
+    }, { passive: true });
+    pane.addEventListener('scroll', () => {
+      if (state.comparisonScrollMode !== 'linked' || synchronizing) return;
+      synchronizing = true;
+      for (const other of panes) {
+        if (other === pane) continue;
+        other.scrollTop = Math.min(pane.scrollTop, comparisonPaneMaxScroll(other));
+      }
+      requestAnimationFrame(() => { synchronizing = false; });
+    }, { passive: true });
+  }
+
+  shell.addEventListener('wheel', (event) => {
+    if (state.comparisonScrollMode !== 'linked' || event.ctrlKey) return;
+    if (panes.length < 2) return;
+
+    const referenceHeight = panes[0]?.clientHeight || window.innerHeight;
+    const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+      ? 18
+      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+        ? referenceHeight
+        : 1;
+    const delta = event.deltaY * unit;
+    if (!delta) return;
+
+    const canMove = panes.some((pane) => {
+      const maxScroll = comparisonPaneMaxScroll(pane);
+      return delta > 0 ? pane.scrollTop < maxScroll - 1 : pane.scrollTop > 1;
+    });
+    if (!canMove) return;
+
+    event.preventDefault();
+    synchronizing = true;
+    for (const pane of panes) {
+      pane.scrollTop = Math.max(0, Math.min(comparisonPaneMaxScroll(pane), pane.scrollTop + delta));
+    }
+    requestAnimationFrame(() => { synchronizing = false; });
+  }, { passive: false });
 }
 
 function createComparisonPaneForSource(source) {
   if (source.type === 'custom') {
     const pane = document.createElement('section');
     pane.className = 'comparisonPane comparisonCustomPane';
+    pane.dataset.scrollSlot = source.slotName || 'custom';
     const heading = document.createElement('h2');
     heading.className = 'comparisonPrefectureTitle';
     heading.textContent = source.name;
@@ -1858,6 +1976,7 @@ function createComparisonPane(prefecture, hiddenIds, slotName = 'primary') {
   const pane = document.createElement('section');
   pane.className = 'comparisonPane';
   pane.dataset.prefectureId = prefecture.id;
+  pane.dataset.scrollSlot = slotName;
   const heading = document.createElement('h2');
   heading.className = 'comparisonPrefectureTitle';
   heading.textContent = prefecture.name;
@@ -2811,22 +2930,47 @@ function updatePanelBackdrop() {
 
 function setScrollSpeed(value) {
   state.scrollSpeed = Number(value) || 0;
-  state.previousScrollTime = 0;
-  state.scrollRemainder = 0;
-  cancelAnimationFrame(state.scrollFrame);
-  clearTimeout(state.scrollReturnTimer);
-  state.scrollReturnTimer = null;
+  resetAutoScrollState();
 
   if (state.scrollSpeed > 0) {
     state.scrollFrame = requestAnimationFrame(autoScroll);
   }
 }
 
+function setComparisonScrollMode(value) {
+  state.comparisonScrollMode = value === 'independent' ? 'independent' : 'linked';
+  localStorage.setItem(COMPARISON_SCROLL_MODE_KEY, state.comparisonScrollMode);
+  if (elements.comparisonScrollModeSelect) elements.comparisonScrollModeSelect.value = state.comparisonScrollMode;
+
+  const shell = elements.content.querySelector('.comparisonShell.is-dual-scroll');
+  if (shell) shell.dataset.scrollMode = state.comparisonScrollMode;
+  resetAutoScrollState();
+  updateComparisonScrollModeControl();
+  if (state.scrollSpeed > 0) state.scrollFrame = requestAnimationFrame(autoScroll);
+}
+
+function updateComparisonScrollModeControl() {
+  if (!elements.comparisonScrollModeControl || !elements.comparisonScrollModeSelect) return;
+  const available = state.compareMode && !state.isSinglePaneComparison && !state.isMobile && !state.customMode;
+  elements.comparisonScrollModeControl.hidden = !available;
+  elements.comparisonScrollModeSelect.value = state.comparisonScrollMode;
+  elements.comparisonScrollModeControl.title = state.comparisonScrollMode === 'independent'
+    ? '各枠が別々に進み、末尾で1秒停止してその枠だけ先頭へ戻ります。'
+    : '両枠を同じ速さで進め、短い枠は末尾で停止し、両方が末尾に着いたら一緒に先頭へ戻ります。';
+}
+
+function resetAutoScrollState() {
+  state.previousScrollTime = 0;
+  state.scrollRemainder = 0;
+  state.paneScrollStates.clear();
+  cancelAnimationFrame(state.scrollFrame);
+  clearTimeout(state.scrollReturnTimer);
+  state.scrollFrame = null;
+  state.scrollReturnTimer = null;
+}
+
 function autoScroll(timestamp) {
   if (state.scrollSpeed <= 0) return;
-
-  const scroller = document.scrollingElement || document.documentElement;
-  const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
 
   if (state.previousScrollTime === 0) {
     state.previousScrollTime = timestamp;
@@ -2834,16 +2978,103 @@ function autoScroll(timestamp) {
     return;
   }
 
-  if (maxScroll <= 1) {
-    state.previousScrollTime = timestamp;
+  const elapsedSeconds = Math.min(0.12, Math.max(0, timestamp - state.previousScrollTime) / 1000);
+  state.previousScrollTime = timestamp;
+
+  const panes = comparisonPanes();
+  if (panes.length >= 2) {
+    if (state.comparisonScrollMode === 'independent') {
+      autoScrollIndependentPanes(panes, timestamp, elapsedSeconds);
+    } else {
+      if (autoScrollLinkedPanes(panes, elapsedSeconds)) return;
+    }
     state.scrollFrame = requestAnimationFrame(autoScroll);
     return;
   }
 
-  const elapsedSeconds = Math.min(0.12, Math.max(0, timestamp - state.previousScrollTime) / 1000);
-  state.previousScrollTime = timestamp;
-  state.scrollRemainder += state.scrollSpeed * elapsedSeconds;
+  if (autoScrollDocument(elapsedSeconds)) return;
+  state.scrollFrame = requestAnimationFrame(autoScroll);
+}
 
+function autoScrollLinkedPanes(panes, elapsedSeconds) {
+  state.scrollRemainder += state.scrollSpeed * elapsedSeconds;
+  const movePixels = Math.floor(state.scrollRemainder);
+  state.scrollRemainder -= movePixels;
+
+  let allAtEnd = true;
+  for (const pane of panes) {
+    const maxScroll = comparisonPaneMaxScroll(pane);
+    if (maxScroll <= 1) continue;
+    const remaining = maxScroll - pane.scrollTop;
+    if (remaining > Math.max(2, movePixels)) {
+      allAtEnd = false;
+      if (movePixels > 0) pane.scrollTop = Math.min(maxScroll, pane.scrollTop + movePixels);
+    } else {
+      pane.scrollTop = maxScroll;
+    }
+  }
+
+  if (!allAtEnd) return false;
+  state.previousScrollTime = 0;
+  state.scrollRemainder = 0;
+  state.scrollReturnTimer = window.setTimeout(() => {
+    state.scrollReturnTimer = null;
+    if (state.scrollSpeed <= 0) return;
+    for (const pane of comparisonPanes()) pane.scrollTop = 0;
+    state.previousScrollTime = 0;
+    state.scrollRemainder = 0;
+    state.scrollFrame = requestAnimationFrame(autoScroll);
+  }, COMPARISON_SCROLL_PAUSE_MS);
+  return true;
+}
+
+function autoScrollIndependentPanes(panes, timestamp, elapsedSeconds) {
+  for (const pane of panes) {
+    const slot = pane.dataset.scrollSlot || String(panes.indexOf(pane));
+    const paneState = state.paneScrollStates.get(slot) || { remainder: 0, waitingUntil: 0 };
+    const maxScroll = comparisonPaneMaxScroll(pane);
+
+    if (maxScroll <= 1) {
+      paneState.remainder = 0;
+      paneState.waitingUntil = 0;
+      state.paneScrollStates.set(slot, paneState);
+      continue;
+    }
+
+    if (paneState.waitingUntil > 0) {
+      if (timestamp < paneState.waitingUntil) {
+        state.paneScrollStates.set(slot, paneState);
+        continue;
+      }
+      pane.scrollTop = 0;
+      paneState.remainder = 0;
+      paneState.waitingUntil = 0;
+      state.paneScrollStates.set(slot, paneState);
+      continue;
+    }
+
+    paneState.remainder += state.scrollSpeed * elapsedSeconds;
+    const movePixels = Math.floor(paneState.remainder);
+    paneState.remainder -= movePixels;
+    const remaining = maxScroll - pane.scrollTop;
+
+    if (remaining <= Math.max(2, movePixels)) {
+      pane.scrollTop = maxScroll;
+      paneState.remainder = 0;
+      paneState.waitingUntil = timestamp + COMPARISON_SCROLL_PAUSE_MS;
+    } else if (movePixels > 0) {
+      pane.scrollTop = Math.min(maxScroll, pane.scrollTop + movePixels);
+    }
+    state.paneScrollStates.set(slot, paneState);
+  }
+}
+
+function autoScrollDocument(elapsedSeconds) {
+  const scroller = document.scrollingElement || document.documentElement;
+  const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+  if (maxScroll <= 1) return false;
+
+  state.scrollRemainder += state.scrollSpeed * elapsedSeconds;
   const movePixels = Math.floor(state.scrollRemainder);
   state.scrollRemainder -= movePixels;
   const remaining = maxScroll - scroller.scrollTop;
@@ -2855,29 +3086,22 @@ function autoScroll(timestamp) {
     state.scrollReturnTimer = window.setTimeout(() => {
       state.scrollReturnTimer = null;
       if (state.scrollSpeed <= 0) return;
-
       scroller.scrollTop = 0;
       state.previousScrollTime = 0;
       state.scrollRemainder = 0;
       state.scrollFrame = requestAnimationFrame(autoScroll);
-    }, 1000);
-    return;
+    }, COMPARISON_SCROLL_PAUSE_MS);
+    return true;
   }
 
-  if (movePixels > 0) {
-    scroller.scrollTop = Math.min(maxScroll, scroller.scrollTop + movePixels);
-  }
-  state.scrollFrame = requestAnimationFrame(autoScroll);
+  if (movePixels > 0) scroller.scrollTop = Math.min(maxScroll, scroller.scrollTop + movePixels);
+  return false;
 }
 
 function stopAutoScroll() {
   state.scrollSpeed = 0;
-  state.previousScrollTime = 0;
-  state.scrollRemainder = 0;
-  elements.scrollSpeedSelect.value = '0';
-  cancelAnimationFrame(state.scrollFrame);
-  clearTimeout(state.scrollReturnTimer);
-  state.scrollReturnTimer = null;
+  if (elements.scrollSpeedSelect) elements.scrollSpeedSelect.value = '0';
+  resetAutoScrollState();
 }
 
 function closeAreaSelectionMenus(except = null) {
@@ -2960,6 +3184,7 @@ function bindEvents() {
     updateMapVisibility();
   });
   elements.comparisonToggleButton?.addEventListener('click', toggleComparisonMode);
+  elements.comparisonScrollModeSelect?.addEventListener('change', (event) => setComparisonScrollMode(event.target.value));
   elements.customModeButton?.addEventListener('click', openCustomPanel);
   elements.customReorderButton?.addEventListener('click', toggleCustomReorderMode);
   elements.customOrderResetButton?.addEventListener('click', resetCustomOrder);
@@ -3261,6 +3486,7 @@ async function swapComparisonPrefectures() {
 
 async function toggleComparisonMode() {
   if (state.isMobile || state.customMode) return;
+  resetAutoScrollState();
   state.compareMode = !state.compareMode;
   localStorage.setItem(COMPARE_MODE_KEY, String(state.compareMode));
   if (state.compareMode) {
@@ -3275,6 +3501,7 @@ async function toggleComparisonMode() {
   renderVisibilityEditor();
   renderHiddenImages();
   refreshYoutubeLiveStatus();
+  if (state.scrollSpeed > 0) state.scrollFrame = requestAnimationFrame(autoScroll);
 }
 
 function updateComparisonControls() {
@@ -3283,6 +3510,7 @@ function updateComparisonControls() {
   elements.comparisonToggleButton.setAttribute('aria-pressed', String(state.compareMode));
   elements.comparisonToggleButton.textContent = state.compareMode ? '1枠表示' : '2枠表示';
   if (elements.comparisonToggleButton) elements.comparisonToggleButton.hidden = state.isMobile || state.customMode;
+  updateComparisonScrollModeControl();
   renderAreaSelect();
   updateGridColumnControl();
   updatePrefectureSelectionUI();
