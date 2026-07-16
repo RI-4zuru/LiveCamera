@@ -1,7 +1,4 @@
 const DATA_ROOT = './data';
-const MARINE_DATA_URL = `${DATA_ROOT}/cameras/marine.json`;
-const MARINE_AREA_ID = 'marine';
-let marineDataPromise = null;
 const Leaflet = window.L;
 const NARA_RIVER_SOURCE = 'naraPrefectureRiver';
 const NARA_RIVER_INTERVAL_MS = 10 * 60 * 1000;
@@ -240,74 +237,10 @@ async function init() {
   startYoutubeLivePolling();
 }
 
-async function loadMarineSupplement() {
-  if (!marineDataPromise) {
-    marineDataPromise = fetch(MARINE_DATA_URL, { cache: 'no-store' })
-      .then((response) => {
-        if (!response.ok) throw new Error(`${MARINE_DATA_URL}: HTTP ${response.status}`);
-        return response.json();
-      })
-      .catch((error) => {
-        console.warn('海上カメラ追加データを読み込めませんでした。', error);
-        return {
-          area: { id: MARINE_AREA_ID, name: '海上', color: 'black' },
-          prefectures: {}
-        };
-      });
-  }
-  return marineDataPromise;
-}
-
-async function applyMarineSupplement(data, url) {
-  const match = /\/cameras\/([^/?#]+)\.json(?:[?#].*)?$/.exec(url);
-  if (!match || match[1] === 'marine' || !data?.id) return;
-
-  const supplement = await loadMarineSupplement();
-  const marine = supplement?.prefectures?.[data.id];
-  if (!marine) return;
-
-  const moveCameraIds = Array.isArray(marine.moveCameraIds) ? marine.moveCameraIds : [];
-  const extraCameras = Array.isArray(marine.cameras) ? marine.cameras : [];
-  if (!moveCameraIds.length && !extraCameras.length) return;
-
-  const areaDefinition = {
-    id: MARINE_AREA_ID,
-    name: '海上',
-    color: 'black',
-    ...(supplement.area || {})
-  };
-
-  const currentAreas = Array.isArray(data.areas) ? data.areas : [];
-  const existingMarineArea = currentAreas.find((area) => area.id === MARINE_AREA_ID);
-
-  data.areas = currentAreas.filter((area) => area.id !== MARINE_AREA_ID);
-  data.areas.push({
-    ...areaDefinition,
-    ...(existingMarineArea || {}),
-    id: MARINE_AREA_ID
-  });
-
-  if (!Array.isArray(data.cameras)) data.cameras = [];
-
-  const moveSet = new Set(moveCameraIds);
-  data.cameras.forEach((camera) => {
-    if (moveSet.has(camera.id)) camera.area = MARINE_AREA_ID;
-  });
-
-  const existingIds = new Set(data.cameras.map((camera) => camera.id));
-  extraCameras.forEach((camera) => {
-    if (!camera?.id || existingIds.has(camera.id)) return;
-    data.cameras.push({ ...camera, area: MARINE_AREA_ID });
-    existingIds.add(camera.id);
-  });
-}
-
 async function fetchJson(url) {
   const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
   const data = await response.json();
-  normalizeYoutubeCameraIds(data);
-  await applyMarineSupplement(data, url);
   normalizeYoutubeCameraIds(data);
   return data;
 }
