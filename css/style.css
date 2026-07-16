@@ -1406,14 +1406,9 @@ a { color: inherit; }
 .layout.comparisonColumns8 .comparisonPane .cameraGrid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
-.layout.comparisonColumns10 .comparisonPane .cameraGrid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
 @media (max-width: 700px) {
   .layout.comparisonColumns6 .comparisonPane .cameraGrid,
-  .layout.comparisonColumns8 .comparisonPane .cameraGrid,
-  .layout.comparisonColumns10 .comparisonPane .cameraGrid {
+  .layout.comparisonColumns8 .comparisonPane .cameraGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
@@ -1706,18 +1701,13 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
     flex-basis: 100% !important;
     margin-left: 0;
   }
-  .layout.mobileColumns1 .cameraGrid { grid-template-columns: 1fr !important; }
-  .layout.mobileColumns2 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .layout.mobileColumns3 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px; }
-  .layout.mobileColumns4 .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px; }
-  .layout.mobileColumns3 .cardHeader,
-  .layout.mobileColumns4 .cardHeader,
-  .layout.mobileColumns3 .cardFooter,
-  .layout.mobileColumns4 .cardFooter { padding: 4px; }
-  .layout.mobileColumns3 .city,
-  .layout.mobileColumns4 .city { font-size: 9px; }
-  .layout.mobileColumns3 .placeLink,
-  .layout.mobileColumns4 .placeLink { font-size: 8px; }
+  .layout.compactColumns1 .cameraGrid { grid-template-columns: 1fr !important; }
+  .layout.compactColumns2 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .layout.compactColumns3 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px; }
+  .layout.compactColumns3 .cardHeader,
+  .layout.compactColumns3 .cardFooter { padding: 4px; }
+  .layout.compactColumns3 .city { font-size: 9px; }
+  .layout.compactColumns3 .placeLink { font-size: 8px; }
   .customPanel { width: 100vw; }
   .customSlotSection { grid-template-columns: 1fr; }
   .customSlotButtons { grid-column: auto; }
@@ -1739,4 +1729,74 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   .topbar { flex-wrap: wrap; gap: 8px 14px; }
   .brandArea { min-width: 0; flex: 1 1 240px; }
   .headerTools { min-width: 0; flex: 1 1 420px; flex-wrap: wrap; }
+}
+
+
+/* v17: 都道府県メニュー内のカスタム読込・列数の整理 */
+.prefectureCustomSlotsSection {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.prefectureCustomSlotsSection h2 {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 14px;
+}
+.prefectureCustomSlotsSection > p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.prefectureCustomSlotList {
+  display: grid;
+  gap: 7px;
+}
+.prefectureCustomSlotButton {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid #99f6e4;
+  border-radius: 9px;
+  background: #ecfdf5;
+  color: #0f766e;
+  text-align: left;
+}
+.prefectureCustomSlotButton:hover { background: #d1fae5; }
+.prefectureCustomSlotButton strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.prefectureCustomSlotButton span {
+  flex: 0 0 auto;
+  color: #0d9488;
+  font-size: 10px;
+  font-weight: 800;
+}
+.prefectureCustomSlotEmpty {
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .layout.compactColumns1 .cameraGrid { grid-template-columns: 1fr !important; }
+  .layout.compactColumns2 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .layout.compactColumns3 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 7px; }
+  .layout.compactColumns3 .cardHeader,
+  .layout.compactColumns3 .cardFooter { padding: 5px; }
+  .layout.compactColumns3 .city { font-size: 10px; }
+  .layout.compactColumns3 .placeLink { font-size: 9px; }
 }
