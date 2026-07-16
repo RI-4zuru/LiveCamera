@@ -281,7 +281,7 @@ function initializeComparisonScrollModeControl() {
   );
 
   control.append(label, select);
-  elements.summaryToggleButton.parentElement?.insertBefore(control, elements.summaryToggleButton);
+  elements.summaryToggleButton.after(control);
   elements.comparisonScrollModeControl = control;
   elements.comparisonScrollModeSelect = select;
 }
