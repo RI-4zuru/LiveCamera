@@ -2171,3 +2171,126 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
 .cameraCard.is-dragging { opacity: .35; transform: scale(.98); }
 .cameraCard.drag-before { box-shadow: -5px 0 0 #7c3aed, 0 4px 14px rgba(15, 23, 42, .14); }
 .cameraCard.drag-after { box-shadow: 5px 0 0 #7c3aed, 0 4px 14px rgba(15, 23, 42, .14); }
+
+
+/* v18: カスタム選択のYouTubeサムネイルと並べ替え操作 */
+.summaryBar .customOrderResetButton {
+  flex: 0 0 auto;
+}
+.customOrderResetButton {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid #c4b5fd;
+  border-radius: 8px;
+  color: #5b21b6;
+  background: #f5f3ff;
+  font-weight: 900;
+  cursor: pointer;
+}
+.customOrderResetButton:hover:not(:disabled) { background: #ede9fe; }
+.customOrderResetButton:disabled { opacity: .45; cursor: default; }
+.customOrderResetButton[hidden] { display: none !important; }
+
+.customCameraPreview.is-youtube {
+  background: #111827;
+}
+.customCameraPreview.is-youtube .youtubeSelectionThumbnail {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 1 !important;
+  filter: none !important;
+  object-fit: cover;
+}
+.customCameraPreview.is-youtube .customYoutubeBadge {
+  position: absolute !important;
+  inset: auto 6px 6px auto !important;
+  z-index: 3;
+  display: inline-flex !important;
+  width: max-content !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 3px 7px !important;
+  border-radius: 5px !important;
+  color: #fff !important;
+  background: rgba(220, 38, 38, .9) !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+  pointer-events: none;
+}
+.customCameraPreview .customCameraPreviewError {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  place-items: center;
+  padding: 6px;
+  color: #fff;
+  background: #7f1d1d;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+.customCameraPreview.error .customCameraPreviewError { display: grid; }
+.customCameraPreview.error .youtubeSelectionThumbnail,
+.customCameraPreview.error .customYoutubeBadge { display: none !important; }
+
+.customReorderGuide {
+  margin: 3px 0 8px;
+  color: #6d28d9;
+  font-size: 12px;
+  font-weight: 800;
+}
+.customReorderDropZone {
+  display: grid;
+  min-height: 42px;
+  margin: 7px 0;
+  place-items: center;
+  border: 2px dashed #a78bfa;
+  border-radius: 10px;
+  color: #6d28d9;
+  background: #f5f3ff;
+  font-size: 12px;
+  font-weight: 900;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+.customReorderDropZone.is-over {
+  border-color: #6d28d9;
+  background: #ede9fe;
+  transform: scale(1.01);
+}
+.customReorderControls {
+  position: absolute;
+  inset: auto 5px 5px 5px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  padding: 4px;
+  border-radius: 8px;
+  background: rgba(46, 16, 101, .88);
+  backdrop-filter: blur(3px);
+}
+.customReorderControls button {
+  min-width: 0;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 5px;
+  color: #4c1d95;
+  background: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.customReorderControls button:hover { background: #ddd6fe; }
+.customCameraSection.is-reordering .cameraCard { padding-bottom: 40px; }
+.customCameraSection.is-reordering .cameraCard::after { top: 5px; right: 5px; }
+.cameraCard.drag-before { box-shadow: -7px 0 0 #7c3aed, 0 4px 14px rgba(15, 23, 42, .14) !important; }
+.cameraCard.drag-after { box-shadow: 7px 0 0 #7c3aed, 0 4px 14px rgba(15, 23, 42, .14) !important; }
+
+@media (max-width: 620px) {
+  .customReorderControls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .customCameraSection.is-reordering .cameraCard { padding-bottom: 65px; }
+}
