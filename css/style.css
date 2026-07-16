@@ -2309,3 +2309,77 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   .customReorderControls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .customCameraSection.is-reordering .cameraCard { padding-bottom: 65px; }
 }
+
+
+/* v27: 2枠表示の連動・独立スクロール */
+.comparisonScrollModeControl {
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 4px 5px 4px 8px;
+  border: 1px solid #c4b5fd;
+  border-radius: 8px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.comparisonScrollModeControl[hidden] { display: none !important; }
+.comparisonScrollModeControl select {
+  min-height: 30px;
+  padding: 4px 24px 4px 7px;
+  border-color: #c4b5fd;
+  background-color: #fff;
+  color: #5b21b6;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.comparisonShell.is-dual-scroll {
+  height: calc(100vh - var(--sticky-stack-height) - 30px);
+  height: calc(100dvh - var(--sticky-stack-height) - 30px);
+  min-height: 420px;
+  overflow: hidden;
+}
+.comparisonShell.is-dual-scroll > .comparisonPane {
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scroll-behavior: auto;
+}
+.comparisonShell.is-dual-scroll > .comparisonPane .comparisonPrefectureTitle {
+  position: sticky;
+  top: -1px;
+  z-index: 35;
+  margin: -4px -4px 14px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px);
+}
+.comparisonShell.is-dual-scroll[data-scroll-mode="linked"] > .comparisonPane {
+  scrollbar-color: #8b5cf6 #ede9fe;
+}
+.comparisonShell.is-dual-scroll[data-scroll-mode="independent"] > .comparisonPane {
+  scrollbar-color: #0f766e #ccfbf1;
+}
+
+@media (max-width: 1280px) {
+  .comparisonScrollModeControl { display: none !important; }
+  .comparisonShell.is-dual-scroll {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .comparisonShell.is-dual-scroll > .comparisonPane {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
+}
