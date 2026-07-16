@@ -1954,3 +1954,75 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   .areaMultiSelect { width: 100%; flex-basis: 100%; }
   .areaOptionList { position: fixed; top: auto; right: 8px; bottom: 8px; left: 8px; max-height: 55vh; }
 }
+
+/* v21: エリア候補が設定バー内で切り取られないようにする */
+.summaryBar:not(.is-collapsed) {
+  overflow: visible !important;
+}
+
+.areaControls,
+.areaMultiSelect {
+  overflow: visible;
+}
+
+.areaMultiSelect[open] {
+  z-index: 2600;
+}
+
+.areaMultiSelect[open] > summary {
+  border-color: #64748b;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.14);
+}
+
+.areaOptionList {
+  z-index: 2700;
+  isolation: isolate;
+}
+
+@media (min-width: 621px) {
+  .areaMultiSelect:last-child .areaOptionList {
+    right: 0;
+    left: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .areaOptionList {
+    z-index: 4000;
+    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.28);
+  }
+}
+
+
+/* v21: 1280px以下の2県選択は、県を切り替えて1県ずつ表示 */
+.comparisonShell.is-single-pane {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.layout.singlePaneComparison .comparisonPane {
+  min-width: 0;
+  width: 100%;
+}
+
+.layout.singlePaneComparison.compactComparisonColumns1 .comparisonPane .cameraGrid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.layout.singlePaneComparison.compactComparisonColumns2 .comparisonPane .cameraGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.layout.singlePaneComparison.compactComparisonColumns3 .comparisonPane .cameraGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+.layout.singlePaneComparison.compactComparisonColumns4 .comparisonPane .cameraGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 1280px) and (min-width: 621px) {
+  .layout.comparisonMode {
+    display: block;
+  }
+
+  .layout.singlePaneComparison .comparisonShell {
+    width: 100%;
+  }
+}
