@@ -1800,3 +1800,47 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
   .layout.compactColumns3 .city { font-size: 10px; }
   .layout.compactColumns3 .placeLink { font-size: 9px; }
 }
+
+
+/* v18: カスタム設定の第1県・第2県割り当て／小画面の2県列数 */
+.prefectureCustomSlotButton {
+  position: relative;
+}
+.prefectureCustomSlotAssignment {
+  min-width: 30px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 5px 7px;
+  text-align: center;
+}
+.prefectureCustomSlotButton.is-primary {
+  border-color: #2563eb;
+  box-shadow: inset 3px 0 #2563eb;
+}
+.prefectureCustomSlotButton.is-secondary {
+  background: #faf5ff;
+  border-color: #8b5cf6;
+}
+@media (max-width: 1100px) and (min-width: 621px) {
+  .layout.compactComparisonColumns1 .comparisonPane .cameraGrid {
+    grid-template-columns: 1fr !important;
+  }
+  .layout.compactComparisonColumns2 .comparisonPane .cameraGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .layout.compactComparisonColumns3 .comparisonPane .cameraGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px;
+  }
+  .layout.compactComparisonColumns3 .comparisonPane .cardHeader,
+  .layout.compactComparisonColumns3 .comparisonPane .cardFooter {
+    padding: 5px;
+  }
+  .layout.compactComparisonColumns3 .comparisonPane .city { font-size: 10px; }
+  .layout.compactComparisonColumns3 .comparisonPane .placeLink { font-size: 9px; }
+}
