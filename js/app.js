@@ -15,6 +15,7 @@ const YOUTUBE_LIVE_REFRESH_MS = 5 * 60 * 1000;
 const YOUTUBE_LIVE_PROBE_TIMEOUT_MS = 8000;
 const MOBILE_MEDIA_QUERY = '(max-width: 620px)';
 const COMPACT_GRID_MEDIA_QUERY = '(max-width: 1100px)';
+const SINGLE_PANE_COMPARE_MEDIA_QUERY = '(max-width: 1280px)';
 const MOBILE_GRID_COLUMNS_KEY = 'national-live-camera:mobile-grid-columns:v1';
 const CUSTOM_SLOTS_KEY = 'national-live-camera:custom-slots:v1';
 const CUSTOM_DRAFT_KEY = 'national-live-camera:custom-draft:v1';
@@ -154,6 +155,7 @@ const state = {
   mobileGridColumns: 2,
   isMobile: false,
   isCompactGrid: false,
+  isSinglePaneComparison: false,
   compareMode: false,
   singleViewSlot: 'primary',
   secondaryPrefecture: null,
@@ -785,23 +787,26 @@ function updatePageMeta() {
   const secondarySource = slotSource('secondary');
   const singleIsCustom = !state.compareMode && singleSource.type === 'custom';
   const hasYoutube = youtubeEntriesForCurrentView({ liveOnly: false }).length > 0;
+  const comparisonSource = state.isSinglePaneComparison
+    ? slotSource(state.singleViewSlot === 'secondary' ? 'secondary' : 'primary')
+    : null;
   const titleName = state.customMode
     ? 'カスタム'
     : state.compareMode
-      ? `${primarySource.name}・${secondarySource.name}`
+      ? state.isSinglePaneComparison ? comparisonSource.name : `${primarySource.name}・${secondarySource.name}`
       : singleSource.name || '全国';
   document.title = `${titleName}ライブカメラ｜全国ライブカメラ`;
   elements.pageSubtitle.textContent = state.customMode
     ? `選択した${state.customSelection.length}地点をカスタム表示`
     : state.compareMode
-      ? `${primarySource.name}と${secondarySource.name}を比較表示`
+      ? state.isSinglePaneComparison ? `${comparisonSource.name}を表示（第1県・第2県を切替可能）` : `${primarySource.name}と${secondarySource.name}を比較表示`
       : singleIsCustom
         ? `保存したカスタム設定「${singleSource.name}」を表示`
         : singleSource.prefecture ? `${singleSource.prefecture.region}地方・${singleSource.prefecture.name}` : 'データを読み込み中...';
   elements.prefectureName.textContent = state.customMode
     ? 'カスタム'
     : state.compareMode
-      ? `${primarySource.name} × ${secondarySource.name}`
+      ? state.isSinglePaneComparison ? comparisonSource.name : `${primarySource.name} × ${secondarySource.name}`
       : singleSource.name || '-';
   updatePrefectureSelectionUI();
   elements.youtubeToggle.hidden = !hasYoutube;
@@ -1055,11 +1060,14 @@ function initializeDisplayPreferences() {
 
   state.isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
   state.isCompactGrid = window.matchMedia(COMPACT_GRID_MEDIA_QUERY).matches;
+  state.isSinglePaneComparison = window.matchMedia(SINGLE_PANE_COMPARE_MEDIA_QUERY).matches;
   state.mapVisible = localStorage.getItem(MAP_VISIBILITY_KEY) !== 'false';
   const savedColumns = Number(localStorage.getItem(GRID_COLUMNS_KEY));
   state.gridColumns = [1, 2, 3, 4].includes(savedColumns) ? savedColumns : 4;
   const savedComparisonColumns = Number(localStorage.getItem(COMPARE_GRID_COLUMNS_KEY));
   state.comparisonGridColumns = [2, 4, 6, 8].includes(savedComparisonColumns) ? savedComparisonColumns : 6;
+  const savedCompactComparisonColumns = Number(localStorage.getItem(COMPACT_COMPARE_GRID_COLUMNS_KEY));
+  state.compactComparisonGridColumns = [1, 2, 3, 4].includes(savedCompactComparisonColumns) ? savedCompactComparisonColumns : 4;
   state.primaryAreas = loadAreaSelection(PRIMARY_AREAS_KEY);
   state.secondaryAreas = loadAreaSelection(SECONDARY_AREAS_KEY);
   state.compareMode = !state.isMobile && localStorage.getItem(COMPARE_MODE_KEY) === 'true';
@@ -1075,15 +1083,18 @@ function updateMapVisibility() {
   elements.mapWrap.hidden = !effectiveMapVisible;
   elements.layout.classList.toggle('mapHidden', !effectiveMapVisible);
   elements.layout.classList.toggle('comparisonMode', state.compareMode);
+  elements.layout.classList.toggle('singlePaneComparison', state.compareMode && state.isSinglePaneComparison);
   elements.layout.classList.toggle('customMode', state.customMode);
   for (const columns of [1, 2, 3, 4, 6]) {
     elements.layout.classList.toggle(`gridColumns${columns}`, !state.compareMode && state.gridColumns === columns);
     elements.layout.classList.remove(`compactColumns${columns}`, `mobileColumns${columns}`);
   }
   for (const columns of [2, 4, 6, 8, 10]) {
-    elements.layout.classList.toggle(`comparisonColumns${columns}`, state.compareMode && state.comparisonGridColumns === columns);
+    elements.layout.classList.toggle(`comparisonColumns${columns}`, state.compareMode && !state.isSinglePaneComparison && state.comparisonGridColumns === columns);
   }
-  for (const columns of [1, 2, 3]) elements.layout.classList.remove(`compactComparisonColumns${columns}`);
+  for (const columns of [1, 2, 3, 4]) {
+    elements.layout.classList.toggle(`compactComparisonColumns${columns}`, state.compareMode && state.isSinglePaneComparison && state.compactComparisonGridColumns === columns);
+  }
   elements.mapToggleButton.hidden = state.compareMode;
   elements.mapToggleButton.classList.toggle('is-off', !state.mapVisible);
   elements.mapToggleButton.setAttribute('aria-pressed', String(state.mapVisible));
@@ -1096,8 +1107,12 @@ function updateMapVisibility() {
 
 function updateGridColumnControl() {
   if (!elements.gridColumnControl || !elements.gridColumnSelect) return;
-  const values = state.compareMode ? [2, 4, 6, 8] : [1, 2, 3, 4];
-  const selected = state.compareMode ? state.comparisonGridColumns : state.gridColumns;
+  const values = state.compareMode
+    ? state.isSinglePaneComparison ? [1, 2, 3, 4] : [2, 4, 6, 8]
+    : [1, 2, 3, 4];
+  const selected = state.compareMode
+    ? state.isSinglePaneComparison ? state.compactComparisonGridColumns : state.comparisonGridColumns
+    : state.gridColumns;
   const currentValues = [...elements.gridColumnSelect.options].map((option) => Number(option.value));
   if (currentValues.join(',') !== values.join(',')) {
     elements.gridColumnSelect.replaceChildren(...values.map((value) => new Option(`${value}列`, String(value))));
@@ -1122,13 +1137,15 @@ function updateResponsiveControls() {
 function handleResponsiveChange() {
   const mobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
   const compactGrid = window.matchMedia(COMPACT_GRID_MEDIA_QUERY).matches;
-  if (mobile === state.isMobile && compactGrid === state.isCompactGrid) {
+  const singlePaneComparison = window.matchMedia(SINGLE_PANE_COMPARE_MEDIA_QUERY).matches;
+  if (mobile === state.isMobile && compactGrid === state.isCompactGrid && singlePaneComparison === state.isSinglePaneComparison) {
     updateResponsiveControls();
     return;
   }
 
   state.isMobile = mobile;
   state.isCompactGrid = compactGrid;
+  state.isSinglePaneComparison = singlePaneComparison;
   if (mobile && state.compareMode) {
     state.compareMode = false;
     localStorage.setItem(COMPARE_MODE_KEY, 'false');
@@ -1137,6 +1154,7 @@ function handleResponsiveChange() {
     initializeOrResetMap();
   }
   updateComparisonControls();
+  updatePageMeta();
   updateResponsiveControls();
   updateMapVisibility();
   renderCameras();
@@ -1364,10 +1382,18 @@ function renderComparisonCameras() {
   state.markers.clear();
   const shell = document.createElement('div');
   shell.className = 'comparisonShell';
-  shell.append(
-    createComparisonPaneForSource(slotSource('primary')),
-    createComparisonPaneForSource(slotSource('secondary'))
-  );
+
+  if (state.isSinglePaneComparison) {
+    shell.classList.add('is-single-pane');
+    const slot = state.singleViewSlot === 'secondary' ? 'secondary' : 'primary';
+    shell.append(createComparisonPaneForSource(slotSource(slot)));
+  } else {
+    shell.append(
+      createComparisonPaneForSource(slotSource('primary')),
+      createComparisonPaneForSource(slotSource('secondary'))
+    );
+  }
+
   elements.content.replaceChildren(shell);
   updateMapVisibility();
 }
@@ -2411,8 +2437,13 @@ function bindEvents() {
   elements.gridColumnSelect?.addEventListener('change', (event) => {
     const value = Number(event.target.value);
     if (state.compareMode) {
-      state.comparisonGridColumns = [2, 4, 6, 8].includes(value) ? value : 6;
-      localStorage.setItem(COMPARE_GRID_COLUMNS_KEY, String(state.comparisonGridColumns));
+      if (state.isSinglePaneComparison) {
+        state.compactComparisonGridColumns = [1, 2, 3, 4].includes(value) ? value : 4;
+        localStorage.setItem(COMPACT_COMPARE_GRID_COLUMNS_KEY, String(state.compactComparisonGridColumns));
+      } else {
+        state.comparisonGridColumns = [2, 4, 6, 8].includes(value) ? value : 6;
+        localStorage.setItem(COMPARE_GRID_COLUMNS_KEY, String(state.comparisonGridColumns));
+      }
     } else {
       state.gridColumns = [1, 2, 3, 4].includes(value) ? value : 4;
       localStorage.setItem(GRID_COLUMNS_KEY, String(state.gridColumns));
@@ -2455,11 +2486,13 @@ function bindEvents() {
   elements.customApplyButton?.addEventListener('click', applyCustomSelection);
   elements.customNormalViewButton?.addEventListener('click', exitCustomMode);
   elements.primaryPrefectureSummaryButton?.addEventListener('click', async () => {
-    if (state.compareMode) await swapComparisonPrefectures();
+    if (state.compareMode && state.isSinglePaneComparison) await setComparisonViewSlot('primary');
+    else if (state.compareMode) await swapComparisonPrefectures();
     else await setSingleViewSlot('primary');
   });
   elements.secondaryPrefectureSummaryButton?.addEventListener('click', async () => {
-    if (state.compareMode) await swapComparisonPrefectures();
+    if (state.compareMode && state.isSinglePaneComparison) await setComparisonViewSlot('secondary');
+    else if (state.compareMode) await swapComparisonPrefectures();
     else await setSingleViewSlot('secondary');
   });
   elements.visibilityPrimaryPrefectureButton?.addEventListener('click', () => setVisibilityPrefectureSlot('primary'));
@@ -2526,12 +2559,13 @@ function updatePrefectureSelectionUI() {
   if (elements.secondaryPrefectureSummaryButton) elements.secondaryPrefectureSummaryButton.hidden = state.isMobile;
   if (elements.panelPrimaryPrefectureName) elements.panelPrimaryPrefectureName.textContent = primaryName;
   if (elements.panelSecondaryPrefectureName) elements.panelSecondaryPrefectureName.textContent = secondaryName;
-  const viewingPrimary = state.compareMode || state.singleViewSlot === 'primary';
-  const viewingSecondary = state.compareMode || state.singleViewSlot === 'secondary';
+  const onePaneComparison = state.compareMode && state.isSinglePaneComparison;
+  const viewingPrimary = state.compareMode ? (!onePaneComparison || state.singleViewSlot === 'primary') : state.singleViewSlot === 'primary';
+  const viewingSecondary = state.compareMode ? (!onePaneComparison || state.singleViewSlot === 'secondary') : state.singleViewSlot === 'secondary';
   elements.primaryPrefectureSummaryButton?.classList.toggle('is-viewing', viewingPrimary);
   elements.secondaryPrefectureSummaryButton?.classList.toggle('is-viewing', viewingSecondary);
-  elements.primaryPrefectureSummaryButton?.setAttribute('aria-pressed', String(!state.compareMode && state.singleViewSlot === 'primary'));
-  elements.secondaryPrefectureSummaryButton?.setAttribute('aria-pressed', String(!state.compareMode && state.singleViewSlot === 'secondary'));
+  elements.primaryPrefectureSummaryButton?.setAttribute('aria-pressed', String((!state.compareMode || onePaneComparison) && state.singleViewSlot === 'primary'));
+  elements.secondaryPrefectureSummaryButton?.setAttribute('aria-pressed', String((!state.compareMode || onePaneComparison) && state.singleViewSlot === 'secondary'));
   setPrefectureTargetSlot(state.prefectureTargetSlot);
   updateVisibilityPrefectureSwitcher();
   highlightNavigation();
@@ -2629,6 +2663,27 @@ async function setSingleViewSlot(slot) {
   renderAreaSelect();
   updateComparisonControls();
   initializeOrResetMap();
+  updatePageMeta();
+  updateYoutubeToggle();
+  renderCameras();
+  renderVisibilityEditor();
+  renderHiddenImages();
+  await refreshYoutubeLiveStatus();
+}
+
+async function setComparisonViewSlot(slot) {
+  if (!state.compareMode || !state.isSinglePaneComparison) return;
+  const target = slot === 'secondary' ? 'secondary' : 'primary';
+  if (target === 'secondary' && !state.secondaryPrefecture) await ensureSecondaryPrefecture(state.prefecture?.id);
+  if (assignedCustomSlot(target)) await ensureCustomPrefectureData();
+  if (state.singleViewSlot === target) {
+    updatePrefectureSelectionUI();
+    return;
+  }
+
+  state.singleViewSlot = target;
+  state.visibilityPrefectureSlot = target;
+  updatePrefectureSelectionUI();
   updatePageMeta();
   updateYoutubeToggle();
   renderCameras();
