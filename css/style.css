@@ -1423,3 +1423,320 @@ a { color: inherit; }
     order: -1;
   }
 }
+
+/* v16: 画面幅追従・スマホ列数・カスタム保存 */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.summaryBar {
+  flex-wrap: wrap;
+  gap: clamp(6px, 0.8vw, 14px);
+  padding: clamp(8px, 0.8vw, 12px) clamp(8px, 1vw, 14px);
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.summaryBar::-webkit-scrollbar { display: none; }
+.summaryBar > div,
+.summaryBar > label,
+.summaryBar > button {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.summaryBar button,
+.summaryBar select,
+.summaryBar input {
+  max-width: 100%;
+  font-size: clamp(10px, 0.7vw, 12px);
+}
+.summaryBar .youtubeToggle,
+.summaryBar .editButton,
+.summaryBar .mapToggleButton,
+.summaryBar .comparisonToggleButton,
+.summaryBar .customModeButton {
+  min-height: clamp(32px, 2.2vw, 36px);
+  padding: clamp(5px, 0.45vw, 7px) clamp(7px, 0.7vw, 12px);
+}
+.prefectureSelectionSummary {
+  max-width: min(100%, 290px);
+  flex: 0 1 auto;
+}
+.prefectureSummarySlot {
+  min-width: 0;
+  padding-right: clamp(6px, 0.65vw, 10px);
+  padding-left: clamp(6px, 0.65vw, 10px);
+}
+.prefectureSummarySlot strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.searchBox {
+  flex: 1 1 190px !important;
+  min-width: 160px;
+  margin-left: auto;
+}
+.searchBox input { width: 100%; }
+
+.customModeButton {
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid #0f766e;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.customModeButton:hover,
+.customModeButton[aria-expanded="true"] { background: #d1fae5; }
+.customModeButton.is-active {
+  background: #0f766e;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.customPanel {
+  inset: 0 0 0 auto;
+  width: min(700px, 96vw);
+  box-shadow: -18px 0 50px rgba(15, 23, 42, 0.2);
+  transform: translateX(105%);
+}
+.customPanel.open { transform: translateX(0); }
+.customSlotSection {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.8fr) minmax(180px, 1fr);
+  gap: 10px;
+  margin: 16px 0 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-muted);
+}
+.customField {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+.customField select,
+.customField input {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+.customSlotButtons {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.customSlotButtons button { flex: 1 1 90px; }
+.dangerButton {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 800;
+}
+.dangerButton:hover { background: #fecaca; }
+button:disabled { cursor: not-allowed; opacity: 0.45; }
+
+.customCameraTools {
+  position: sticky;
+  top: -18px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(130px, 0.55fr) minmax(190px, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  margin: 0 -4px 10px;
+  padding: 10px 4px;
+  background: var(--surface);
+}
+.customSelectionSummary {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.customSelectionSummary strong { color: #0f766e; font-size: 15px; }
+.customCameraList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-bottom: 82px;
+}
+.customCameraOption {
+  display: grid;
+  grid-template-columns: auto 116px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.customCameraOption:hover { background: #f8fafc; }
+.customCameraOption.is-selected {
+  border-color: #0f766e;
+  background: #ecfdf5;
+  box-shadow: inset 0 0 0 1px #0f766e;
+}
+.customCameraOption > input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #0f766e;
+}
+.customCameraPreview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #dfe5ec;
+}
+.customCameraPreview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+.customCameraPreview > span {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 5px;
+  color: var(--muted);
+  font-size: 9px;
+  text-align: center;
+}
+.customCameraPreview.error img { display: none; }
+.customCameraPreview.error > span { display: grid; }
+.customCameraText {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.customCameraText small { color: #0f766e; font-size: 9px; font-weight: 800; }
+.customCameraText strong,
+.customCameraText span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.customCameraText strong { font-size: 11px; }
+.customCameraText span { color: var(--muted); font-size: 10px; }
+.customPanelActions {
+  position: sticky;
+  bottom: -18px;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 -18px -18px;
+  padding: 12px 18px 18px;
+  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(8px);
+}
+.customPanelActions .primaryButton { background: #0f766e; }
+.customCameraSection .areaTitle { border-left-color: #7c3aed; }
+
+@media (max-width: 1150px) and (min-width: 621px) {
+  .summaryBar { gap: 6px; }
+  .summaryBar .summaryLabel { font-size: 10px; }
+  .prefectureSelectionSummary { max-width: 225px; }
+  .searchBox { flex-basis: 160px !important; }
+}
+
+@media (max-width: 620px) {
+  .topbar,
+  .headerTools,
+  .summaryBar { max-width: 100%; }
+  .headerTools {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .headerTools > * { min-width: 0; }
+  .summaryBar {
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+  }
+  .summaryBar > div,
+  .summaryBar > label,
+  .summaryBar > button { flex: 0 1 auto; }
+  .summaryBar .summaryLabel { font-size: 9px; }
+  .summaryBar button,
+  .summaryBar select,
+  .summaryBar input { font-size: 10px; }
+  .prefectureSelectionSummary { width: auto; max-width: 100%; }
+  .prefectureSelectionSummary .prefectureSummarySlot { min-height: 32px; }
+  #secondaryPrefectureSummaryButton,
+  #comparisonToggleButton,
+  #visibilitySecondaryPrefectureButton { display: none !important; }
+  .prefectureTargetSelector { grid-template-columns: 1fr; }
+  .searchBox {
+    order: 20;
+    width: 100%;
+    min-width: 100%;
+    flex-basis: 100% !important;
+    margin-left: 0;
+  }
+  .layout.mobileColumns1 .cameraGrid { grid-template-columns: 1fr !important; }
+  .layout.mobileColumns2 .cameraGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .layout.mobileColumns3 .cameraGrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px; }
+  .layout.mobileColumns4 .cameraGrid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 5px; }
+  .layout.mobileColumns3 .cardHeader,
+  .layout.mobileColumns4 .cardHeader,
+  .layout.mobileColumns3 .cardFooter,
+  .layout.mobileColumns4 .cardFooter { padding: 4px; }
+  .layout.mobileColumns3 .city,
+  .layout.mobileColumns4 .city { font-size: 9px; }
+  .layout.mobileColumns3 .placeLink,
+  .layout.mobileColumns4 .placeLink { font-size: 8px; }
+  .customPanel { width: 100vw; }
+  .customSlotSection { grid-template-columns: 1fr; }
+  .customSlotButtons { grid-column: auto; }
+  .customCameraTools {
+    grid-template-columns: 1fr 1fr;
+    top: -18px;
+  }
+  .customSelectionSummary { grid-column: 1 / -1; justify-content: space-between; }
+  .customCameraList { grid-template-columns: 1fr; }
+  .customCameraOption { grid-template-columns: auto 100px minmax(0, 1fr); }
+}
+
+@media (max-width: 390px) {
+  .customCameraOption { grid-template-columns: auto 86px minmax(0, 1fr); }
+  .summaryBar .youtubePlay { display: none; }
+}
+
+@media (max-width: 1100px) and (min-width: 621px) {
+  .topbar { flex-wrap: wrap; gap: 8px 14px; }
+  .brandArea { min-width: 0; flex: 1 1 240px; }
+  .headerTools { min-width: 0; flex: 1 1 420px; flex-wrap: wrap; }
+}
