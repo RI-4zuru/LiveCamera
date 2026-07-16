@@ -118,6 +118,7 @@ const elements = {
   comparisonToggleButton: document.querySelector('#comparisonToggleButton'),
   customModeButton: document.querySelector('#customModeButton'),
   customReorderButton: document.querySelector('#customReorderButton'),
+  customOrderResetButton: document.querySelector('#customOrderResetButton'),
   customPanel: document.querySelector('#customPanel'),
   customPanelClose: document.querySelector('#customPanelClose'),
   customSlotSelect: document.querySelector('#customSlotSelect'),
@@ -571,18 +572,16 @@ async function renderCustomCameraEditor() {
     image.decoding = 'async';
     image.alt = `${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)}`;
     if (isYoutube) {
-      const videoId = entry.camera.youtubeId || extractYoutubeVideoId(entry.camera.pageUrl || entry.camera.videoUrl || '');
-      image.src = entry.camera.thumbnailUrl || youtubeThumbnailUrl(videoId);
+      setYoutubeSelectionThumbnail(image, entry.camera, media);
       image.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
         window.open(entry.camera.pageUrl, '_blank', 'noopener,noreferrer');
       });
-      image.addEventListener('error', () => media.classList.add('error'));
-      const badge = document.createElement('span');
+      const badge = document.createElement('div');
       badge.className = 'customYoutubeBadge';
       badge.textContent = 'YouTube';
-      const imageError = document.createElement('span');
+      const imageError = document.createElement('div');
       imageError.className = 'customCameraPreviewError';
       imageError.textContent = 'サムネイル取得不可';
       media.append(image, badge, imageError);
@@ -1443,26 +1442,43 @@ function currentCustomReorderContext() {
   return source.type === 'custom' ? { type: 'slot', slotId: source.customSlot.id } : null;
 }
 
+function customOrderIsCustomized(target) {
+  if (!target) return false;
+  if (target.type === 'draft') return state.customOrderCustomized === true;
+  return state.customSlots.find((item) => item.id === target.slotId)?.orderCustomized === true;
+}
+
 function updateCustomReorderButton() {
-  if (!elements.customReorderButton) return;
   const context = currentCustomReorderContext();
   if (!context) state.customReorderMode = false;
-  elements.customReorderButton.hidden = !context;
-  elements.customReorderButton.classList.toggle('is-active', state.customReorderMode);
-  elements.customReorderButton.setAttribute('aria-pressed', String(state.customReorderMode));
-  elements.customReorderButton.textContent = state.customReorderMode ? '完了' : '並替';
-  elements.customReorderButton.title = state.customReorderMode
-    ? 'ドラッグ並べ替えを終了します'
-    : 'カスタム画像の表示順をドラッグで変更します';
+
+  if (elements.customReorderButton) {
+    elements.customReorderButton.hidden = !context;
+    elements.customReorderButton.classList.toggle('is-active', state.customReorderMode);
+    elements.customReorderButton.setAttribute('aria-pressed', String(state.customReorderMode));
+    elements.customReorderButton.textContent = state.customReorderMode ? '完了' : '並替';
+    elements.customReorderButton.title = state.customReorderMode
+      ? 'ドラッグ並べ替えを終了します'
+      : 'カスタム画像の表示順をドラッグまたはボタンで変更します';
+  }
+
+  if (elements.customOrderResetButton) {
+    elements.customOrderResetButton.hidden = !context;
+    elements.customOrderResetButton.disabled = !context || !customOrderIsCustomized(context);
+    elements.customOrderResetButton.title = customOrderIsCustomized(context)
+      ? 'カスタム画像を元のデータ順へ戻します'
+      : '現在は元のデータ順です';
+  }
 }
 
 function toggleCustomReorderMode() {
   if (!currentCustomReorderContext()) return;
   state.customReorderMode = !state.customReorderMode;
+  stopCustomDragAutoScroll();
   updateCustomReorderButton();
   renderCameras();
   showStatus(state.customReorderMode
-    ? '画像をドラッグして表示順を変更できます。「完了」で終了します。'
+    ? '画像をドラッグするか、各カードの「前・後・先頭・末尾」で順番を変更できます。'
     : '並べ替えを終了しました。');
 }
 
@@ -1472,38 +1488,63 @@ function customKeysForReorderTarget(target) {
   return slot ? [...slot.cameras] : [];
 }
 
-function saveCustomKeysForReorderTarget(target, keys) {
+function saveCustomKeysForReorderTarget(target, keys, orderCustomized = true) {
   if (target.type === 'draft') {
     state.customSelection = keys;
-    state.customOrderCustomized = true;
+    state.customOrderCustomized = orderCustomized;
     persistCustomSelection();
+    updateCustomReorderButton();
     return;
   }
   const slot = state.customSlots.find((item) => item.id === target.slotId);
   if (!slot) return;
   slot.cameras = keys;
-  slot.orderCustomized = true;
+  slot.orderCustomized = orderCustomized;
   slot.updatedAt = new Date().toISOString();
   persistCustomSlots();
   if (state.customActiveSlotId === slot.id) {
     state.customSelection = [...keys];
-    state.customOrderCustomized = true;
+    state.customOrderCustomized = orderCustomized;
     persistCustomSelection();
   }
   updateCustomSlotControls();
+  updateCustomReorderButton();
+}
+
+function resetCustomOrder() {
+  const target = currentCustomReorderContext();
+  if (!target) return;
+  const keys = normalizeCustomKeys(customKeysForReorderTarget(target), false);
+  saveCustomKeysForReorderTarget(target, keys, false);
+  stopCustomDragAutoScroll();
+  renderCameras();
+  updatePageMeta();
+  showStatus('カスタム画像を元のデータ順へ戻しました。');
 }
 
 function clearCustomDragClasses() {
-  document.querySelectorAll('.cameraCard.is-dragging, .cameraCard.drag-before, .cameraCard.drag-after')
-    .forEach((card) => card.classList.remove('is-dragging', 'drag-before', 'drag-after'));
+  document.querySelectorAll('.cameraCard.is-dragging, .cameraCard.drag-before, .cameraCard.drag-after, .customReorderDropZone.is-over')
+    .forEach((element) => element.classList.remove('is-dragging', 'drag-before', 'drag-after', 'is-over'));
+}
+
+function splitCustomKeysForImageReorder(target) {
+  const byKey = new Map(allCustomCameraEntries().map((entry) => [entry.key, entry]));
+  const currentKeys = normalizeCustomKeys(customKeysForReorderTarget(target), true);
+  return {
+    imageKeys: currentKeys.filter((key) => cameraMediaType(byKey.get(key)?.camera || {}) === 'image'),
+    otherKeys: currentKeys.filter((key) => cameraMediaType(byKey.get(key)?.camera || {}) !== 'image')
+  };
+}
+
+function commitCustomImageOrder(target, imageKeys, otherKeys) {
+  saveCustomKeysForReorderTarget(target, [...imageKeys, ...otherKeys], true);
+  renderCameras();
+  updatePageMeta();
 }
 
 function reorderCustomImages(target, draggedKey, targetKey, insertAfter) {
   if (!draggedKey || !targetKey || draggedKey === targetKey) return;
-  const byKey = new Map(allCustomCameraEntries().map((entry) => [entry.key, entry]));
-  const currentKeys = normalizeCustomKeys(customKeysForReorderTarget(target), true);
-  const imageKeys = currentKeys.filter((key) => cameraMediaType(byKey.get(key)?.camera || {}) === 'image');
-  const otherKeys = currentKeys.filter((key) => cameraMediaType(byKey.get(key)?.camera || {}) !== 'image');
+  const { imageKeys, otherKeys } = splitCustomKeysForImageReorder(target);
   const fromIndex = imageKeys.indexOf(draggedKey);
   const targetIndex = imageKeys.indexOf(targetKey);
   if (fromIndex < 0 || targetIndex < 0) return;
@@ -1511,16 +1552,107 @@ function reorderCustomImages(target, draggedKey, targetKey, insertAfter) {
   let insertionIndex = imageKeys.indexOf(targetKey);
   if (insertAfter) insertionIndex += 1;
   imageKeys.splice(Math.max(0, insertionIndex), 0, draggedKey);
-  saveCustomKeysForReorderTarget(target, [...imageKeys, ...otherKeys]);
-  renderCameras();
-  updatePageMeta();
+  commitCustomImageOrder(target, imageKeys, otherKeys);
+}
+
+function moveCustomImage(target, customKey, action) {
+  const { imageKeys, otherKeys } = splitCustomKeysForImageReorder(target);
+  const fromIndex = imageKeys.indexOf(customKey);
+  if (fromIndex < 0) return;
+  const [key] = imageKeys.splice(fromIndex, 1);
+  let insertionIndex = fromIndex;
+  if (action === 'first') insertionIndex = 0;
+  if (action === 'previous') insertionIndex = Math.max(0, fromIndex - 1);
+  if (action === 'next') insertionIndex = Math.min(imageKeys.length, fromIndex + 1);
+  if (action === 'last') insertionIndex = imageKeys.length;
+  imageKeys.splice(insertionIndex, 0, key);
+  commitCustomImageOrder(target, imageKeys, otherKeys);
+}
+
+let customDragAutoScrollFrame = null;
+let customDragPointerY = null;
+
+function customDragAutoScrollStep() {
+  customDragAutoScrollFrame = null;
+  if (customDragPointerY === null || !state.customDraggedKey) return;
+  const edge = Math.min(150, Math.max(80, window.innerHeight * 0.16));
+  let delta = 0;
+  if (customDragPointerY < edge) {
+    delta = -Math.ceil((edge - customDragPointerY) / 4);
+  } else if (customDragPointerY > window.innerHeight - edge) {
+    delta = Math.ceil((customDragPointerY - (window.innerHeight - edge)) / 4);
+  }
+  if (delta) window.scrollBy(0, Math.max(-34, Math.min(34, delta)));
+  customDragAutoScrollFrame = requestAnimationFrame(customDragAutoScrollStep);
+}
+
+function updateCustomDragAutoScroll(clientY) {
+  customDragPointerY = clientY;
+  if (!customDragAutoScrollFrame) customDragAutoScrollFrame = requestAnimationFrame(customDragAutoScrollStep);
+}
+
+function stopCustomDragAutoScroll() {
+  customDragPointerY = null;
+  if (customDragAutoScrollFrame) cancelAnimationFrame(customDragAutoScrollFrame);
+  customDragAutoScrollFrame = null;
+}
+
+function createCustomReorderControls(customKey, target) {
+  const controls = document.createElement('div');
+  controls.className = 'customReorderControls';
+  const actions = [
+    ['first', '先頭', '先頭へ移動'],
+    ['previous', '前', '1つ前へ移動'],
+    ['next', '後', '1つ後ろへ移動'],
+    ['last', '末尾', '末尾へ移動']
+  ];
+  for (const [action, label, title] of actions) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    button.title = title;
+    button.addEventListener('pointerdown', (event) => event.stopPropagation());
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      moveCustomImage(target, customKey, action);
+    });
+    controls.appendChild(button);
+  }
+  return controls;
+}
+
+function createCustomReorderDropZone(target, edge) {
+  const zone = document.createElement('div');
+  zone.className = `customReorderDropZone is-${edge}`;
+  zone.textContent = edge === 'start' ? 'ここへドロップして先頭へ' : 'ここへドロップして末尾へ';
+  zone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    updateCustomDragAutoScroll(event.clientY);
+    zone.classList.add('is-over');
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('is-over'));
+  zone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    const draggedKey = state.customDraggedKey || event.dataTransfer.getData('text/plain');
+    clearCustomDragClasses();
+    stopCustomDragAutoScroll();
+    state.customDraggedKey = null;
+    if (draggedKey) moveCustomImage(target, draggedKey, edge === 'start' ? 'first' : 'last');
+  });
+  return zone;
 }
 
 function enableCustomCardReorder(card, customKey, target) {
   card.draggable = true;
   card.dataset.customKey = customKey;
   card.classList.add('is-reorderable');
+  card.appendChild(createCustomReorderControls(customKey, target));
   card.addEventListener('dragstart', (event) => {
+    if (event.target.closest?.('.customReorderControls')) {
+      event.preventDefault();
+      return;
+    }
     state.customDraggedKey = customKey;
     card.classList.add('is-dragging');
     event.dataTransfer.effectAllowed = 'move';
@@ -1528,6 +1660,7 @@ function enableCustomCardReorder(card, customKey, target) {
   });
   card.addEventListener('dragover', (event) => {
     event.preventDefault();
+    updateCustomDragAutoScroll(event.clientY);
     if (!state.customDraggedKey || state.customDraggedKey === customKey) return;
     clearCustomDragClasses();
     const rect = card.getBoundingClientRect();
@@ -1541,11 +1674,13 @@ function enableCustomCardReorder(card, customKey, target) {
     const draggedKey = state.customDraggedKey || event.dataTransfer.getData('text/plain');
     const insertAfter = card.classList.contains('drag-after');
     clearCustomDragClasses();
+    stopCustomDragAutoScroll();
     state.customDraggedKey = null;
     reorderCustomImages(target, draggedKey, customKey, insertAfter);
   });
   card.addEventListener('dragend', () => {
     state.customDraggedKey = null;
+    stopCustomDragAutoScroll();
     clearCustomDragClasses();
   });
 }
@@ -1573,6 +1708,13 @@ function renderCustomEntrySet(sourceEntries, titleText, reorderTarget = null) {
   title.textContent = titleText;
   const grid = document.createElement('div');
   grid.className = 'cameraGrid';
+  if (state.customReorderMode && reorderTarget) {
+    grid.addEventListener('dragover', (event) => {
+      if (!state.customDraggedKey) return;
+      event.preventDefault();
+      updateCustomDragAutoScroll(event.clientY);
+    });
+  }
 
   for (const entry of displayEntries) {
     const card = createCameraCard(entry.camera, entry.area, {
@@ -1588,7 +1730,14 @@ function renderCustomEntrySet(sourceEntries, titleText, reorderTarget = null) {
     addMarker(entry.camera, entry.area);
     visibleIds.add(entry.camera.id);
   }
-  section.append(title, grid);
+  if (state.customReorderMode && reorderTarget) {
+    const guide = document.createElement('p');
+    guide.className = 'customReorderGuide';
+    guide.textContent = 'ドラッグ、またはカード上のボタンで順番を変更できます。';
+    section.append(title, guide, createCustomReorderDropZone(reorderTarget, 'start'), grid, createCustomReorderDropZone(reorderTarget, 'end'));
+  } else {
+    section.append(title, grid);
+  }
 
   if (!displayEntries.length) {
     const empty = document.createElement('div');
@@ -2745,6 +2894,7 @@ function bindEvents() {
   elements.comparisonToggleButton?.addEventListener('click', toggleComparisonMode);
   elements.customModeButton?.addEventListener('click', openCustomPanel);
   elements.customReorderButton?.addEventListener('click', toggleCustomReorderMode);
+  elements.customOrderResetButton?.addEventListener('click', resetCustomOrder);
   elements.customPanelClose?.addEventListener('click', () => closeCustomPanel());
   elements.customCameraSearch?.addEventListener('input', async (event) => {
     state.customSearch = event.target.value;
@@ -3239,6 +3389,38 @@ async function refreshYoutubeLiveStatus() {
 function startYoutubeLivePolling() {
   clearInterval(state.youtubeStatusTimer);
   state.youtubeStatusTimer = window.setInterval(refreshYoutubeLiveStatus, YOUTUBE_LIVE_REFRESH_MS);
+}
+
+function youtubeThumbnailCandidates(camera) {
+  const videoId = camera?.youtubeId || extractYoutubeVideoId(camera?.pageUrl || camera?.videoUrl || '');
+  if (!videoId) return [];
+  const safeId = encodeURIComponent(videoId);
+  return [...new Set([
+    camera?.thumbnailUrl,
+    `https://i.ytimg.com/vi/${safeId}/hqdefault.jpg`,
+    `https://img.youtube.com/vi/${safeId}/hqdefault.jpg`,
+    `https://i.ytimg.com/vi/${safeId}/mqdefault.jpg`,
+    `https://img.youtube.com/vi/${safeId}/0.jpg`
+  ].filter(Boolean))];
+}
+
+function setYoutubeSelectionThumbnail(image, camera, media) {
+  const candidates = youtubeThumbnailCandidates(camera);
+  let candidateIndex = 0;
+  image.referrerPolicy = 'no-referrer';
+  image.classList.add('youtubeSelectionThumbnail');
+  const loadNext = () => {
+    if (candidateIndex >= candidates.length) {
+      media.classList.add('error');
+      image.removeAttribute('src');
+      return;
+    }
+    media.classList.remove('error');
+    image.src = candidates[candidateIndex++];
+  };
+  image.addEventListener('load', () => media.classList.remove('error'));
+  image.addEventListener('error', loadNext);
+  loadNext();
 }
 
 function youtubeThumbnailUrl(videoId) {
