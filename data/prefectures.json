@@ -163,7 +163,7 @@
         {
           "id": "kyoto",
           "name": "京都府",
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "osaka",
