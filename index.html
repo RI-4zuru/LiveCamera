@@ -41,12 +41,12 @@
     </header>
 
     <section id="summaryBar" class="summaryBar" aria-label="表示情報">
-      <div id="prefectureSelectionSummary" class="prefectureSelectionSummary" aria-label="第1県と第2県">
-        <button id="primaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="true" title="1県表示中は第1県を表示します。2県表示中は左右を入れ替えます。">
-          <span class="summaryLabel">第1県</span><strong id="primaryPrefectureName">-</strong>
+      <div id="prefectureSelectionSummary" class="prefectureSelectionSummary" aria-label="第1と第2">
+        <button id="primaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="true" title="1枠表示中は第1を表示します。2枠表示中は左右を入れ替えます。">
+          <span class="summaryLabel">第1</span><strong id="primaryPrefectureName">-</strong>
         </button>
-        <button id="secondaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="false" title="1県表示中は第2県を表示します。2県表示中は左右を入れ替えます。">
-          <span class="summaryLabel">第2県</span><strong id="secondaryPrefectureName">-</strong>
+        <button id="secondaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="false" title="1枠表示中は第2を表示します。2枠表示中は左右を入れ替えます。">
+          <span class="summaryLabel">第2</span><strong id="secondaryPrefectureName">-</strong>
         </button>
         <strong id="prefectureName" class="visuallyHidden" aria-live="polite">-</strong>
       </div>
@@ -56,14 +56,14 @@
             <span id="primaryAreaLabel" class="summaryLabel">エリア</span>
             <strong id="primaryAreaSummary">全域</strong>
           </summary>
-          <div id="primaryAreaOptions" class="areaOptionList" role="group" aria-label="第1県のエリア候補"></div>
+          <div id="primaryAreaOptions" class="areaOptionList" role="group" aria-label="第1のエリア候補"></div>
         </details>
         <details id="secondaryAreaControl" class="areaMultiSelect" hidden>
           <summary>
-            <span id="secondaryAreaLabel" class="summaryLabel">第2県エリア</span>
+            <span id="secondaryAreaLabel" class="summaryLabel">第2エリア</span>
             <strong id="secondaryAreaSummary">全域</strong>
           </summary>
-          <div id="secondaryAreaOptions" class="areaOptionList" role="group" aria-label="第2県のエリア候補"></div>
+          <div id="secondaryAreaOptions" class="areaOptionList" role="group" aria-label="第2のエリア候補"></div>
         </details>
       </div>
       <button id="youtubeToggle" class="youtubeToggle" type="button" aria-pressed="false" title="YouTubeライブカメラの表示を切り替えます">
@@ -87,8 +87,8 @@
           <option value="8">8列</option>
         </select>
       </label>
-      <button id="comparisonToggleButton" class="comparisonToggleButton" type="button" aria-pressed="false" title="2つの都道府県を左右に並べます">
-        2県表示
+      <button id="comparisonToggleButton" class="comparisonToggleButton" type="button" aria-pressed="false" title="第1と第2を左右に並べます">
+        2枠表示
       </button>
       <button id="customModeButton" class="customModeButton" type="button" aria-controls="customPanel" aria-expanded="false" title="都道府県をまたいでカメラを選びます">
         カスタム
@@ -110,7 +110,7 @@
     <div class="panelHeader">
       <div>
         <strong>都道府県を選択</strong>
-        <p>先に第1県または第2県を選び、そのあと表示したい都道府県を押してください。</p>
+        <p>先に第1または第2を選び、そのあと表示したい都道府県を押してください。</p>
       </div>
       <button id="prefectureMenuClose" class="iconButton" type="button" aria-label="都道府県メニューを閉じる">×</button>
     </div>
@@ -118,21 +118,21 @@
       <legend>選択先</legend>
       <label class="prefectureTargetOption">
         <input id="primaryPrefectureTarget" type="radio" name="prefectureTarget" value="primary" checked>
-        <span>第1県</span>
+        <span>第1</span>
         <strong id="panelPrimaryPrefectureName">-</strong>
       </label>
       <label class="prefectureTargetOption">
         <input id="secondaryPrefectureTarget" type="radio" name="prefectureTarget" value="secondary">
-        <span>第2県</span>
+        <span>第2</span>
         <strong id="panelSecondaryPrefectureName">-</strong>
       </label>
     </fieldset>
-    <p class="prefecturePanelNote">灰色の項目はデータ準備中です。第2県は、1県表示中に上部の「第2県」を押して表示することも、2県表示で右側に並べることもできます。</p>
+    <p class="prefecturePanelNote">灰色の項目はデータ準備中です。第2は、1枠表示中に上部の「第2」を押して表示することも、2枠表示で右側に並べることもできます。</p>
     <nav id="prefectureNavigation" class="prefectureNavigation" aria-label="都道府県一覧"></nav>
 
     <section id="prefectureCustomSlotsSection" class="prefectureCustomSlotsSection" aria-label="保存したカスタム設定">
       <h2>保存したカスタム設定</h2>
-      <p>第1県または第2県を選んでから押すと、その枠へカスタム設定を割り当てます。</p>
+      <p>第1または第2を選んでから押すと、その枠へカスタム設定を割り当てます。</p>
       <div id="prefectureCustomSlotList" class="prefectureCustomSlotList"></div>
     </section>
   </aside>
@@ -145,12 +145,12 @@
       </div>
       <button id="visibilityPanelClose" class="iconButton" type="button" aria-label="表示編集を閉じる">×</button>
     </div>
-    <div id="visibilityPrefectureSwitcher" class="visibilityPrefectureSwitcher" aria-label="編集する都道府県" hidden>
+    <div id="visibilityPrefectureSwitcher" class="visibilityPrefectureSwitcher" aria-label="編集する表示枠" hidden>
       <button id="visibilityPrimaryPrefectureButton" class="visibilityPrefectureButton is-active" type="button">
-        <span>第1県</span><strong id="visibilityPrimaryPrefectureName">-</strong>
+        <span>第1</span><strong id="visibilityPrimaryPrefectureName">-</strong>
       </button>
       <button id="visibilitySecondaryPrefectureButton" class="visibilityPrefectureButton" type="button">
-        <span>第2県</span><strong id="visibilitySecondaryPrefectureName">-</strong>
+        <span>第2</span><strong id="visibilitySecondaryPrefectureName">-</strong>
       </button>
     </div>
 
@@ -287,6 +287,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260716-25"></script>
+  <script type="module" src="./js/app.js?v=20260716-26"></script>
 </body>
 </html>
