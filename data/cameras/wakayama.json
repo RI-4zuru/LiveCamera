@@ -29,6 +29,11 @@
       "id": "shingu_higashimuro",
       "name": "新宮・東牟婁",
       "color": "red"
+    },
+    {
+      "id": "marine",
+      "name": "海上",
+      "color": "black"
     }
   ],
   "cameras": [
@@ -1258,15 +1263,15 @@
     },
     {
       "id": "wakayama-extra-camera1-image",
-      "area": "shingu_higashimuro",
+      "area": "marine",
       "city": "串本町",
-      "place": "潮岬風力実験所",
+      "place": "潮岬風力実験所から望む太平洋",
       "mediaType": "image",
       "provider": "京都大学防災研究所 潮岬風力実験所",
       "pageUrl": "https://rcfcd.dpri.kyoto-u.ac.jp/frs/swel/camera.html",
       "imageUrl": "https://rcfcd.dpri.kyoto-u.ac.jp/frs/swel/web_camera/camera1_image.jpg",
-      "latitude": 33.447,
-      "longitude": 135.754
+      "latitude": 33.4465674,
+      "longitude": 135.7566748
     },
     {
       "id": "wakayama-extra-c00014",
@@ -1582,15 +1587,15 @@
     },
     {
       "id": "wakayama-y02",
-      "area": "shingu_higashimuro",
+      "area": "marine",
       "city": "串本町",
-      "place": "串本町 情報カメラ",
+      "place": "串本港・太平洋・くしもと大橋",
       "mediaType": "youtube",
       "provider": "テレビ和歌山【公式】",
       "pageUrl": "https://www.youtube.com/watch?v=QPFEvMS-LoU",
       "youtubeId": "QPFEvMS-LoU",
-      "latitude": 33.4726,
-      "longitude": 135.7812
+      "latitude": 33.480939,
+      "longitude": 135.785695
     },
     {
       "id": "wakayama-y03",
@@ -2059,6 +2064,30 @@
       "imageUrl": "https://kasensabo01.pref.wakayama.lg.jp/hyoujidata/camera/C11611.jpg",
       "latitude": 33.7675,
       "longitude": 135.3657
+    },
+    {
+      "id": "wakayama-marine-y001",
+      "area": "marine",
+      "city": "田辺市",
+      "place": "天神崎・田辺湾",
+      "mediaType": "youtube",
+      "provider": "天神崎の自然を大切にする会 / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=-DOezXoXqeU",
+      "youtubeId": "-DOezXoXqeU",
+      "latitude": 33.726733,
+      "longitude": 135.353477
+    },
+    {
+      "id": "wakayama-marine-y003",
+      "area": "marine",
+      "city": "串本町",
+      "place": "ビーチテラス串本 太平洋",
+      "mediaType": "youtube",
+      "provider": "BEACH TERRACE KUSHIMOTO / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=_IegwToRnFw",
+      "youtubeId": "_IegwToRnFw",
+      "latitude": 33.505593,
+      "longitude": 135.639563
     }
   ]
 }
