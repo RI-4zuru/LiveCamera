@@ -49,6 +49,11 @@
       "id": "tajima_south",
       "name": "但馬南部",
       "color": "gold"
+    },
+    {
+      "id": "marine",
+      "name": "海上",
+      "color": "black"
     }
   ],
   "cameras": [
@@ -582,7 +587,7 @@
     },
     {
       "id": "hyogo-r063",
-      "area": "hanshin",
+      "area": "marine",
       "city": "西宮市",
       "place": "今津港 今津港局",
       "mediaType": "image",
@@ -738,7 +743,7 @@
     },
     {
       "id": "hyogo-y001",
-      "area": "hanshin",
+      "area": "marine",
       "city": "神戸市中央区",
       "place": "神戸ウォーターフロント・メリケンパーク",
       "mediaType": "youtube",
@@ -750,7 +755,7 @@
     },
     {
       "id": "hyogo-y002",
-      "area": "hanshin",
+      "area": "marine",
       "city": "神戸市垂水区",
       "place": "明石海峡大橋 4Kライブカメラ",
       "mediaType": "youtube",
@@ -2631,6 +2636,54 @@
       "youtubeId": "eL3MIhLVKeg",
       "latitude": 35.389,
       "longitude": 134.703
+    },
+    {
+      "id": "hyogo-marine-y001",
+      "city": "神戸市垂水区",
+      "place": "舞子ビラ神戸 明石海峡・瀬戸内海",
+      "mediaType": "youtube",
+      "provider": "シーサイドホテル舞子ビラ神戸 / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=W5iKrSNyJhQ",
+      "youtubeId": "W5iKrSNyJhQ",
+      "latitude": 34.631293,
+      "longitude": 135.038768,
+      "area": "marine"
+    },
+    {
+      "id": "hyogo-marine-y002",
+      "city": "明石市",
+      "place": "明石浦漁業協同組合 瀬戸内海・明石海峡大橋",
+      "mediaType": "youtube",
+      "provider": "明石浦漁業協同組合 / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=xoaPajNchN4",
+      "youtubeId": "xoaPajNchN4",
+      "latitude": 34.6435,
+      "longitude": 134.9922,
+      "area": "marine"
+    },
+    {
+      "id": "hyogo-marine-y003",
+      "city": "淡路市",
+      "place": "淡路サービスエリア上り 明石海峡大橋・瀬戸内海",
+      "mediaType": "youtube",
+      "provider": "JBハイウェイサービス / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=wVYiVODQAkg",
+      "youtubeId": "wVYiVODQAkg",
+      "latitude": 34.5833,
+      "longitude": 135.0209,
+      "area": "marine"
+    },
+    {
+      "id": "hyogo-marine-y004",
+      "city": "香美町",
+      "place": "柴山港・日本海",
+      "mediaType": "youtube",
+      "provider": "柴山港ライブカメラ / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=gCLcqnKyFHI",
+      "youtubeId": "gCLcqnKyFHI",
+      "latitude": 35.648,
+      "longitude": 134.66,
+      "area": "marine"
     }
   ]
 }
