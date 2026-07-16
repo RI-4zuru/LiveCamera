@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260716-21">
+  <link rel="stylesheet" href="./css/style.css?v=20260716-23">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -79,8 +79,12 @@
       <label id="gridColumnControl" class="gridColumnControl" hidden>
         <span class="summaryLabel">画像列数</span>
         <select id="gridColumnSelect" aria-label="画像の列数">
+          <option value="1">1列</option>
+          <option value="2">2列</option>
+          <option value="3">3列</option>
           <option value="4">4列</option>
           <option value="6">6列</option>
+          <option value="8">8列</option>
         </select>
       </label>
       <button id="comparisonToggleButton" class="comparisonToggleButton" type="button" aria-pressed="false" title="2つの都道府県を左右に並べます">
@@ -277,6 +281,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260716-21"></script>
+  <script type="module" src="./js/app.js?v=20260716-23"></script>
 </body>
 </html>
