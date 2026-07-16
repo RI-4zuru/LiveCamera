@@ -1762,6 +1762,48 @@
       "youtubeId": "q3PaBFivEVE",
       "latitude": 34.6865,
       "longitude": 135.6876
+    },
+    {
+      "id": "nara-pref-dam-138",
+      "area": "northwest",
+      "city": "天理市",
+      "place": "天理ダム上流（布留川）",
+      "pageUrl": "https://www.kasen.pref.nara.jp/sppub/camera/camera_site_138.html?nw=1",
+      "imageSource": "naraPrefectureRiver",
+      "stationId": 138,
+      "latitude": 34.588333,
+      "longitude": 135.876944,
+      "mediaType": "image",
+      "provider": "奈良県 河川情報システム",
+      "riverName": "布留川"
+    },
+    {
+      "id": "nara-pref-dam-144",
+      "area": "northwest",
+      "city": "奈良市",
+      "place": "岩井川ダム上流（岩井川）",
+      "pageUrl": "https://www.kasen.pref.nara.jp/sppub/camera/camera_site_144.html?nw=1",
+      "imageSource": "naraPrefectureRiver",
+      "stationId": 144,
+      "latitude": 34.660278,
+      "longitude": 135.869167,
+      "mediaType": "image",
+      "provider": "奈良県 河川情報システム",
+      "riverName": "岩井川"
+    },
+    {
+      "id": "nara-pref-dam-139",
+      "area": "northwest",
+      "city": "天理市",
+      "place": "白川ダム下流（高瀬川）",
+      "pageUrl": "https://www.kasen.pref.nara.jp/sppub/camera/camera_site_139.html?nw=1",
+      "imageSource": "naraPrefectureRiver",
+      "stationId": 139,
+      "latitude": 34.621944,
+      "longitude": 135.848528,
+      "mediaType": "image",
+      "provider": "奈良県 河川情報システム",
+      "riverName": "高瀬川"
     }
   ]
 }
