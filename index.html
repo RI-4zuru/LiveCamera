@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260715-15">
+  <link rel="stylesheet" href="./css/style.css?v=20260716-16">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -75,6 +75,9 @@
       </label>
       <button id="comparisonToggleButton" class="comparisonToggleButton" type="button" aria-pressed="false" title="2つの都道府県を左右に並べます">
         2県表示
+      </button>
+      <button id="customModeButton" class="customModeButton" type="button" aria-controls="customPanel" aria-expanded="false" title="都道府県をまたいでカメラを選びます">
+        カスタム
       </button>
       <label class="searchBox">
         <span class="summaryLabel">絞り込み</span>
@@ -158,6 +161,61 @@
     </section>
   </aside>
 
+
+  <aside id="customPanel" class="sidePanel customPanel" aria-hidden="true">
+    <div class="panelHeader">
+      <div>
+        <strong>カスタム表示</strong>
+        <p>都道府県をまたいで静止画カメラを選択し、名前を付けて保存できます。</p>
+      </div>
+      <button id="customPanelClose" class="iconButton" type="button" aria-label="カスタム表示を閉じる">×</button>
+    </div>
+
+    <section class="customSlotSection" aria-label="保存スロット">
+      <label class="customField">
+        <span>保存スロット</span>
+        <select id="customSlotSelect">
+          <option value="">保存スロットを選択</option>
+        </select>
+      </label>
+      <label class="customField">
+        <span>スロット名</span>
+        <input id="customSlotName" type="text" maxlength="40" placeholder="例：雨天監視用">
+      </label>
+      <div class="customSlotButtons">
+        <button id="customLoadSlotButton" class="secondaryButton" type="button">読み込む</button>
+        <button id="customSaveNewButton" class="secondaryButton" type="button">新規保存</button>
+        <button id="customOverwriteButton" class="secondaryButton" type="button">上書き</button>
+        <button id="customRenameButton" class="secondaryButton" type="button">名前変更</button>
+        <button id="customDeleteButton" class="dangerButton" type="button">削除</button>
+      </div>
+    </section>
+
+    <div class="customCameraTools">
+      <label class="customField">
+        <span>都道府県</span>
+        <select id="customPrefectureFilter">
+          <option value="all">すべて</option>
+        </select>
+      </label>
+      <label class="customField customSearchField">
+        <span>カメラ検索</span>
+        <input id="customCameraSearch" type="search" placeholder="市町村名・地点名" autocomplete="off">
+      </label>
+      <div class="customSelectionSummary">
+        選択中 <strong id="customSelectedCount">0</strong>件
+        <button id="customClearSelectionButton" class="secondaryButton" type="button">選択解除</button>
+      </div>
+    </div>
+
+    <div id="customCameraList" class="customCameraList" aria-live="polite"></div>
+
+    <div class="customPanelActions">
+      <button id="customNormalViewButton" class="secondaryButton" type="button">通常表示に戻る</button>
+      <button id="customApplyButton" class="primaryButton" type="button">選択画像を表示</button>
+    </div>
+  </aside>
+
   <div id="panelBackdrop" class="panelBackdrop" hidden></div>
 
   <main class="pageShell">
@@ -203,6 +261,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260715-15"></script>
+  <script type="module" src="./js/app.js?v=20260716-16"></script>
 </body>
 </html>
