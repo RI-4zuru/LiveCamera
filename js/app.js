@@ -320,15 +320,24 @@ function createCustomSlotId() {
 }
 
 async function ensureCustomPrefectureData() {
+  const failures = [];
   const tasks = enabledPrefectures().map(async (prefectureInfo) => {
     if (state.customPrefectureData.has(prefectureInfo.id)) return;
-    let data = null;
-    if (state.prefecture?.id === prefectureInfo.id) data = state.prefecture;
-    else if (state.secondaryPrefecture?.id === prefectureInfo.id) data = state.secondaryPrefecture;
-    else data = await fetchJson(`${DATA_ROOT}/cameras/${prefectureInfo.id}.json`);
-    state.customPrefectureData.set(prefectureInfo.id, data);
+    try {
+      let data = null;
+      if (state.prefecture?.id === prefectureInfo.id) data = state.prefecture;
+      else if (state.secondaryPrefecture?.id === prefectureInfo.id) data = state.secondaryPrefecture;
+      else data = await fetchJson(`${DATA_ROOT}/cameras/${prefectureInfo.id}.json`);
+      state.customPrefectureData.set(prefectureInfo.id, data);
+    } catch (error) {
+      failures.push({ prefectureInfo, error });
+      console.warn(`カスタム用データを読み込めませんでした: ${prefectureInfo.name}`, error);
+    }
   });
   await Promise.all(tasks);
+
+  if (!state.customPrefectureData.size && failures.length) throw failures[0].error;
+  return failures;
 }
 
 function allCustomCameraEntries() {
