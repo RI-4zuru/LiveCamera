@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260716-18">
+  <link rel="stylesheet" href="./css/style.css?v=20260716-21">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -50,12 +50,22 @@
         </button>
         <strong id="prefectureName" class="visuallyHidden" aria-live="polite">-</strong>
       </div>
-      <label id="areaControl">
-        <span class="summaryLabel">エリア</span>
-        <select id="areaSelect">
-          <option value="all">全域</option>
-        </select>
-      </label>
+      <div id="areaControls" class="areaControls">
+        <details id="primaryAreaControl" class="areaMultiSelect">
+          <summary>
+            <span id="primaryAreaLabel" class="summaryLabel">エリア</span>
+            <strong id="primaryAreaSummary">全域</strong>
+          </summary>
+          <div id="primaryAreaOptions" class="areaOptionList"></div>
+        </details>
+        <details id="secondaryAreaControl" class="areaMultiSelect" hidden>
+          <summary>
+            <span id="secondaryAreaLabel" class="summaryLabel">第2県エリア</span>
+            <strong id="secondaryAreaSummary">全域</strong>
+          </summary>
+          <div id="secondaryAreaOptions" class="areaOptionList"></div>
+        </details>
+      </div>
       <button id="youtubeToggle" class="youtubeToggle" type="button" aria-pressed="false" title="YouTubeライブカメラの表示を切り替えます">
         <span class="youtubePlay" aria-hidden="true">▶</span>
         <span id="youtubeToggleLabel">YouTube</span>
@@ -69,8 +79,10 @@
       <label id="gridColumnControl" class="gridColumnControl" hidden>
         <span class="summaryLabel">画像列数</span>
         <select id="gridColumnSelect" aria-label="画像の列数">
+          <option value="1">1列</option>
+          <option value="2">2列</option>
+          <option value="3">3列</option>
           <option value="4">4列</option>
-          <option value="6">6列</option>
         </select>
       </label>
       <button id="comparisonToggleButton" class="comparisonToggleButton" type="button" aria-pressed="false" title="2つの都道府県を左右に並べます">
@@ -172,7 +184,7 @@
     <div class="panelHeader">
       <div>
         <strong>カスタム表示</strong>
-        <p>都道府県をまたいで静止画カメラを選択し、名前を付けて保存できます。</p>
+        <p>都道府県をまたいで静止画・YouTubeライブカメラを選択し、名前を付けて保存できます。</p>
       </div>
       <button id="customPanelClose" class="iconButton" type="button" aria-label="カスタム表示を閉じる">×</button>
     </div>
@@ -218,7 +230,7 @@
 
     <div class="customPanelActions">
       <button id="customNormalViewButton" class="secondaryButton" type="button">通常表示に戻る</button>
-      <button id="customApplyButton" class="primaryButton" type="button">選択画像を表示</button>
+      <button id="customApplyButton" class="primaryButton" type="button">選択カメラを表示</button>
     </div>
   </aside>
 
@@ -267,6 +279,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260716-18"></script>
+  <script type="module" src="./js/app.js?v=20260716-21"></script>
 </body>
 </html>
