@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260716-16">
+  <link rel="stylesheet" href="./css/style.css?v=20260716-17">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -109,6 +109,12 @@
     </fieldset>
     <p class="prefecturePanelNote">灰色の項目はデータ準備中です。第2県は、1県表示中に上部の「第2県」を押して表示することも、2県表示で右側に並べることもできます。</p>
     <nav id="prefectureNavigation" class="prefectureNavigation" aria-label="都道府県一覧"></nav>
+
+    <section id="prefectureCustomSlotsSection" class="prefectureCustomSlotsSection" aria-label="保存したカスタム設定">
+      <h2>保存したカスタム設定</h2>
+      <p>保存済みのカスタム表示を、ここから直接読み込めます。</p>
+      <div id="prefectureCustomSlotList" class="prefectureCustomSlotList"></div>
+    </section>
   </aside>
 
   <aside id="visibilityPanel" class="sidePanel visibilityPanel" aria-hidden="true">
@@ -261,6 +267,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260716-16"></script>
+  <script type="module" src="./js/app.js?v=20260716-17"></script>
 </body>
 </html>
