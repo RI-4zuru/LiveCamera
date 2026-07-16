@@ -2384,3 +2384,70 @@ button:disabled { cursor: not-allowed; opacity: 0.45; }
     scrollbar-gutter: auto;
   }
 }
+
+/* v24: 地図をページスクロール中も常時追従表示 */
+/*
+ * overflow-x: hidden を持つ祖先要素は、ブラウザによって
+ * position: sticky の基準を変えてしまうことがある。
+ * clip を利用して横方向のはみ出しだけを隠し、
+ * 縦方向の追従を妨げないようにする。
+ */
+html,
+body {
+  overflow-x: clip;
+}
+
+.pageShell,
+.layout {
+  overflow: visible;
+}
+
+.layout:not(.mapHidden):not(.comparisonMode) {
+  align-items: start;
+}
+
+.layout:not(.mapHidden):not(.comparisonMode) > .mapWrap {
+  position: sticky !important;
+  top: calc(var(--sticky-stack-height) + 8px) !important;
+  z-index: 40;
+  align-self: start !important;
+  height: fit-content;
+  max-height: calc(100vh - var(--sticky-stack-height) - 16px);
+  max-height: calc(100dvh - var(--sticky-stack-height) - 16px);
+  overflow: hidden;
+}
+
+.layout:not(.mapHidden):not(.comparisonMode) > .mapWrap #map {
+  height: calc(100vh - var(--sticky-stack-height) - 74px);
+  height: calc(100dvh - var(--sticky-stack-height) - 74px);
+  min-height: min(360px, calc(100vh - var(--sticky-stack-height) - 74px));
+  min-height: min(360px, calc(100dvh - var(--sticky-stack-height) - 74px));
+}
+
+/* overflow: clip 非対応ブラウザ用。bodyをスクロールコンテナにしない。 */
+@supports not (overflow: clip) {
+  html {
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: visible;
+  }
+}
+
+@media (max-width: 620px) {
+  .layout:not(.mapHidden):not(.comparisonMode) > .mapWrap {
+    top: calc(var(--sticky-stack-height) + 6px) !important;
+    z-index: 60;
+    order: -1;
+    max-height: calc(100vh - var(--sticky-stack-height) - 12px);
+    max-height: calc(100dvh - var(--sticky-stack-height) - 12px);
+  }
+
+  .layout:not(.mapHidden):not(.comparisonMode) > .mapWrap #map {
+    height: clamp(220px, 38vh, 360px);
+    height: clamp(220px, 38dvh, 360px);
+    min-height: 220px;
+  }
+}
+
