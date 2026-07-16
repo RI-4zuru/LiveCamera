@@ -11,44 +11,39 @@
   "refreshIntervalMinutes": 5,
   "areas": [
     {
-      "id": "kyoto_city",
-      "name": "京都市",
+      "id": "kyoto_kameoka",
+      "name": "京都・亀岡",
       "color": "orange"
     },
     {
-      "id": "otokuni",
-      "name": "乙訓",
-      "color": "blue"
+      "id": "nantan_kyotamba",
+      "name": "南丹・京丹波",
+      "color": "gold"
     },
     {
-      "id": "yamashiro_north",
-      "name": "山城北",
+      "id": "yamashiro_central",
+      "name": "山城中部",
       "color": "green"
     },
     {
       "id": "yamashiro_south",
-      "name": "山城南",
+      "name": "山城南部",
       "color": "violet"
-    },
-    {
-      "id": "nantan",
-      "name": "南丹",
-      "color": "gold"
-    },
-    {
-      "id": "chutan_west",
-      "name": "中丹西",
-      "color": "red"
-    },
-    {
-      "id": "chutan_east",
-      "name": "中丹東",
-      "color": "yellow"
     },
     {
       "id": "tango",
       "name": "丹後",
       "color": "grey"
+    },
+    {
+      "id": "maizuru_ayabe",
+      "name": "舞鶴・綾部",
+      "color": "yellow"
+    },
+    {
+      "id": "fukuchiyama",
+      "name": "福知山",
+      "color": "red"
     },
     {
       "id": "marine",
@@ -59,7 +54,7 @@
   "cameras": [
     {
       "id": "kyoto-river-014",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市上京区",
       "place": "鴨川 出町橋",
       "mediaType": "image",
@@ -71,7 +66,7 @@
     },
     {
       "id": "kyoto-river-002",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市東山区",
       "place": "鴨川 三条大橋",
       "mediaType": "image",
@@ -83,7 +78,7 @@
     },
     {
       "id": "kyoto-river-001",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市伏見区",
       "place": "鴨川 鳥羽大橋",
       "mediaType": "image",
@@ -95,7 +90,7 @@
     },
     {
       "id": "kyoto-river-011",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "桂川 保津橋",
       "mediaType": "image",
@@ -107,7 +102,7 @@
     },
     {
       "id": "kyoto-river-037",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "桂川 弓削川合流部",
       "mediaType": "image",
@@ -119,7 +114,7 @@
     },
     {
       "id": "kyoto-river-055",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "犬飼川 並河橋観測所",
       "mediaType": "image",
@@ -131,7 +126,7 @@
     },
     {
       "id": "kyoto-river-048",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市左京区",
       "place": "高野川 岩倉川合流部",
       "mediaType": "image",
@@ -143,7 +138,7 @@
     },
     {
       "id": "kyoto-river-015",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市山科区",
       "place": "山科川 旧安祥寺川合流部",
       "mediaType": "image",
@@ -155,7 +150,7 @@
     },
     {
       "id": "kyoto-river-017",
-      "area": "otokuni",
+      "area": "kyoto_kameoka",
       "city": "大山崎町",
       "place": "小泉川 松田橋観測所",
       "mediaType": "image",
@@ -167,7 +162,7 @@
     },
     {
       "id": "kyoto-river-013",
-      "area": "otokuni",
+      "area": "kyoto_kameoka",
       "city": "長岡京市",
       "place": "小畑川 落合橋",
       "mediaType": "image",
@@ -179,7 +174,7 @@
     },
     {
       "id": "kyoto-river-049",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市南区",
       "place": "西高瀬川 稲村橋",
       "mediaType": "image",
@@ -191,7 +186,7 @@
     },
     {
       "id": "kyoto-river-054",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "曽我谷川 余部観測所",
       "mediaType": "image",
@@ -203,7 +198,7 @@
     },
     {
       "id": "kyoto-river-016",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "天神川 桂小橋",
       "mediaType": "image",
@@ -215,7 +210,7 @@
     },
     {
       "id": "kyoto-river-053",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "年谷川 三宅観測所",
       "mediaType": "image",
@@ -227,7 +222,7 @@
     },
     {
       "id": "kyoto-river-074",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "七谷川 七谷川",
       "mediaType": "image",
@@ -239,7 +234,7 @@
     },
     {
       "id": "kyoto-river-075",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "三俣川 三俣川",
       "mediaType": "image",
@@ -251,7 +246,7 @@
     },
     {
       "id": "kyoto-river-080",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "桂川 山本浜（量水標）",
       "mediaType": "image",
@@ -263,7 +258,7 @@
     },
     {
       "id": "kyoto-river-024",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "南丹市",
       "place": "園部川 小山観測所",
       "mediaType": "image",
@@ -275,7 +270,7 @@
     },
     {
       "id": "kyoto-river-025",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "京丹波町",
       "place": "高屋川 高屋川観測所",
       "mediaType": "image",
@@ -287,7 +282,7 @@
     },
     {
       "id": "kyoto-river-052",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "京丹波町",
       "place": "須知川 須知川橋",
       "mediaType": "image",
@@ -299,7 +294,7 @@
     },
     {
       "id": "kyoto-river-041",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "南丹市",
       "place": "棚野川 渡橋",
       "mediaType": "image",
@@ -311,7 +306,7 @@
     },
     {
       "id": "kyoto-river-026",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "南丹市",
       "place": "田原川 殿田",
       "mediaType": "image",
@@ -323,7 +318,7 @@
     },
     {
       "id": "kyoto-river-082",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "南丹市",
       "place": "由良川 大野ダム貯水池",
       "mediaType": "image",
@@ -335,7 +330,7 @@
     },
     {
       "id": "kyoto-river-038",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "井手町",
       "place": "玉川 井手観測所",
       "mediaType": "image",
@@ -347,7 +342,7 @@
     },
     {
       "id": "kyoto-river-018",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "久御山町",
       "place": "古川 佐古観測所",
       "mediaType": "image",
@@ -359,7 +354,7 @@
     },
     {
       "id": "kyoto-river-019",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "八幡市",
       "place": "大谷川 八幡観測所",
       "mediaType": "image",
@@ -371,7 +366,7 @@
     },
     {
       "id": "kyoto-river-039",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "宇治田原町",
       "place": "田原川 大導寺川合流部",
       "mediaType": "image",
@@ -383,7 +378,7 @@
     },
     {
       "id": "kyoto-river-020",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "普賢寺川 三山木観測所",
       "mediaType": "image",
@@ -395,7 +390,7 @@
     },
     {
       "id": "kyoto-river-040",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "防賀川 防賀川観測所",
       "mediaType": "image",
@@ -407,7 +402,7 @@
     },
     {
       "id": "kyoto-river-061",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "宇治市",
       "place": "弥陀次郎川 弥陀次郎川",
       "mediaType": "image",
@@ -419,7 +414,7 @@
     },
     {
       "id": "kyoto-river-062",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "城陽市",
       "place": "長谷川 長谷川（城陽市）",
       "mediaType": "image",
@@ -431,7 +426,7 @@
     },
     {
       "id": "kyoto-river-063",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "城陽市",
       "place": "青谷川 青谷川（山城）",
       "mediaType": "image",
@@ -443,7 +438,7 @@
     },
     {
       "id": "kyoto-river-064",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "井手町",
       "place": "南谷川 南谷川",
       "mediaType": "image",
@@ -455,7 +450,7 @@
     },
     {
       "id": "kyoto-river-065",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "井手町",
       "place": "渋川 渋川",
       "mediaType": "image",
@@ -467,7 +462,7 @@
     },
     {
       "id": "kyoto-river-066",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "馬坂川 馬坂川",
       "mediaType": "image",
@@ -479,7 +474,7 @@
     },
     {
       "id": "kyoto-river-067",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "天津神川 天津神川",
       "mediaType": "image",
@@ -491,7 +486,7 @@
     },
     {
       "id": "kyoto-river-068",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "手原川 手原川",
       "mediaType": "image",
@@ -503,7 +498,7 @@
     },
     {
       "id": "kyoto-river-069",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "防賀川 興戸",
       "mediaType": "image",
@@ -515,7 +510,7 @@
     },
     {
       "id": "kyoto-river-083",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "宇治市",
       "place": "井川 小倉",
       "mediaType": "image",
@@ -527,7 +522,7 @@
     },
     {
       "id": "kyoto-river-084",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "宇治市",
       "place": "堂ノ川 木幡池",
       "mediaType": "image",
@@ -791,7 +786,7 @@
     },
     {
       "id": "kyoto-river-012",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "舞鶴市",
       "place": "伊佐津川 九枠橋",
       "mediaType": "image",
@@ -803,7 +798,7 @@
     },
     {
       "id": "kyoto-river-044",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "舞鶴市",
       "place": "高野川 高野由里",
       "mediaType": "image",
@@ -815,7 +810,7 @@
     },
     {
       "id": "kyoto-river-027",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "綾部市",
       "place": "犀川 物部大橋",
       "mediaType": "image",
@@ -827,7 +822,7 @@
     },
     {
       "id": "kyoto-river-029",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "舞鶴市",
       "place": "志楽川 安岡橋",
       "mediaType": "image",
@@ -839,7 +834,7 @@
     },
     {
       "id": "kyoto-river-043",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "綾部市",
       "place": "上林川 山内川合流部",
       "mediaType": "image",
@@ -851,7 +846,7 @@
     },
     {
       "id": "kyoto-river-028",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "綾部市",
       "place": "八田川 安国寺",
       "mediaType": "image",
@@ -863,7 +858,7 @@
     },
     {
       "id": "kyoto-river-042",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "舞鶴市",
       "place": "与保呂川 椿川合流部",
       "mediaType": "image",
@@ -875,7 +870,7 @@
     },
     {
       "id": "kyoto-river-076",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "舞鶴市",
       "place": "米田川 米田川",
       "mediaType": "image",
@@ -887,7 +882,7 @@
     },
     {
       "id": "kyoto-river-085",
-      "area": "chutan_east",
+      "area": "maizuru_ayabe",
       "city": "舞鶴市",
       "place": "伊佐津川 二ツ橋",
       "mediaType": "image",
@@ -899,7 +894,7 @@
     },
     {
       "id": "kyoto-river-056",
-      "area": "chutan_west",
+      "area": "fukuchiyama",
       "city": "福知山市",
       "place": "宮川 雲原川合流部",
       "mediaType": "image",
@@ -911,7 +906,7 @@
     },
     {
       "id": "kyoto-river-032",
-      "area": "chutan_west",
+      "area": "fukuchiyama",
       "city": "福知山市",
       "place": "弘法川 厚東観測所",
       "mediaType": "image",
@@ -923,7 +918,7 @@
     },
     {
       "id": "kyoto-river-030",
-      "area": "chutan_west",
+      "area": "fukuchiyama",
       "city": "福知山市",
       "place": "土師川 前ヶ島橋",
       "mediaType": "image",
@@ -935,7 +930,7 @@
     },
     {
       "id": "kyoto-river-045",
-      "area": "chutan_west",
+      "area": "fukuchiyama",
       "city": "福知山市",
       "place": "牧川 十二橋",
       "mediaType": "image",
@@ -947,7 +942,7 @@
     },
     {
       "id": "kyoto-river-031",
-      "area": "chutan_west",
+      "area": "fukuchiyama",
       "city": "福知山市",
       "place": "和久川 和久川橋",
       "mediaType": "image",
@@ -959,7 +954,7 @@
     },
     {
       "id": "kyoto-river-078",
-      "area": "chutan_west",
+      "area": "fukuchiyama",
       "city": "福知山市",
       "place": "弘法川 上荒河橋",
       "mediaType": "image",
@@ -971,7 +966,7 @@
     },
     {
       "id": "kyoto-river-079",
-      "area": "chutan_west",
+      "area": "fukuchiyama",
       "city": "福知山市",
       "place": "法川 福知山城公園",
       "mediaType": "image",
@@ -983,7 +978,7 @@
     },
     {
       "id": "kyoto-road-c00060",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市山科区",
       "place": "国道1号 東山トンネル 東側坑口",
       "mediaType": "image",
@@ -995,7 +990,7 @@
     },
     {
       "id": "kyoto-road-c00061",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市東山区",
       "place": "国道1号 東山トンネル 西側坑口",
       "mediaType": "image",
@@ -1007,7 +1002,7 @@
     },
     {
       "id": "kyoto-road-c02486",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市下京区",
       "place": "国道1号 堀川アンダーパス 上り",
       "mediaType": "image",
@@ -1019,7 +1014,7 @@
     },
     {
       "id": "kyoto-road-c02487",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市下京区",
       "place": "国道1号 堀川アンダーパス 下り",
       "mediaType": "image",
@@ -1031,7 +1026,7 @@
     },
     {
       "id": "kyoto-road-c03913",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "国道1号BP 京田辺トンネル1",
       "mediaType": "image",
@@ -1043,7 +1038,7 @@
     },
     {
       "id": "kyoto-road-c03909",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "国道1号BP 京田辺トンネル2",
       "mediaType": "image",
@@ -1055,7 +1050,7 @@
     },
     {
       "id": "kyoto-road-c03910",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "国道1号BP 京田辺トンネル3",
       "mediaType": "image",
@@ -1067,7 +1062,7 @@
     },
     {
       "id": "kyoto-road-c03911",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "国道1号BP 京田辺トンネル4",
       "mediaType": "image",
@@ -1079,7 +1074,7 @@
     },
     {
       "id": "kyoto-road-c03912",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "京田辺市",
       "place": "国道1号BP 京田辺トンネル5",
       "mediaType": "image",
@@ -1091,7 +1086,7 @@
     },
     {
       "id": "kyoto-road-c02491",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "国道9号 阪急京都線アンダーパス 下り",
       "mediaType": "image",
@@ -1103,7 +1098,7 @@
     },
     {
       "id": "kyoto-road-c02490",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "国道9号 阪急京都線アンダーパス 上り",
       "mediaType": "image",
@@ -1115,7 +1110,7 @@
     },
     {
       "id": "kyoto-road-c03924",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "国道9号 千代原口トンネル 下り坑外",
       "mediaType": "image",
@@ -1127,7 +1122,7 @@
     },
     {
       "id": "kyoto-road-c03922",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "国道9号 千代原口トンネル 下り1",
       "mediaType": "image",
@@ -1139,7 +1134,7 @@
     },
     {
       "id": "kyoto-road-c03919",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "国道9号 千代原口トンネル 上り1",
       "mediaType": "image",
@@ -1151,7 +1146,7 @@
     },
     {
       "id": "kyoto-road-c03921",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "国道9号 千代原口トンネル 上り坑外",
       "mediaType": "image",
@@ -1163,7 +1158,7 @@
     },
     {
       "id": "kyoto-road-c03914",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "国道9号 老ノ坂峠1",
       "mediaType": "image",
@@ -1175,7 +1170,7 @@
     },
     {
       "id": "kyoto-road-c03915",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "国道9号 老ノ坂峠2",
       "mediaType": "image",
@@ -1187,7 +1182,7 @@
     },
     {
       "id": "kyoto-road-c03916",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "国道9号 老ノ坂峠3",
       "mediaType": "image",
@@ -1199,7 +1194,7 @@
     },
     {
       "id": "kyoto-road-c03917",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "国道9号 老ノ坂峠4",
       "mediaType": "image",
@@ -1211,7 +1206,7 @@
     },
     {
       "id": "kyoto-road-c00065",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "国道9号 老ノ坂トンネル 東側坑口",
       "mediaType": "image",
@@ -1223,7 +1218,7 @@
     },
     {
       "id": "kyoto-road-c00066",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "国道9号 老ノ坂トンネル 西側坑口",
       "mediaType": "image",
@@ -1235,7 +1230,7 @@
     },
     {
       "id": "kyoto-road-c00067",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "南丹市",
       "place": "国道9号 観音トンネル 園部側",
       "mediaType": "image",
@@ -1247,7 +1242,7 @@
     },
     {
       "id": "kyoto-road-c00068",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "京丹波町",
       "place": "国道9号 観音トンネル 京丹波側",
       "mediaType": "image",
@@ -1259,7 +1254,7 @@
     },
     {
       "id": "kyoto-road-c02489",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市下京区",
       "place": "国道24号 八条坊門アンダーパス 下り",
       "mediaType": "image",
@@ -1271,7 +1266,7 @@
     },
     {
       "id": "kyoto-road-c02488",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市下京区",
       "place": "国道24号 八条坊門アンダーパス 上り",
       "mediaType": "image",
@@ -1283,7 +1278,7 @@
     },
     {
       "id": "kyoto-road-c04200",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "城陽市",
       "place": "国道24号 城陽IC 上り",
       "mediaType": "image",
@@ -1295,7 +1290,7 @@
     },
     {
       "id": "kyoto-road-c04201",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "城陽市",
       "place": "国道24号 城陽IC 下り",
       "mediaType": "image",
@@ -1343,7 +1338,7 @@
     },
     {
       "id": "kyoto-yodogawa-c03001",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "桂川 18.2k 嵐山渡月橋（右岸）",
       "mediaType": "image",
@@ -1355,7 +1350,7 @@
     },
     {
       "id": "kyoto-yodogawa-c02781",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "桂川 12.0k 桂大橋下流（右岸）",
       "mediaType": "image",
@@ -1367,7 +1362,7 @@
     },
     {
       "id": "kyoto-yodogawa-c02795",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "宇治市",
       "place": "宇治川 51.8k 槙尾山（左岸）",
       "mediaType": "image",
@@ -1379,7 +1374,7 @@
     },
     {
       "id": "kyoto-yodogawa-c02997",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市伏見区",
       "place": "宇治川 42.8k 下三栖（右岸）",
       "mediaType": "image",
@@ -1391,7 +1386,7 @@
     },
     {
       "id": "kyoto-yodogawa-c04309",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "八幡市",
       "place": "宇治川 37.3k さくらであい館（左岸）",
       "mediaType": "image",
@@ -1415,7 +1410,7 @@
     },
     {
       "id": "kyoto-yodogawa-c02975",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "八幡市",
       "place": "木津川 6.1k 流れ橋（左岸）",
       "mediaType": "image",
@@ -1427,7 +1422,7 @@
     },
     {
       "id": "kyoto-yodogawa-c02797",
-      "area": "yamashiro_north",
+      "area": "yamashiro_central",
       "city": "八幡市",
       "place": "淀川 35.8k 三川合流付近",
       "mediaType": "image",
@@ -1439,7 +1434,7 @@
     },
     {
       "id": "kyoto-youtube-01",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市下京区",
       "place": "京都駅前 バス乗り場",
       "mediaType": "youtube",
@@ -1451,7 +1446,7 @@
     },
     {
       "id": "kyoto-youtube-02",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市南区",
       "place": "京都駅八条口 タクシー乗り場",
       "mediaType": "youtube",
@@ -1463,7 +1458,7 @@
     },
     {
       "id": "kyoto-youtube-03",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市下京区",
       "place": "JR京都駅・新幹線・東海道線",
       "mediaType": "youtube",
@@ -1475,7 +1470,7 @@
     },
     {
       "id": "kyoto-youtube-04",
-      "area": "otokuni",
+      "area": "kyoto_kameoka",
       "city": "長岡京市",
       "place": "長岡天満宮 八条ケ池",
       "mediaType": "youtube",
@@ -1523,7 +1518,7 @@
     },
     {
       "id": "kyoto-extra-y001",
-      "area": "nantan",
+      "area": "kyoto_kameoka",
       "city": "亀岡市",
       "place": "かめおか霧のテラス・亀岡盆地",
       "mediaType": "youtube",
@@ -1535,7 +1530,7 @@
     },
     {
       "id": "kyoto-extra-y002",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "南丹市",
       "place": "スプリングスひよし・日吉ダム",
       "mediaType": "youtube",
@@ -1547,7 +1542,7 @@
     },
     {
       "id": "kyoto-extra-y003",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "南丹市",
       "place": "紅葉峠展望台・亀岡盆地",
       "mediaType": "youtube",
@@ -1559,7 +1554,7 @@
     },
     {
       "id": "kyoto-extra-y004",
-      "area": "nantan",
+      "area": "nantan_kyotamba",
       "city": "南丹市",
       "place": "美山かやぶきの里",
       "mediaType": "youtube",
@@ -1571,7 +1566,7 @@
     },
     {
       "id": "kyoto-extra-y005",
-      "area": "chutan_west",
+      "area": "fukuchiyama",
       "city": "福知山市",
       "place": "福知山城",
       "mediaType": "youtube",
@@ -1643,7 +1638,7 @@
     },
     {
       "id": "kyoto-extra-y011",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市中京区",
       "place": "京都新聞社前・烏丸通",
       "mediaType": "youtube",
@@ -1655,7 +1650,7 @@
     },
     {
       "id": "kyoto-extra-y012",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市中京区",
       "place": "京都錦市場",
       "mediaType": "youtube",
@@ -1667,7 +1662,7 @@
     },
     {
       "id": "kyoto-extra-y013",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市中京区",
       "place": "新京極六角公園",
       "mediaType": "youtube",
@@ -1679,7 +1674,7 @@
     },
     {
       "id": "kyoto-extra-y014",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市左京区",
       "place": "銀閣寺参道",
       "mediaType": "youtube",
@@ -1691,7 +1686,7 @@
     },
     {
       "id": "kyoto-extra-y015",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市左京区",
       "place": "平安神宮",
       "mediaType": "youtube",
@@ -1703,7 +1698,7 @@
     },
     {
       "id": "kyoto-extra-y016",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市左京区",
       "place": "哲学の道",
       "mediaType": "youtube",
@@ -1715,7 +1710,7 @@
     },
     {
       "id": "kyoto-extra-y017",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市左京区",
       "place": "永観堂",
       "mediaType": "youtube",
@@ -1727,7 +1722,7 @@
     },
     {
       "id": "kyoto-extra-y018",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市左京区",
       "place": "貴船神社",
       "mediaType": "youtube",
@@ -1739,7 +1734,7 @@
     },
     {
       "id": "kyoto-extra-y019",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市左京区",
       "place": "寂光院",
       "mediaType": "youtube",
@@ -1751,7 +1746,7 @@
     },
     {
       "id": "kyoto-extra-y020",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市東山区",
       "place": "清水坂",
       "mediaType": "youtube",
@@ -1763,7 +1758,7 @@
     },
     {
       "id": "kyoto-extra-y021",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市東山区",
       "place": "花見小路・四条通",
       "mediaType": "youtube",
@@ -1775,7 +1770,7 @@
     },
     {
       "id": "kyoto-extra-y022",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市東山区",
       "place": "東大路通・五条坂",
       "mediaType": "youtube",
@@ -1787,7 +1782,7 @@
     },
     {
       "id": "kyoto-extra-y023",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市東山区",
       "place": "ねねの道・高台寺",
       "mediaType": "youtube",
@@ -1799,7 +1794,7 @@
     },
     {
       "id": "kyoto-extra-y024",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "嵯峨嵐山・渡月橋北詰",
       "mediaType": "youtube",
@@ -1811,7 +1806,7 @@
     },
     {
       "id": "kyoto-extra-y025",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "嵐山・竹林の小径",
       "mediaType": "youtube",
@@ -1823,7 +1818,7 @@
     },
     {
       "id": "kyoto-extra-y026",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "道の駅ウッディー京北・国道162号",
       "mediaType": "youtube",
@@ -1835,7 +1830,7 @@
     },
     {
       "id": "kyoto-extra-y027",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市右京区",
       "place": "仁和寺・二王門",
       "mediaType": "youtube",
@@ -1847,7 +1842,7 @@
     },
     {
       "id": "kyoto-extra-y028",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市伏見区",
       "place": "伏見稲荷大社表参道",
       "mediaType": "youtube",
@@ -1859,7 +1854,7 @@
     },
     {
       "id": "kyoto-extra-y029",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市伏見区",
       "place": "城南宮",
       "mediaType": "youtube",
@@ -1871,7 +1866,7 @@
     },
     {
       "id": "kyoto-extra-y030",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市伏見区",
       "place": "醍醐寺",
       "mediaType": "youtube",
@@ -1883,7 +1878,7 @@
     },
     {
       "id": "kyoto-extra-y031",
-      "area": "kyoto_city",
+      "area": "kyoto_kameoka",
       "city": "京都市西京区",
       "place": "鈴虫寺",
       "mediaType": "youtube",
@@ -1892,6 +1887,234 @@
       "youtubeId": "dBZapnrMeII",
       "latitude": 34.9927,
       "longitude": 135.6849
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c03485",
+      "area": "fukuchiyama",
+      "city": "福知山市",
+      "place": "国道9号 夜久野町小倉",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r9_no01.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C03485.jpg",
+      "latitude": 35.366,
+      "longitude": 134.979
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04113",
+      "area": "fukuchiyama",
+      "city": "福知山市",
+      "place": "国道9号 夜久野町日置",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r9_no02.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04113.jpg",
+      "latitude": 35.352,
+      "longitude": 135.009
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04147",
+      "area": "fukuchiyama",
+      "city": "福知山市",
+      "place": "国道9号 夜久野町額田",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r9_no03.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04147.jpg",
+      "latitude": 35.338,
+      "longitude": 135.043
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04146",
+      "area": "fukuchiyama",
+      "city": "福知山市",
+      "place": "国道9号 長田野",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r9_no04.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04146.jpg",
+      "latitude": 35.281,
+      "longitude": 135.181
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04112",
+      "area": "fukuchiyama",
+      "city": "福知山市",
+      "place": "国道9号 萩原",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r9_no05.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04112.jpg",
+      "latitude": 35.25,
+      "longitude": 135.221
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04643",
+      "area": "fukuchiyama",
+      "city": "福知山市",
+      "place": "国道9号 三和町辻",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r9_no06.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04643.jpg",
+      "latitude": 35.199,
+      "longitude": 135.256
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04642",
+      "area": "nantan_kyotamba",
+      "city": "京丹波町",
+      "place": "国道9号 水原",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r9_no07.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04642.jpg",
+      "latitude": 35.173,
+      "longitude": 135.316
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c03484",
+      "area": "nantan_kyotamba",
+      "city": "京丹波町",
+      "place": "国道9号 坂井",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r9_no08.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C03484.jpg",
+      "latitude": 35.188,
+      "longitude": 135.338
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04108",
+      "area": "maizuru_ayabe",
+      "city": "舞鶴市",
+      "place": "国道27号 吉坂中継所",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no01.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04108.jpg",
+      "latitude": 35.458,
+      "longitude": 135.461
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04109",
+      "area": "maizuru_ayabe",
+      "city": "舞鶴市",
+      "place": "国道27号 吉坂",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no02.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04109.jpg",
+      "latitude": 35.452,
+      "longitude": 135.45
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04148",
+      "area": "maizuru_ayabe",
+      "city": "舞鶴市",
+      "place": "国道27号 小倉",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no03.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04148.jpg",
+      "latitude": 35.444,
+      "longitude": 135.429
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c03482",
+      "area": "maizuru_ayabe",
+      "city": "舞鶴市",
+      "place": "国道27号 泉源寺",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no04.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C03482.jpg",
+      "latitude": 35.447,
+      "longitude": 135.411
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04149",
+      "area": "maizuru_ayabe",
+      "city": "舞鶴市",
+      "place": "国道27号 余部",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no05.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04149.jpg",
+      "latitude": 35.474,
+      "longitude": 135.377
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04110",
+      "area": "maizuru_ayabe",
+      "city": "舞鶴市",
+      "place": "国道27号 上安",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no06.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04110.jpg",
+      "latitude": 35.449,
+      "longitude": 135.361
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04150",
+      "area": "maizuru_ayabe",
+      "city": "舞鶴市",
+      "place": "国道27号 京田",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no07.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04150.jpg",
+      "latitude": 35.418,
+      "longitude": 135.346
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04644",
+      "area": "nantan_kyotamba",
+      "city": "京丹波町",
+      "place": "国道27号 安栖里",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no09.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04644.jpg",
+      "latitude": 35.222,
+      "longitude": 135.437
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c03483",
+      "area": "nantan_kyotamba",
+      "city": "京丹波町",
+      "place": "国道27号 坂原・道の駅和",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no10.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C03483.jpg",
+      "latitude": 35.247,
+      "longitude": 135.402
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04151",
+      "area": "nantan_kyotamba",
+      "city": "京丹波町",
+      "place": "国道27号 升谷",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no11.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04151.jpg",
+      "latitude": 35.258,
+      "longitude": 135.38
+    },
+    {
+      "id": "kyoto-fukuchiyama-road-c04152",
+      "area": "nantan_kyotamba",
+      "city": "京丹波町",
+      "place": "国道27号 中山",
+      "mediaType": "image",
+      "provider": "国土交通省 福知山河川国道事務所",
+      "pageUrl": "https://www.kkr.mlit.go.jp/fukuchiyama/road/cctv/r27_no12.html",
+      "imageUrl": "https://www.seishiga.kkr.mlit.go.jp/hukuchiyama/pic/C04152.jpg",
+      "latitude": 35.27,
+      "longitude": 135.367
     }
   ]
 }
