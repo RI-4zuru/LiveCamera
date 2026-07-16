@@ -168,7 +168,7 @@
         {
           "id": "osaka",
           "name": "大阪府",
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "hyogo",
