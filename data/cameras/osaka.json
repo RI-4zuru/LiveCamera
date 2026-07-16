@@ -34,6 +34,11 @@
       "id": "senshu",
       "name": "泉州",
       "color": "red"
+    },
+    {
+      "id": "marine",
+      "name": "海上",
+      "color": "black"
     }
   ],
   "cameras": [
@@ -1147,7 +1152,7 @@
     },
     {
       "id": "osaka-054",
-      "area": "senshu",
+      "area": "marine",
       "city": "岬町",
       "place": "とっとパーク小島 桟橋・大阪湾",
       "mediaType": "image",
@@ -1228,6 +1233,42 @@
       "imageUrl": "https://cam.river.go.jp/cam/now/106913051.jpg",
       "latitude": 34.5245,
       "longitude": 135.4748
+    },
+    {
+      "id": "osaka-marine-y001",
+      "city": "大阪市住之江区",
+      "place": "大阪港 咲洲・夢洲・大阪湾",
+      "mediaType": "youtube",
+      "provider": "大阪港ライブカメラ / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=ojx0lD_sS1k",
+      "youtubeId": "ojx0lD_sS1k",
+      "latitude": 34.638,
+      "longitude": 135.412,
+      "area": "marine"
+    },
+    {
+      "id": "osaka-marine-y002",
+      "city": "大阪市住之江区",
+      "place": "大阪南港 お天気カメラ",
+      "mediaType": "youtube",
+      "provider": "大阪南港お天気カメラ / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=dOBjpaP0OO4",
+      "youtubeId": "dOBjpaP0OO4",
+      "latitude": 34.6374,
+      "longitude": 135.4115,
+      "area": "marine"
+    },
+    {
+      "id": "osaka-marine-y003",
+      "city": "忠岡町",
+      "place": "忠岡町新浜 大阪湾・マリーナ",
+      "mediaType": "youtube",
+      "provider": "大阪湾ライブカメラ / YouTube",
+      "pageUrl": "https://www.youtube.com/watch?v=kRrYkifMngs",
+      "youtubeId": "kRrYkifMngs",
+      "latitude": 34.4887,
+      "longitude": 135.377,
+      "area": "marine"
     }
   ]
 }
