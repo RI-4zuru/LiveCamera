@@ -42,10 +42,10 @@
 
     <section id="summaryBar" class="summaryBar" aria-label="表示情報">
       <div id="prefectureSelectionSummary" class="prefectureSelectionSummary" aria-label="第1県と第2県">
-        <button id="primaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="true" title="1県表示中は第1県を表示します。2県選択中は、画面が狭い場合は表示県を切り替え、広い場合は左右を入れ替えます。">
+        <button id="primaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="true" title="1県表示中は第1県を表示します。2県表示中は左右を入れ替えます。">
           <span class="summaryLabel">第1県</span><strong id="primaryPrefectureName">-</strong>
         </button>
-        <button id="secondaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="false" title="1県表示中は第2県を表示します。2県選択中は、画面が狭い場合は表示県を切り替え、広い場合は左右を入れ替えます。">
+        <button id="secondaryPrefectureSummaryButton" class="prefectureSummarySlot" type="button" aria-pressed="false" title="1県表示中は第2県を表示します。2県表示中は左右を入れ替えます。">
           <span class="summaryLabel">第2県</span><strong id="secondaryPrefectureName">-</strong>
         </button>
         <strong id="prefectureName" class="visuallyHidden" aria-live="polite">-</strong>
@@ -74,7 +74,7 @@
         表示編集
       </button>
       <button id="mapToggleButton" class="mapToggleButton" type="button" aria-pressed="true" title="地図の表示を切り替えます">
-        地図表示
+        地図非表示
       </button>
       <label id="gridColumnControl" class="gridColumnControl" hidden>
         <span class="summaryLabel">画像列数</span>
