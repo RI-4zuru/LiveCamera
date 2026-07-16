@@ -6,7 +6,7 @@
   <meta name="description" content="全国の道路・河川などのライブカメラ画像を地図と一覧で確認するページです。">
   <title>全国ライブカメラ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="./css/style.css?v=20260716-24">
+  <link rel="stylesheet" href="./css/style.css?v=20260716-25">
 </head>
 <body>
   <div id="stickyStack" class="stickyStack">
@@ -95,6 +95,9 @@
       </button>
       <button id="customReorderButton" class="customReorderButton" type="button" aria-pressed="false" hidden title="カスタム画像の表示順をドラッグで変更します">
         並替
+      </button>
+      <button id="customOrderResetButton" class="customOrderResetButton" type="button" hidden title="カスタム画像を元のデータ順へ戻します">
+        元順
       </button>
       <label class="searchBox">
         <span class="summaryLabel">絞り込み</span>
@@ -189,7 +192,7 @@
     <div class="panelHeader">
       <div>
         <strong>カスタム表示</strong>
-        <p>都道府県をまたいで静止画カメラを選択し、名前を付けて保存できます。</p>
+        <p>都道府県をまたいで静止画・YouTubeライブカメラを選択し、名前を付けて保存できます。</p>
       </div>
       <button id="customPanelClose" class="iconButton" type="button" aria-label="カスタム表示を閉じる">×</button>
     </div>
@@ -284,6 +287,6 @@
 
   <noscript>このページを表示するにはJavaScriptを有効にしてください。</noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script type="module" src="./js/app.js?v=20260716-24"></script>
+  <script type="module" src="./js/app.js?v=20260716-25"></script>
 </body>
 </html>
