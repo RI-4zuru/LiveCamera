@@ -489,9 +489,18 @@ async function renderCustomCameraEditor() {
     return normalizeText(`${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)} ${entry.camera.provider || ''}`).includes(keyword);
   });
   const fragment = document.createDocumentFragment();
+  const imageEntries = entries.filter((entry) => cameraMediaType(entry.camera) !== 'youtube');
+  const youtubeEntries = entries.filter((entry) => cameraMediaType(entry.camera) === 'youtube');
+  const orderedEntries = [...imageEntries, ...youtubeEntries];
 
-  for (const entry of entries) {
+  for (const [entryIndex, entry] of orderedEntries.entries()) {
     const isYoutube = cameraMediaType(entry.camera) === 'youtube';
+    if (isYoutube && entryIndex === imageEntries.length) {
+      const heading = document.createElement('h3');
+      heading.className = 'customCameraGroupHeading';
+      heading.textContent = 'YouTubeライブカメラ';
+      fragment.appendChild(heading);
+    }
     const label = document.createElement('label');
     label.className = 'customCameraOption';
     label.classList.toggle('is-selected', selected.has(entry.key));
@@ -874,8 +883,10 @@ function renderPrefectureNavigation() {
 function highlightNavigation() {
   document.querySelectorAll('.prefectureButton').forEach((button) => {
     const id = button.dataset.prefectureId;
-    const isPrimary = id === state.prefecture?.id;
-    const isSecondary = id === state.secondaryPrefectureId;
+    // カスタムスロットが割り当てられている側では、背後に保持している
+    // 通常の都道府県を選択中として表示しない。
+    const isPrimary = !state.primaryCustomSlotId && id === state.prefecture?.id;
+    const isSecondary = !state.secondaryCustomSlotId && id === state.secondaryPrefectureId;
     button.classList.toggle('is-primary', isPrimary);
     button.classList.toggle('is-secondary', isSecondary);
     button.classList.toggle('active', isPrimary || isSecondary);
@@ -898,6 +909,7 @@ function renderAreaSelect() {
   const hideAll = state.customMode || customSingle;
   if (elements.areaControls) elements.areaControls.hidden = hideAll;
   if (hideAll) {
+    closeAreaSelectionMenus();
     if (elements.primaryAreaControl) elements.primaryAreaControl.hidden = true;
     if (elements.secondaryAreaControl) elements.secondaryAreaControl.hidden = true;
     return;
@@ -1098,7 +1110,7 @@ function updateMapVisibility() {
   elements.mapToggleButton.hidden = state.compareMode;
   elements.mapToggleButton.classList.toggle('is-off', !state.mapVisible);
   elements.mapToggleButton.setAttribute('aria-pressed', String(state.mapVisible));
-  elements.mapToggleButton.textContent = state.mapVisible ? '地図表示' : '地図非表示';
+  elements.mapToggleButton.textContent = state.mapVisible ? '地図非表示' : '地図表示';
   elements.mapToggleButton.title = state.mapVisible ? '地図を非表示にします' : '地図を表示します';
   updateGridColumnControl();
 
@@ -2394,7 +2406,30 @@ function stopAutoScroll() {
   state.scrollReturnTimer = null;
 }
 
+function closeAreaSelectionMenus(except = null) {
+  for (const control of [elements.primaryAreaControl, elements.secondaryAreaControl]) {
+    if (control && control !== except) control.open = false;
+  }
+}
+
+function bindAreaSelectionMenuEvents() {
+  for (const control of [elements.primaryAreaControl, elements.secondaryAreaControl]) {
+    control?.addEventListener('toggle', () => {
+      if (control.open) closeAreaSelectionMenus(control);
+    });
+  }
+
+  document.addEventListener('pointerdown', (event) => {
+    const openMenus = [elements.primaryAreaControl, elements.secondaryAreaControl]
+      .filter((control) => control?.open);
+    if (!openMenus.length) return;
+    if (openMenus.some((control) => control.contains(event.target))) return;
+    closeAreaSelectionMenus();
+  });
+}
+
 function bindEvents() {
+  bindAreaSelectionMenuEvents();
   elements.summaryToggleButton?.addEventListener('click', toggleSummaryBar);
 
   elements.cameraSearch.addEventListener('input', (event) => {
