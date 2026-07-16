@@ -2357,6 +2357,12 @@ function addMarker(camera, area) {
     opacity: 1
   });
 
+  // 地図上でピンにカーソルを合わせ、プレビューが開いた時点で、
+  // 対応するカメラカードを左側の一覧へ表示する。
+  marker.on('tooltipopen', () => {
+    focusCameraCard(camera.id, true);
+  });
+
   marker.on('click', () => {
     if (type === 'youtube') {
       openYoutubeGallery(camera.id);
@@ -2392,16 +2398,79 @@ function createMarkerIcon(color) {
   });
 }
 
+function cameraCardsForId(cameraId) {
+  return [...document.querySelectorAll('.cameraCard[data-camera-id]')]
+    .filter((card) => card.dataset.cameraId === cameraId && card.getClientRects().length > 0);
+}
+
+function stickyStackBottom() {
+  const rect = elements.stickyStack?.getBoundingClientRect();
+  return rect ? Math.max(0, rect.bottom) : 0;
+}
+
+function cameraCardIsVisible(card, scroller = null) {
+  const cardRect = card.getBoundingClientRect();
+  const margin = 12;
+
+  if (scroller) {
+    const scrollerRect = scroller.getBoundingClientRect();
+    return cardRect.top >= scrollerRect.top + margin
+      && cardRect.bottom <= scrollerRect.bottom - margin;
+  }
+
+  return cardRect.top >= stickyStackBottom() + margin
+    && cardRect.bottom <= window.innerHeight - margin;
+}
+
+function scrollCameraCardIntoView(cameraId, behavior = 'smooth') {
+  const cards = cameraCardsForId(cameraId);
+  const card = cards[0];
+  if (!card) return null;
+
+  const pane = card.closest('.comparisonPane');
+  const paneIsScrollable = pane && pane.scrollHeight > pane.clientHeight + 1;
+
+  if (paneIsScrollable) {
+    if (!cameraCardIsVisible(card, pane)) {
+      const paneRect = pane.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const centeredOffset = Math.max(8, (pane.clientHeight - cardRect.height) / 2);
+      const targetTop = pane.scrollTop + cardRect.top - paneRect.top - centeredOffset;
+      const maxScroll = Math.max(0, pane.scrollHeight - pane.clientHeight);
+      pane.scrollTo({
+        top: Math.max(0, Math.min(maxScroll, targetTop)),
+        behavior
+      });
+    }
+    return card;
+  }
+
+  if (!cameraCardIsVisible(card)) {
+    card.scrollIntoView({
+      behavior,
+      block: 'center',
+      inline: 'nearest'
+    });
+  }
+  return card;
+}
+
+function focusCameraCard(cameraId, scrollToCard) {
+  state.selectedCameraId = cameraId;
+  document.querySelectorAll('.cameraCard.selected')
+    .forEach((card) => card.classList.remove('selected'));
+
+  const cards = cameraCardsForId(cameraId);
+  cards.forEach((card) => card.classList.add('selected'));
+  if (scrollToCard) scrollCameraCardIntoView(cameraId);
+  return cards[0] || null;
+}
+
 function focusCamera(cameraId, scrollToCard) {
   const camera = findCameraById(cameraId);
   if (!camera) return;
 
-  state.selectedCameraId = cameraId;
-  document.querySelectorAll('.cameraCard.selected').forEach((card) => card.classList.remove('selected'));
-
-  const card = document.querySelector(`#camera-${CSS.escape(cameraId)}`);
-  card?.classList.add('selected');
-  if (scrollToCard) card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  focusCameraCard(cameraId, scrollToCard);
 
   const marker = state.markers.get(cameraId);
   if (marker && state.map && state.mapVisible) {
@@ -2411,8 +2480,7 @@ function focusCamera(cameraId, scrollToCard) {
 }
 
 function releaseCameraFocus(cameraId) {
-  const card = document.querySelector(`#camera-${CSS.escape(cameraId)}`);
-  card?.classList.remove('selected');
+  cameraCardsForId(cameraId).forEach((card) => card.classList.remove('selected'));
 
   const marker = state.markers.get(cameraId);
   marker?.closeTooltip();
