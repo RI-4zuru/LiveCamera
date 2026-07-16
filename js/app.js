@@ -503,7 +503,7 @@ async function assignCustomSlotToTarget(slotId) {
   renderVisibilityEditor();
   renderHiddenImages();
   await refreshYoutubeLiveStatus();
-  showStatus(`「${slot.name}」を${target === 'secondary' ? '第2県' : '第1県'}へ設定しました。`);
+  showStatus(`「${slot.name}」を${target === 'secondary' ? '第2' : '第1'}へ設定しました。`);
 }
 
 function updateCustomSelectedCount() {
@@ -866,7 +866,7 @@ function updatePageMeta() {
   elements.pageSubtitle.textContent = state.customMode
     ? `選択した${state.customSelection.length}地点をカスタム表示`
     : state.compareMode
-      ? state.isSinglePaneComparison ? `${comparisonSource.name}を表示（第1県・第2県を切替可能）` : `${primarySource.name}と${secondarySource.name}を比較表示`
+      ? state.isSinglePaneComparison ? `${comparisonSource.name}を表示（第1・第2を切替可能）` : `${primarySource.name}と${secondarySource.name}を比較表示`
       : singleIsCustom
         ? `保存したカスタム設定「${singleSource.name}」を表示`
         : singleSource.prefecture ? `${singleSource.prefecture.region}地方・${singleSource.prefecture.name}` : 'データを読み込み中...';
@@ -955,9 +955,9 @@ function highlightNavigation() {
       slots.textContent = `${isPrimary ? '①' : ''}${isSecondary ? '②' : ''}`;
     }
     const label = button.querySelector('.prefectureButtonName')?.textContent || '';
-    if (isPrimary && isSecondary) button.setAttribute('aria-label', `${label} 第1県・第2県`);
-    else if (isPrimary) button.setAttribute('aria-label', `${label} 第1県`);
-    else if (isSecondary) button.setAttribute('aria-label', `${label} 第2県`);
+    if (isPrimary && isSecondary) button.setAttribute('aria-label', `${label} 第1・第2`);
+    else if (isPrimary) button.setAttribute('aria-label', `${label} 第1`);
+    else if (isSecondary) button.setAttribute('aria-label', `${label} 第2`);
     else button.removeAttribute('aria-label');
   });
 }
@@ -977,8 +977,8 @@ function renderAreaSelect() {
   if (state.compareMode) {
     const primarySource = slotSource('primary');
     const secondarySource = slotSource('secondary');
-    renderAreaControl('primary', primarySource.type === 'prefecture' ? primarySource.prefecture : null, '第1県エリア');
-    renderAreaControl('secondary', secondarySource.type === 'prefecture' ? secondarySource.prefecture : null, '第2県エリア');
+    renderAreaControl('primary', primarySource.type === 'prefecture' ? primarySource.prefecture : null, '第1エリア');
+    renderAreaControl('secondary', secondarySource.type === 'prefecture' ? secondarySource.prefecture : null, '第2エリア');
   } else {
     const slot = state.singleViewSlot === 'secondary' ? 'secondary' : 'primary';
     renderAreaControl('primary', singleSource.type === 'prefecture' ? singleSource.prefecture : null, 'エリア', slot);
@@ -2690,6 +2690,16 @@ function refreshHiddenImages() {
 function openPrefecturePanel() {
   closeVisibilityPanel(false);
   closeCustomPanel(false);
+
+  // 1枠表示、または横幅が狭く1枠だけを表示している場合は、
+  // 現在画面に出ている側をそのまま都道府県の変更先にする。
+  // これにより、第2を見ながら選択画面を開いたのに第1を変更してしまう誤操作を防ぐ。
+  if (!state.isMobile && (!state.compareMode || state.isSinglePaneComparison)) {
+    setPrefectureTargetSlot(state.singleViewSlot === 'secondary' ? 'secondary' : 'primary');
+  } else if (state.isMobile) {
+    setPrefectureTargetSlot('primary');
+  }
+
   elements.prefecturePanel.classList.add('open');
   elements.prefecturePanel.setAttribute('aria-hidden', 'false');
   elements.prefectureMenuButton.setAttribute('aria-expanded', 'true');
@@ -3200,7 +3210,7 @@ function updateComparisonControls() {
   if (!elements.comparisonToggleButton) return;
   elements.comparisonToggleButton.classList.toggle('is-active', state.compareMode);
   elements.comparisonToggleButton.setAttribute('aria-pressed', String(state.compareMode));
-  elements.comparisonToggleButton.textContent = state.compareMode ? '1県表示' : '2県表示';
+  elements.comparisonToggleButton.textContent = state.compareMode ? '1枠表示' : '2枠表示';
   if (elements.comparisonToggleButton) elements.comparisonToggleButton.hidden = state.isMobile || state.customMode;
   renderAreaSelect();
   updateGridColumnControl();
