@@ -19,6 +19,7 @@ const SINGLE_PANE_COMPARE_MEDIA_QUERY = '(max-width: 1280px)';
 const MOBILE_GRID_COLUMNS_KEY = 'national-live-camera:mobile-grid-columns:v1';
 const CUSTOM_SLOTS_KEY = 'national-live-camera:custom-slots:v1';
 const CUSTOM_DRAFT_KEY = 'national-live-camera:custom-draft:v1';
+const CUSTOM_DRAFT_ORDER_KEY = 'national-live-camera:custom-draft-order:v1';
 const CUSTOM_ACTIVE_SLOT_KEY = 'national-live-camera:custom-active-slot:v1';
 const PRIMARY_CUSTOM_SLOT_KEY = 'national-live-camera:primary-custom-slot:v1';
 const SECONDARY_CUSTOM_SLOT_KEY = 'national-live-camera:secondary-custom-slot:v1';
@@ -116,6 +117,7 @@ const elements = {
   gridColumnSelect: document.querySelector('#gridColumnSelect'),
   comparisonToggleButton: document.querySelector('#comparisonToggleButton'),
   customModeButton: document.querySelector('#customModeButton'),
+  customReorderButton: document.querySelector('#customReorderButton'),
   customPanel: document.querySelector('#customPanel'),
   customPanelClose: document.querySelector('#customPanelClose'),
   customSlotSelect: document.querySelector('#customSlotSelect'),
@@ -188,7 +190,10 @@ const state = {
   secondaryCustomSlotId: null,
   customPrefectureData: new Map(),
   customSearch: '',
-  customPrefectureFilter: 'all'
+  customPrefectureFilter: 'all',
+  customOrderCustomized: false,
+  customReorderMode: false,
+  customDraggedKey: null
 };
 
 init().catch((error) => {
@@ -269,7 +274,13 @@ function initializeCustomStorage() {
   try {
     const slots = JSON.parse(localStorage.getItem(CUSTOM_SLOTS_KEY) || '[]');
     state.customSlots = Array.isArray(slots)
-      ? slots.filter((slot) => slot && typeof slot.id === 'string' && typeof slot.name === 'string' && Array.isArray(slot.cameras))
+      ? slots
+          .filter((slot) => slot && typeof slot.id === 'string' && typeof slot.name === 'string' && Array.isArray(slot.cameras))
+          .map((slot) => ({
+            ...slot,
+            cameras: [...new Set(slot.cameras.filter((key) => typeof key === 'string'))],
+            orderCustomized: slot.orderCustomized === true
+          }))
       : [];
   } catch (error) {
     console.warn('カスタム保存スロットを読み込めませんでした。', error);
@@ -282,6 +293,7 @@ function initializeCustomStorage() {
   } catch {
     state.customSelection = [];
   }
+  state.customOrderCustomized = localStorage.getItem(CUSTOM_DRAFT_ORDER_KEY) === 'true';
   state.customActiveSlotId = localStorage.getItem(CUSTOM_ACTIVE_SLOT_KEY) || null;
   const slotIds = new Set(state.customSlots.map((slot) => slot.id));
   const primaryAssigned = localStorage.getItem(PRIMARY_CUSTOM_SLOT_KEY);
@@ -298,6 +310,7 @@ function persistCustomSlots() {
 
 function persistCustomSelection() {
   localStorage.setItem(CUSTOM_DRAFT_KEY, JSON.stringify(state.customSelection));
+  localStorage.setItem(CUSTOM_DRAFT_ORDER_KEY, state.customOrderCustomized ? 'true' : 'false');
 }
 
 function createCustomSlotId() {
@@ -322,8 +335,8 @@ function allCustomCameraEntries() {
   for (const prefectureInfo of enabledPrefectures()) {
     const prefecture = state.customPrefectureData.get(prefectureInfo.id);
     if (!prefecture) continue;
-    const sorted = [...prefecture.cameras].sort(compareCamerasForPrefecture(prefecture));
-    for (const camera of sorted) {
+    // JSONに登録されている元の順番を、カスタム表示の既定順として使う。
+    for (const camera of prefecture.cameras) {
       entries.push({
         key: customCameraKey(prefecture.id, camera.id),
         prefecture,
@@ -335,14 +348,28 @@ function allCustomCameraEntries() {
   return entries;
 }
 
-function selectedCustomEntries() {
-  const byKey = new Map(allCustomCameraEntries().map((entry) => [entry.key, entry]));
-  return state.customSelection.map((key) => byKey.get(key)).filter(Boolean);
+function customKeysInDefaultOrder(keys = []) {
+  const selected = new Set(keys);
+  return allCustomCameraEntries()
+    .filter((entry) => selected.has(entry.key))
+    .map((entry) => entry.key);
 }
 
-function customEntriesForKeys(keys = []) {
-  const byKey = new Map(allCustomCameraEntries().map((entry) => [entry.key, entry]));
-  return keys.map((key) => byKey.get(key)).filter(Boolean);
+function normalizeCustomKeys(keys = [], orderCustomized = false) {
+  const unique = [...new Set(keys.filter((key) => typeof key === 'string'))];
+  if (orderCustomized) return unique;
+  return customKeysInDefaultOrder(unique);
+}
+
+function selectedCustomEntries() {
+  return customEntriesForKeys(state.customSelection, state.customOrderCustomized);
+}
+
+function customEntriesForKeys(keys = [], orderCustomized = false) {
+  const entries = allCustomCameraEntries();
+  const byKey = new Map(entries.map((entry) => [entry.key, entry]));
+  const orderedKeys = orderCustomized ? normalizeCustomKeys(keys, true) : customKeysInDefaultOrder(keys);
+  return orderedKeys.map((key) => byKey.get(key)).filter(Boolean);
 }
 
 function assignedCustomSlot(slotName) {
@@ -352,7 +379,7 @@ function assignedCustomSlot(slotName) {
 
 function customSlotEntries(slotName) {
   const slot = assignedCustomSlot(slotName);
-  return slot ? customEntriesForKeys(slot.cameras) : [];
+  return slot ? customEntriesForKeys(slot.cameras, slot.orderCustomized) : [];
 }
 
 function slotSource(slotName) {
@@ -363,7 +390,7 @@ function slotSource(slotName) {
       slotName,
       customSlot,
       name: customSlot.name,
-      entries: customEntriesForKeys(customSlot.cameras)
+      entries: customEntriesForKeys(customSlot.cameras, customSlot.orderCustomized)
     };
   }
   const secondary = slotName === 'secondary';
@@ -529,6 +556,9 @@ async function renderCustomCameraEditor() {
       } else {
         state.customSelection = state.customSelection.filter((key) => key !== entry.key);
       }
+      if (!state.customOrderCustomized) {
+        state.customSelection = normalizeCustomKeys(state.customSelection, false);
+      }
       label.classList.toggle('is-selected', checkbox.checked);
       persistCustomSelection();
       updateCustomSelectedCount();
@@ -541,16 +571,21 @@ async function renderCustomCameraEditor() {
     image.decoding = 'async';
     image.alt = `${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)}`;
     if (isYoutube) {
-      image.src = entry.camera.thumbnailUrl || `https://i.ytimg.com/vi/${encodeURIComponent(entry.camera.youtubeId || '')}/hqdefault.jpg`;
+      const videoId = entry.camera.youtubeId || extractYoutubeVideoId(entry.camera.pageUrl || entry.camera.videoUrl || '');
+      image.src = entry.camera.thumbnailUrl || youtubeThumbnailUrl(videoId);
       image.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
         window.open(entry.camera.pageUrl, '_blank', 'noopener,noreferrer');
       });
+      image.addEventListener('error', () => media.classList.add('error'));
       const badge = document.createElement('span');
       badge.className = 'customYoutubeBadge';
       badge.textContent = 'YouTube';
-      media.append(image, badge);
+      const imageError = document.createElement('span');
+      imageError.className = 'customCameraPreviewError';
+      imageError.textContent = 'サムネイル取得不可';
+      media.append(image, badge, imageError);
     } else {
       setCameraImageSource(image, entry.camera, 0);
       image.addEventListener('click', (event) => {
@@ -588,6 +623,8 @@ async function renderCustomCameraEditor() {
 }
 
 async function openCustomPanel() {
+  state.customReorderMode = false;
+  updateCustomReorderButton();
   closePrefecturePanel(false);
   closeVisibilityPanel(false);
   showStatus('カスタム用のカメラデータを読み込んでいます。');
@@ -626,7 +663,8 @@ function saveCustomSlotAsNew() {
     return;
   }
   const name = customSlotNameValue() || `カスタム ${state.customSlots.length + 1}`;
-  const slot = { id: createCustomSlotId(), name, cameras: [...state.customSelection], updatedAt: new Date().toISOString() };
+  state.customSelection = normalizeCustomKeys(state.customSelection, state.customOrderCustomized);
+  const slot = { id: createCustomSlotId(), name, cameras: [...state.customSelection], orderCustomized: state.customOrderCustomized, updatedAt: new Date().toISOString() };
   state.customSlots.push(slot);
   state.customActiveSlotId = slot.id;
   localStorage.setItem(CUSTOM_ACTIVE_SLOT_KEY, slot.id);
@@ -642,7 +680,9 @@ function overwriteCustomSlot() {
     showStatus('上書きするカメラを1件以上選択してください。');
     return;
   }
+  state.customSelection = normalizeCustomKeys(state.customSelection, state.customOrderCustomized);
   slot.cameras = [...state.customSelection];
+  slot.orderCustomized = state.customOrderCustomized;
   slot.updatedAt = new Date().toISOString();
   persistCustomSlots();
   showStatus(`「${slot.name}」を上書きしました。`);
@@ -690,7 +730,8 @@ async function loadCustomSlot() {
   if (!slot) return;
   await ensureCustomPrefectureData();
   const valid = new Set(allCustomCameraEntries().map((entry) => entry.key));
-  state.customSelection = slot.cameras.filter((key) => valid.has(key));
+  state.customOrderCustomized = slot.orderCustomized === true;
+  state.customSelection = normalizeCustomKeys(slot.cameras.filter((key) => valid.has(key)), state.customOrderCustomized);
   state.customActiveSlotId = slot.id;
   localStorage.setItem(CUSTOM_ACTIVE_SLOT_KEY, slot.id);
   persistCustomSelection();
@@ -702,7 +743,10 @@ async function loadCustomSlot() {
 async function applyCustomSelection() {
   await ensureCustomPrefectureData();
   const valid = new Set(allCustomCameraEntries().map((entry) => entry.key));
-  state.customSelection = state.customSelection.filter((key) => valid.has(key));
+  state.customSelection = normalizeCustomKeys(
+    state.customSelection.filter((key) => valid.has(key)),
+    state.customOrderCustomized
+  );
   if (!state.customSelection.length) {
     showStatus('表示するカメラを1件以上選択してください。');
     return;
@@ -724,6 +768,7 @@ async function applyCustomSelection() {
 }
 
 function exitCustomMode() {
+  state.customReorderMode = false;
   if (!state.customMode) {
     closeCustomPanel();
     return;
@@ -839,6 +884,7 @@ function updatePageMeta() {
     elements.customModeButton.classList.toggle('is-active', state.customMode || singleIsCustom);
     elements.customModeButton.textContent = state.customMode || singleIsCustom ? 'カスタム中' : 'カスタム';
   }
+  updateCustomReorderButton();
   updateResponsiveControls();
 }
 
@@ -1379,14 +1425,132 @@ function renderCameras() {
 }
 
 function renderCustomCameras() {
-  renderCustomEntrySet(selectedCustomEntries(), 'カスタム表示');
+  renderCustomEntrySet(selectedCustomEntries(), 'カスタム表示', { type: 'draft' });
 }
 
 function renderAssignedCustomCameras(customSlot) {
-  renderCustomEntrySet(customEntriesForKeys(customSlot.cameras), customSlot.name);
+  renderCustomEntrySet(
+    customEntriesForKeys(customSlot.cameras, customSlot.orderCustomized),
+    customSlot.name,
+    { type: 'slot', slotId: customSlot.id }
+  );
 }
 
-function renderCustomEntrySet(sourceEntries, titleText) {
+function currentCustomReorderContext() {
+  if (state.compareMode) return null;
+  if (state.customMode) return { type: 'draft' };
+  const source = currentSingleSource();
+  return source.type === 'custom' ? { type: 'slot', slotId: source.customSlot.id } : null;
+}
+
+function updateCustomReorderButton() {
+  if (!elements.customReorderButton) return;
+  const context = currentCustomReorderContext();
+  if (!context) state.customReorderMode = false;
+  elements.customReorderButton.hidden = !context;
+  elements.customReorderButton.classList.toggle('is-active', state.customReorderMode);
+  elements.customReorderButton.setAttribute('aria-pressed', String(state.customReorderMode));
+  elements.customReorderButton.textContent = state.customReorderMode ? '完了' : '並替';
+  elements.customReorderButton.title = state.customReorderMode
+    ? 'ドラッグ並べ替えを終了します'
+    : 'カスタム画像の表示順をドラッグで変更します';
+}
+
+function toggleCustomReorderMode() {
+  if (!currentCustomReorderContext()) return;
+  state.customReorderMode = !state.customReorderMode;
+  updateCustomReorderButton();
+  renderCameras();
+  showStatus(state.customReorderMode
+    ? '画像をドラッグして表示順を変更できます。「完了」で終了します。'
+    : '並べ替えを終了しました。');
+}
+
+function customKeysForReorderTarget(target) {
+  if (target.type === 'draft') return [...state.customSelection];
+  const slot = state.customSlots.find((item) => item.id === target.slotId);
+  return slot ? [...slot.cameras] : [];
+}
+
+function saveCustomKeysForReorderTarget(target, keys) {
+  if (target.type === 'draft') {
+    state.customSelection = keys;
+    state.customOrderCustomized = true;
+    persistCustomSelection();
+    return;
+  }
+  const slot = state.customSlots.find((item) => item.id === target.slotId);
+  if (!slot) return;
+  slot.cameras = keys;
+  slot.orderCustomized = true;
+  slot.updatedAt = new Date().toISOString();
+  persistCustomSlots();
+  if (state.customActiveSlotId === slot.id) {
+    state.customSelection = [...keys];
+    state.customOrderCustomized = true;
+    persistCustomSelection();
+  }
+  updateCustomSlotControls();
+}
+
+function clearCustomDragClasses() {
+  document.querySelectorAll('.cameraCard.is-dragging, .cameraCard.drag-before, .cameraCard.drag-after')
+    .forEach((card) => card.classList.remove('is-dragging', 'drag-before', 'drag-after'));
+}
+
+function reorderCustomImages(target, draggedKey, targetKey, insertAfter) {
+  if (!draggedKey || !targetKey || draggedKey === targetKey) return;
+  const byKey = new Map(allCustomCameraEntries().map((entry) => [entry.key, entry]));
+  const currentKeys = normalizeCustomKeys(customKeysForReorderTarget(target), true);
+  const imageKeys = currentKeys.filter((key) => cameraMediaType(byKey.get(key)?.camera || {}) === 'image');
+  const otherKeys = currentKeys.filter((key) => cameraMediaType(byKey.get(key)?.camera || {}) !== 'image');
+  const fromIndex = imageKeys.indexOf(draggedKey);
+  const targetIndex = imageKeys.indexOf(targetKey);
+  if (fromIndex < 0 || targetIndex < 0) return;
+  imageKeys.splice(fromIndex, 1);
+  let insertionIndex = imageKeys.indexOf(targetKey);
+  if (insertAfter) insertionIndex += 1;
+  imageKeys.splice(Math.max(0, insertionIndex), 0, draggedKey);
+  saveCustomKeysForReorderTarget(target, [...imageKeys, ...otherKeys]);
+  renderCameras();
+  updatePageMeta();
+}
+
+function enableCustomCardReorder(card, customKey, target) {
+  card.draggable = true;
+  card.dataset.customKey = customKey;
+  card.classList.add('is-reorderable');
+  card.addEventListener('dragstart', (event) => {
+    state.customDraggedKey = customKey;
+    card.classList.add('is-dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', customKey);
+  });
+  card.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    if (!state.customDraggedKey || state.customDraggedKey === customKey) return;
+    clearCustomDragClasses();
+    const rect = card.getBoundingClientRect();
+    const nearSameRow = Math.abs(event.clientY - (rect.top + rect.height / 2)) < rect.height * 0.28;
+    const insertAfter = event.clientY > rect.top + rect.height / 2
+      || (nearSameRow && event.clientX > rect.left + rect.width / 2);
+    card.classList.add(insertAfter ? 'drag-after' : 'drag-before');
+  });
+  card.addEventListener('drop', (event) => {
+    event.preventDefault();
+    const draggedKey = state.customDraggedKey || event.dataTransfer.getData('text/plain');
+    const insertAfter = card.classList.contains('drag-after');
+    clearCustomDragClasses();
+    state.customDraggedKey = null;
+    reorderCustomImages(target, draggedKey, customKey, insertAfter);
+  });
+  card.addEventListener('dragend', () => {
+    state.customDraggedKey = null;
+    clearCustomDragClasses();
+  });
+}
+
+function renderCustomEntrySet(sourceEntries, titleText, reorderTarget = null) {
   state.markerLayer?.clearLayers();
   state.markers.clear();
   const keyword = normalizeText(state.search);
@@ -1394,14 +1558,14 @@ function renderCustomEntrySet(sourceEntries, titleText) {
     if (!keyword) return true;
     return normalizeText(`${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)} ${entry.camera.provider || ''}`).includes(keyword);
   });
-  const displayEntries = matchedEntries.filter((entry) => {
-    const type = cameraMediaType(entry.camera);
-    return type === 'image' || (type === 'youtube' && isYoutubeCurrentlyLive(entry.camera));
-  });
+  // YouTubeはカスタム選択画面と上部のYouTube一覧で扱い、通常の画像グリッドには混ぜない。
+  const displayEntries = matchedEntries.filter((entry) => cameraMediaType(entry.camera) === 'image');
+  const liveYoutubeEntries = matchedEntries.filter((entry) => cameraMediaType(entry.camera) === 'youtube' && isYoutubeCurrentlyLive(entry.camera));
   const selectedYoutubeCount = matchedEntries.filter((entry) => cameraMediaType(entry.camera) === 'youtube').length;
   const visibleIds = new Set();
   const section = document.createElement('section');
   section.className = 'areaSection customCameraSection';
+  section.classList.toggle('is-reordering', state.customReorderMode && Boolean(reorderTarget));
   section.style.setProperty('--area-color', '#7c3aed');
 
   const title = document.createElement('h2');
@@ -1411,10 +1575,16 @@ function renderCustomEntrySet(sourceEntries, titleText) {
   grid.className = 'cameraGrid';
 
   for (const entry of displayEntries) {
-    grid.appendChild(createCameraCard(entry.camera, entry.area, {
+    const card = createCameraCard(entry.camera, entry.area, {
       prefectureName: entry.prefecture.name,
       prefectureId: entry.prefecture.id
-    }));
+    });
+    if (state.customReorderMode && reorderTarget) enableCustomCardReorder(card, entry.key, reorderTarget);
+    grid.appendChild(card);
+    addMarker(entry.camera, entry.area);
+    visibleIds.add(entry.camera.id);
+  }
+  for (const entry of liveYoutubeEntries) {
     addMarker(entry.camera, entry.area);
     visibleIds.add(entry.camera.id);
   }
@@ -1424,7 +1594,7 @@ function renderCustomEntrySet(sourceEntries, titleText) {
     const empty = document.createElement('div');
     empty.className = 'emptyState';
     empty.textContent = selectedYoutubeCount
-      ? '選択したYouTubeカメラは現在ライブ配信中ではないか、ライブ状態を確認できませんでした。'
+      ? '静止画が選択されていません。選択したYouTubeは上部の「YouTube」から開けます。'
       : 'カスタム表示に選択されたカメラがないか、絞り込み条件に一致しません。';
     elements.content.replaceChildren(empty);
   } else {
@@ -1473,10 +1643,7 @@ function createComparisonPaneForSource(source) {
     const keyword = normalizeText(state.search);
     const matchedEntries = source.entries
       .filter((entry) => !keyword || normalizeText(`${entry.prefecture.name} ${entry.camera.city} ${entry.camera.place}`).includes(keyword));
-    const entries = matchedEntries.filter((entry) => {
-      const type = cameraMediaType(entry.camera);
-      return type === 'image' || (type === 'youtube' && isYoutubeCurrentlyLive(entry.camera));
-    });
+    const entries = matchedEntries.filter((entry) => cameraMediaType(entry.camera) === 'image');
     for (const entry of entries) {
       grid.appendChild(createCameraCard(entry.camera, entry.area, {
         mapFocus: false,
@@ -1491,7 +1658,7 @@ function createComparisonPaneForSource(source) {
       const empty = document.createElement('div');
       empty.className = 'emptyState';
       empty.textContent = matchedEntries.some((entry) => cameraMediaType(entry.camera) === 'youtube')
-        ? '選択したYouTubeカメラは現在ライブ配信中ではないか、ライブ状態を確認できませんでした。'
+        ? '静止画が選択されていません。選択したYouTubeは上部の「YouTube」から開けます。'
         : '表示できるカスタムカメラがありません。';
       pane.appendChild(empty);
     }
@@ -2577,6 +2744,7 @@ function bindEvents() {
   });
   elements.comparisonToggleButton?.addEventListener('click', toggleComparisonMode);
   elements.customModeButton?.addEventListener('click', openCustomPanel);
+  elements.customReorderButton?.addEventListener('click', toggleCustomReorderMode);
   elements.customPanelClose?.addEventListener('click', () => closeCustomPanel());
   elements.customCameraSearch?.addEventListener('input', async (event) => {
     state.customSearch = event.target.value;
@@ -2605,6 +2773,7 @@ function bindEvents() {
   elements.customDeleteButton?.addEventListener('click', deleteCustomSlot);
   elements.customClearSelectionButton?.addEventListener('click', async () => {
     state.customSelection = [];
+    state.customOrderCustomized = false;
     persistCustomSelection();
     await renderCustomCameraEditor();
   });
