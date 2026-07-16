@@ -173,7 +173,7 @@
         {
           "id": "hyogo",
           "name": "兵庫県",
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "nara",
