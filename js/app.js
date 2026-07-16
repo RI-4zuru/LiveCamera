@@ -13,6 +13,11 @@ const PRIMARY_PREFECTURE_KEY = 'national-live-camera:primary-prefecture:v1';
 const COMPARE_PREFECTURE_KEY = 'national-live-camera:compare-prefecture:v1';
 const YOUTUBE_LIVE_REFRESH_MS = 5 * 60 * 1000;
 const YOUTUBE_LIVE_PROBE_TIMEOUT_MS = 8000;
+const MOBILE_MEDIA_QUERY = '(max-width: 620px)';
+const MOBILE_GRID_COLUMNS_KEY = 'national-live-camera:mobile-grid-columns:v1';
+const CUSTOM_SLOTS_KEY = 'national-live-camera:custom-slots:v1';
+const CUSTOM_DRAFT_KEY = 'national-live-camera:custom-draft:v1';
+const CUSTOM_ACTIVE_SLOT_KEY = 'national-live-camera:custom-active-slot:v1';
 
 const elements = {
   pageSubtitle: document.querySelector('#pageSubtitle'),
@@ -79,7 +84,24 @@ const elements = {
   areaControl: document.querySelector('#areaControl'),
   gridColumnControl: document.querySelector('#gridColumnControl'),
   gridColumnSelect: document.querySelector('#gridColumnSelect'),
-  comparisonToggleButton: document.querySelector('#comparisonToggleButton')
+  comparisonToggleButton: document.querySelector('#comparisonToggleButton'),
+  customModeButton: document.querySelector('#customModeButton'),
+  customPanel: document.querySelector('#customPanel'),
+  customPanelClose: document.querySelector('#customPanelClose'),
+  customSlotSelect: document.querySelector('#customSlotSelect'),
+  customSlotName: document.querySelector('#customSlotName'),
+  customLoadSlotButton: document.querySelector('#customLoadSlotButton'),
+  customSaveNewButton: document.querySelector('#customSaveNewButton'),
+  customOverwriteButton: document.querySelector('#customOverwriteButton'),
+  customRenameButton: document.querySelector('#customRenameButton'),
+  customDeleteButton: document.querySelector('#customDeleteButton'),
+  customPrefectureFilter: document.querySelector('#customPrefectureFilter'),
+  customCameraSearch: document.querySelector('#customCameraSearch'),
+  customSelectedCount: document.querySelector('#customSelectedCount'),
+  customClearSelectionButton: document.querySelector('#customClearSelectionButton'),
+  customCameraList: document.querySelector('#customCameraList'),
+  customNormalViewButton: document.querySelector('#customNormalViewButton'),
+  customApplyButton: document.querySelector('#customApplyButton')
 };
 
 const state = {
@@ -111,6 +133,8 @@ const state = {
   mapVisible: true,
   gridColumns: 4,
   comparisonGridColumns: 6,
+  mobileGridColumns: 2,
+  isMobile: false,
   compareMode: false,
   singleViewSlot: 'primary',
   secondaryPrefecture: null,
@@ -120,7 +144,14 @@ const state = {
   visibilityPrefectureSlot: 'primary',
   liveYoutubeIds: new Set(),
   youtubeStatusReady: false,
-  youtubeStatusTimer: null
+  youtubeStatusTimer: null,
+  customMode: false,
+  customSelection: [],
+  customSlots: [],
+  customActiveSlotId: null,
+  customPrefectureData: new Map(),
+  customSearch: '',
+  customPrefectureFilter: 'all'
 };
 
 init().catch((error) => {
@@ -135,6 +166,7 @@ async function init() {
   initializeDisplayPreferences();
   setupStickyStackObserver();
   state.prefectures = await fetchJson(`${DATA_ROOT}/prefectures.json`);
+  initializeCustomStorage();
   renderPrefectureNavigation();
   updatePrefectureSelectionUI();
 
@@ -161,6 +193,322 @@ function findEnabledPrefecture(id) {
   return state.prefectures.regions
     .flatMap((region) => region.prefectures)
     .find((prefecture) => prefecture.id === id && prefecture.enabled);
+}
+
+
+function customCameraKey(prefectureId, cameraId) {
+  return `${prefectureId}::${cameraId}`;
+}
+
+function initializeCustomStorage() {
+  try {
+    const slots = JSON.parse(localStorage.getItem(CUSTOM_SLOTS_KEY) || '[]');
+    state.customSlots = Array.isArray(slots)
+      ? slots.filter((slot) => slot && typeof slot.id === 'string' && typeof slot.name === 'string' && Array.isArray(slot.cameras))
+      : [];
+  } catch (error) {
+    console.warn('カスタム保存スロットを読み込めませんでした。', error);
+    state.customSlots = [];
+  }
+
+  try {
+    const draft = JSON.parse(localStorage.getItem(CUSTOM_DRAFT_KEY) || '[]');
+    state.customSelection = Array.isArray(draft) ? [...new Set(draft.filter((key) => typeof key === 'string'))] : [];
+  } catch {
+    state.customSelection = [];
+  }
+  state.customActiveSlotId = localStorage.getItem(CUSTOM_ACTIVE_SLOT_KEY) || null;
+}
+
+function persistCustomSlots() {
+  localStorage.setItem(CUSTOM_SLOTS_KEY, JSON.stringify(state.customSlots));
+}
+
+function persistCustomSelection() {
+  localStorage.setItem(CUSTOM_DRAFT_KEY, JSON.stringify(state.customSelection));
+}
+
+function createCustomSlotId() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `slot-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function ensureCustomPrefectureData() {
+  const tasks = enabledPrefectures().map(async (prefectureInfo) => {
+    if (state.customPrefectureData.has(prefectureInfo.id)) return;
+    let data = null;
+    if (state.prefecture?.id === prefectureInfo.id) data = state.prefecture;
+    else if (state.secondaryPrefecture?.id === prefectureInfo.id) data = state.secondaryPrefecture;
+    else data = await fetchJson(`${DATA_ROOT}/cameras/${prefectureInfo.id}.json`);
+    state.customPrefectureData.set(prefectureInfo.id, data);
+  });
+  await Promise.all(tasks);
+}
+
+function allCustomCameraEntries() {
+  const entries = [];
+  for (const prefectureInfo of enabledPrefectures()) {
+    const prefecture = state.customPrefectureData.get(prefectureInfo.id);
+    if (!prefecture) continue;
+    const sorted = prefecture.cameras
+      .filter((camera) => cameraMediaType(camera) === 'image')
+      .sort(compareCamerasForPrefecture(prefecture));
+    for (const camera of sorted) {
+      entries.push({
+        key: customCameraKey(prefecture.id, camera.id),
+        prefecture,
+        camera,
+        area: prefecture.areas.find((area) => area.id === camera.area) || { id: camera.area, name: '', color: 'grey' }
+      });
+    }
+  }
+  return entries;
+}
+
+function selectedCustomEntries() {
+  const byKey = new Map(allCustomCameraEntries().map((entry) => [entry.key, entry]));
+  return state.customSelection.map((key) => byKey.get(key)).filter(Boolean);
+}
+
+function updateCustomSlotControls() {
+  if (!elements.customSlotSelect) return;
+  const options = [new Option('保存スロットを選択', '')];
+  for (const slot of state.customSlots) options.push(new Option(slot.name, slot.id));
+  elements.customSlotSelect.replaceChildren(...options);
+  const activeExists = state.customSlots.some((slot) => slot.id === state.customActiveSlotId);
+  elements.customSlotSelect.value = activeExists ? state.customActiveSlotId : '';
+  const active = state.customSlots.find((slot) => slot.id === elements.customSlotSelect.value);
+  if (active && elements.customSlotName) elements.customSlotName.value = active.name;
+  const hasActive = Boolean(active);
+  for (const button of [elements.customLoadSlotButton, elements.customOverwriteButton, elements.customRenameButton, elements.customDeleteButton]) {
+    if (button) button.disabled = !hasActive;
+  }
+}
+
+function updateCustomSelectedCount() {
+  if (elements.customSelectedCount) elements.customSelectedCount.textContent = String(state.customSelection.length);
+}
+
+async function renderCustomCameraEditor() {
+  await ensureCustomPrefectureData();
+  updateCustomSlotControls();
+  updateCustomSelectedCount();
+
+  if (elements.customPrefectureFilter) {
+    const current = state.customPrefectureFilter;
+    const options = [new Option('すべて', 'all')];
+    for (const prefectureInfo of enabledPrefectures()) options.push(new Option(prefectureInfo.name, prefectureInfo.id));
+    elements.customPrefectureFilter.replaceChildren(...options);
+    elements.customPrefectureFilter.value = options.some((option) => option.value === current) ? current : 'all';
+  }
+
+  const selected = new Set(state.customSelection);
+  const keyword = normalizeText(state.customSearch);
+  const entries = allCustomCameraEntries().filter((entry) => {
+    if (state.customPrefectureFilter !== 'all' && entry.prefecture.id !== state.customPrefectureFilter) return false;
+    if (!keyword) return true;
+    return normalizeText(`${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)} ${entry.camera.provider || ''}`).includes(keyword);
+  });
+  const fragment = document.createDocumentFragment();
+
+  for (const entry of entries) {
+    const label = document.createElement('label');
+    label.className = 'customCameraOption';
+    label.classList.toggle('is-selected', selected.has(entry.key));
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = selected.has(entry.key);
+    checkbox.value = entry.key;
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        if (!state.customSelection.includes(entry.key)) state.customSelection.push(entry.key);
+      } else {
+        state.customSelection = state.customSelection.filter((key) => key !== entry.key);
+      }
+      label.classList.toggle('is-selected', checkbox.checked);
+      persistCustomSelection();
+      updateCustomSelectedCount();
+    });
+
+    const media = document.createElement('div');
+    media.className = 'customCameraPreview';
+    const image = document.createElement('img');
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.alt = `${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)}`;
+    setCameraImageSource(image, entry.camera, 0);
+    image.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openViewer(entry.camera, image.currentSrc || image.src);
+    });
+    image.addEventListener('error', () => handleCameraImageError(image, media, entry.camera));
+    const imageError = document.createElement('span');
+    imageError.textContent = '画像取得不可';
+    media.append(image, imageError);
+
+    const text = document.createElement('span');
+    text.className = 'customCameraText';
+    const prefecture = document.createElement('small');
+    prefecture.textContent = entry.prefecture.name;
+    const city = document.createElement('strong');
+    city.textContent = municipalityName(entry.camera.city);
+    const place = document.createElement('span');
+    place.textContent = stripTerrainPrefix(entry.camera.place);
+    text.append(prefecture, city, place);
+
+    label.append(checkbox, media, text);
+    fragment.appendChild(label);
+  }
+
+  if (!entries.length) {
+    const empty = document.createElement('div');
+    empty.className = 'emptyState';
+    empty.textContent = '条件に一致する静止画カメラはありません。';
+    fragment.appendChild(empty);
+  }
+  elements.customCameraList.replaceChildren(fragment);
+}
+
+async function openCustomPanel() {
+  closePrefecturePanel(false);
+  closeVisibilityPanel(false);
+  showStatus('カスタム用のカメラデータを読み込んでいます。');
+  try {
+    await renderCustomCameraEditor();
+    hideStatus();
+  } catch (error) {
+    console.error(error);
+    showStatus('カスタム用データを読み込めませんでした。');
+  }
+  elements.customPanel.classList.add('open');
+  elements.customPanel.setAttribute('aria-hidden', 'false');
+  elements.customModeButton.setAttribute('aria-expanded', 'true');
+  elements.panelBackdrop.hidden = false;
+  stopAutoScroll();
+}
+
+function closeCustomPanel(updateBackdrop = true) {
+  elements.customPanel.classList.remove('open');
+  elements.customPanel.setAttribute('aria-hidden', 'true');
+  elements.customModeButton.setAttribute('aria-expanded', 'false');
+  if (updateBackdrop) updatePanelBackdrop();
+}
+
+function selectedCustomSlot() {
+  return state.customSlots.find((slot) => slot.id === elements.customSlotSelect?.value) || null;
+}
+
+function customSlotNameValue() {
+  return elements.customSlotName?.value.trim() || '';
+}
+
+function saveCustomSlotAsNew() {
+  if (!state.customSelection.length) {
+    showStatus('保存するカメラを1件以上選択してください。');
+    return;
+  }
+  const name = customSlotNameValue() || `カスタム ${state.customSlots.length + 1}`;
+  const slot = { id: createCustomSlotId(), name, cameras: [...state.customSelection], updatedAt: new Date().toISOString() };
+  state.customSlots.push(slot);
+  state.customActiveSlotId = slot.id;
+  localStorage.setItem(CUSTOM_ACTIVE_SLOT_KEY, slot.id);
+  persistCustomSlots();
+  updateCustomSlotControls();
+  showStatus(`「${name}」を保存しました。`);
+}
+
+function overwriteCustomSlot() {
+  const slot = selectedCustomSlot();
+  if (!slot) return;
+  if (!state.customSelection.length) {
+    showStatus('上書きするカメラを1件以上選択してください。');
+    return;
+  }
+  slot.cameras = [...state.customSelection];
+  slot.updatedAt = new Date().toISOString();
+  persistCustomSlots();
+  showStatus(`「${slot.name}」を上書きしました。`);
+}
+
+function renameCustomSlot() {
+  const slot = selectedCustomSlot();
+  const name = customSlotNameValue();
+  if (!slot || !name) {
+    showStatus('変更後のスロット名を入力してください。');
+    return;
+  }
+  slot.name = name;
+  slot.updatedAt = new Date().toISOString();
+  persistCustomSlots();
+  updateCustomSlotControls();
+  showStatus(`スロット名を「${name}」へ変更しました。`);
+}
+
+function deleteCustomSlot() {
+  const slot = selectedCustomSlot();
+  if (!slot || !window.confirm(`「${slot.name}」を削除しますか？`)) return;
+  state.customSlots = state.customSlots.filter((item) => item.id !== slot.id);
+  if (state.customActiveSlotId === slot.id) {
+    state.customActiveSlotId = null;
+    localStorage.removeItem(CUSTOM_ACTIVE_SLOT_KEY);
+  }
+  persistCustomSlots();
+  if (elements.customSlotName) elements.customSlotName.value = '';
+  updateCustomSlotControls();
+  showStatus(`「${slot.name}」を削除しました。`);
+}
+
+async function loadCustomSlot() {
+  const slot = selectedCustomSlot();
+  if (!slot) return;
+  await ensureCustomPrefectureData();
+  const valid = new Set(allCustomCameraEntries().map((entry) => entry.key));
+  state.customSelection = slot.cameras.filter((key) => valid.has(key));
+  state.customActiveSlotId = slot.id;
+  localStorage.setItem(CUSTOM_ACTIVE_SLOT_KEY, slot.id);
+  persistCustomSelection();
+  await renderCustomCameraEditor();
+  showStatus(`「${slot.name}」を読み込みました。`);
+  await applyCustomSelection();
+}
+
+async function applyCustomSelection() {
+  await ensureCustomPrefectureData();
+  const valid = new Set(allCustomCameraEntries().map((entry) => entry.key));
+  state.customSelection = state.customSelection.filter((key) => valid.has(key));
+  if (!state.customSelection.length) {
+    showStatus('表示するカメラを1件以上選択してください。');
+    return;
+  }
+  persistCustomSelection();
+  state.customMode = true;
+  state.compareMode = false;
+  localStorage.setItem(COMPARE_MODE_KEY, 'false');
+  state.area = 'all';
+  state.search = '';
+  elements.cameraSearch.value = '';
+  closeCustomPanel();
+  updateComparisonControls();
+  updatePageMeta();
+  initializeOrResetMap();
+  renderCameras();
+  hideStatus();
+}
+
+function exitCustomMode() {
+  if (!state.customMode) {
+    closeCustomPanel();
+    return;
+  }
+  state.customMode = false;
+  closeCustomPanel();
+  renderAreaSelect();
+  updateComparisonControls();
+  updatePageMeta();
+  initializeOrResetMap();
+  renderCameras();
 }
 
 function singleViewContext() {
@@ -191,6 +539,7 @@ async function loadPrefecture(prefectureId) {
   state.visibilityTab = 'settings';
   state.visibilityPrefectureSlot = 'primary';
   state.singleViewSlot = 'primary';
+  state.customMode = false;
   state.showYoutube = false;
   state.selectedCameraId = null;
   state.hiddenCameraIds = loadHiddenCameraIds(prefectureId, data.cameras);
@@ -227,21 +576,34 @@ async function loadPrefecture(prefectureId) {
 function updatePageMeta() {
   const prefectures = activePrefectures();
   const displayed = displayedPrefecture();
-  const hasYoutube = prefectures.some((prefecture) =>
+  const hasYoutube = !state.customMode && prefectures.some((prefecture) =>
     prefecture?.cameras.some((camera) => cameraMediaType(camera) === 'youtube' && isYoutubeCurrentlyLive(camera))
   );
-  const titleName = state.compareMode && state.secondaryPrefecture
-    ? `${state.prefecture.name}・${state.secondaryPrefecture.name}`
-    : displayed?.name || '全国';
+  const titleName = state.customMode
+    ? 'カスタム'
+    : state.compareMode && state.secondaryPrefecture
+      ? `${state.prefecture.name}・${state.secondaryPrefecture.name}`
+      : displayed?.name || '全国';
   document.title = `${titleName}ライブカメラ｜全国ライブカメラ`;
-  elements.pageSubtitle.textContent = state.compareMode && state.secondaryPrefecture
-    ? `${state.prefecture.name}と${state.secondaryPrefecture.name}を比較表示`
-    : displayed ? `${displayed.region}地方・${displayed.name}` : 'データを読み込み中...';
-  elements.prefectureName.textContent = state.compareMode && state.secondaryPrefecture
-    ? `${state.prefecture.name} × ${state.secondaryPrefecture.name}`
-    : displayed?.name || '-';
+  elements.pageSubtitle.textContent = state.customMode
+    ? `選択した${state.customSelection.length}地点をカスタム表示`
+    : state.compareMode && state.secondaryPrefecture
+      ? `${state.prefecture.name}と${state.secondaryPrefecture.name}を比較表示`
+      : displayed ? `${displayed.region}地方・${displayed.name}` : 'データを読み込み中...';
+  elements.prefectureName.textContent = state.customMode
+    ? 'カスタム'
+    : state.compareMode && state.secondaryPrefecture
+      ? `${state.prefecture.name} × ${state.secondaryPrefecture.name}`
+      : displayed?.name || '-';
   updatePrefectureSelectionUI();
   elements.youtubeToggle.hidden = !hasYoutube;
+  if (elements.areaControl) elements.areaControl.hidden = state.compareMode || state.customMode;
+  if (elements.visibilityEditButton) elements.visibilityEditButton.hidden = state.customMode;
+  if (elements.customModeButton) {
+    elements.customModeButton.classList.toggle('is-active', state.customMode);
+    elements.customModeButton.textContent = state.customMode ? 'カスタム中' : 'カスタム';
+  }
+  updateResponsiveControls();
 }
 
 function updateYoutubeToggle() {
@@ -329,14 +691,17 @@ function renderAreaSelect() {
 
 function initializeOrResetMap() {
   const prefecture = displayedPrefecture();
-  if (!prefecture) return;
-  const center = [prefecture.center.latitude, prefecture.center.longitude];
+  if (!prefecture && !state.customMode) return;
+  const center = state.customMode
+    ? [36.2, 138.2]
+    : [prefecture.center.latitude, prefecture.center.longitude];
+  const zoom = state.customMode ? 5 : prefecture.zoom;
 
   if (!state.map) {
     state.map = Leaflet.map(elements.mapContainer, {
       zoomControl: true,
       preferCanvas: false
-    }).setView(center, prefecture.zoom);
+    }).setView(center, zoom);
 
     state.tileLayer = Leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -357,7 +722,7 @@ function initializeOrResetMap() {
     state.map.whenReady(() => scheduleMapRefresh());
   } else {
     state.markerLayer.clearLayers();
-    state.map.setView(center, prefecture.zoom);
+    state.map.setView(center, zoom);
   }
 
   state.markers.clear();
@@ -371,15 +736,19 @@ function initializeDisplayPreferences() {
     elements.visibilityImageMode.value = state.visibilityImagesVisible ? 'show' : 'hide';
   }
 
+  state.isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
   const savedMapVisibility = localStorage.getItem(MAP_VISIBILITY_KEY);
   state.mapVisible = savedMapVisibility !== 'false';
   const savedColumns = Number(localStorage.getItem(GRID_COLUMNS_KEY));
   state.gridColumns = savedColumns === 6 ? 6 : 4;
+  const savedMobileColumns = Number(localStorage.getItem(MOBILE_GRID_COLUMNS_KEY));
+  state.mobileGridColumns = [1, 2, 3, 4].includes(savedMobileColumns) ? savedMobileColumns : 2;
   const savedComparisonColumns = Number(localStorage.getItem(COMPARE_GRID_COLUMNS_KEY));
   state.comparisonGridColumns = [6, 8, 10].includes(savedComparisonColumns) ? savedComparisonColumns : 6;
-  state.compareMode = localStorage.getItem(COMPARE_MODE_KEY) === 'true';
+  state.compareMode = !state.isMobile && localStorage.getItem(COMPARE_MODE_KEY) === 'true';
   state.secondaryPrefectureId = localStorage.getItem(COMPARE_PREFECTURE_KEY);
   updateMapVisibility();
+  updateResponsiveControls();
 }
 
 function updateMapVisibility() {
@@ -389,8 +758,12 @@ function updateMapVisibility() {
   elements.mapWrap.hidden = !effectiveMapVisible;
   elements.layout.classList.toggle('mapHidden', !effectiveMapVisible);
   elements.layout.classList.toggle('comparisonMode', state.compareMode);
-  elements.layout.classList.toggle('gridColumns4', !state.compareMode && state.gridColumns === 4);
-  elements.layout.classList.toggle('gridColumns6', !state.compareMode && state.gridColumns === 6);
+  elements.layout.classList.toggle('customMode', state.customMode);
+  elements.layout.classList.toggle('gridColumns4', !state.compareMode && !state.isMobile && state.gridColumns === 4);
+  elements.layout.classList.toggle('gridColumns6', !state.compareMode && !state.isMobile && state.gridColumns === 6);
+  for (const columns of [1, 2, 3, 4]) {
+    elements.layout.classList.toggle(`mobileColumns${columns}`, !state.compareMode && state.isMobile && state.mobileGridColumns === columns);
+  }
   elements.layout.classList.toggle('comparisonColumns6', state.compareMode && state.comparisonGridColumns === 6);
   elements.layout.classList.toggle('comparisonColumns8', state.compareMode && state.comparisonGridColumns === 8);
   elements.layout.classList.toggle('comparisonColumns10', state.compareMode && state.comparisonGridColumns === 10);
@@ -408,14 +781,52 @@ function updateMapVisibility() {
 
 function updateGridColumnControl() {
   if (!elements.gridColumnControl || !elements.gridColumnSelect) return;
-  const values = state.compareMode ? [6, 8, 10] : [4, 6];
-  const selected = state.compareMode ? state.comparisonGridColumns : state.gridColumns;
+  const values = state.isMobile ? [1, 2, 3, 4] : state.compareMode ? [6, 8, 10] : [4, 6];
+  const selected = state.isMobile
+    ? state.mobileGridColumns
+    : state.compareMode
+      ? state.comparisonGridColumns
+      : state.gridColumns;
   const currentValues = [...elements.gridColumnSelect.options].map((option) => Number(option.value));
   if (currentValues.join(',') !== values.join(',')) {
     elements.gridColumnSelect.replaceChildren(...values.map((value) => new Option(`${value}列`, String(value))));
   }
   elements.gridColumnSelect.value = String(selected);
   elements.gridColumnControl.hidden = false;
+}
+
+function updateResponsiveControls() {
+  const mobile = state.isMobile;
+  if (elements.comparisonToggleButton) elements.comparisonToggleButton.hidden = mobile || state.customMode;
+  if (elements.secondaryPrefectureSummaryButton) elements.secondaryPrefectureSummaryButton.hidden = mobile;
+  if (elements.secondaryPrefectureTarget) {
+    elements.secondaryPrefectureTarget.disabled = mobile;
+    elements.secondaryPrefectureTarget.closest('.prefectureTargetOption')?.toggleAttribute('hidden', mobile);
+  }
+  if (elements.visibilitySecondaryPrefectureButton) elements.visibilitySecondaryPrefectureButton.hidden = mobile;
+  if (mobile && state.prefectureTargetSlot === 'secondary') setPrefectureTargetSlot('primary');
+  updateGridColumnControl();
+}
+
+function handleResponsiveChange() {
+  const mobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+  if (mobile === state.isMobile) {
+    updateResponsiveControls();
+    return;
+  }
+
+  state.isMobile = mobile;
+  if (mobile && state.compareMode) {
+    state.compareMode = false;
+    localStorage.setItem(COMPARE_MODE_KEY, 'false');
+    state.singleViewSlot = 'primary';
+    renderAreaSelect();
+    initializeOrResetMap();
+  }
+  updateComparisonControls();
+  updateResponsiveControls();
+  updateMapVisibility();
+  renderCameras();
 }
 
 function toggleMapVisibility() {
@@ -500,6 +911,10 @@ function scheduleMapRefresh(visibleIds = null) {
 
 function renderCameras() {
   if (!state.prefecture || !state.markerLayer) return;
+  if (state.customMode) {
+    renderCustomCameras();
+    return;
+  }
   if (state.compareMode && state.secondaryPrefecture) {
     renderComparisonCameras();
     return;
@@ -571,6 +986,46 @@ function renderCameras() {
   }
 
   elements.content.replaceChildren(fragment);
+  scheduleMapRefresh(visibleIds);
+}
+
+function renderCustomCameras() {
+  state.markerLayer?.clearLayers();
+  state.markers.clear();
+  const keyword = normalizeText(state.search);
+  const entries = selectedCustomEntries().filter((entry) => {
+    if (!keyword) return true;
+    return normalizeText(`${entry.prefecture.name} ${entry.camera.city} ${stripTerrainPrefix(entry.camera.place)} ${entry.camera.provider || ''}`).includes(keyword);
+  });
+  const visibleIds = new Set();
+  const section = document.createElement('section');
+  section.className = 'areaSection customCameraSection';
+  section.style.setProperty('--area-color', '#7c3aed');
+
+  const title = document.createElement('h2');
+  title.className = 'areaTitle';
+  title.textContent = 'カスタム表示';
+  const grid = document.createElement('div');
+  grid.className = 'cameraGrid';
+
+  for (const entry of entries) {
+    const card = createCameraCard(entry.camera, entry.area, {
+      prefectureName: entry.prefecture.name
+    });
+    grid.appendChild(card);
+    addMarker(entry.camera, entry.area);
+    visibleIds.add(entry.camera.id);
+  }
+  section.append(title, grid);
+
+  if (!entries.length) {
+    const empty = document.createElement('div');
+    empty.className = 'emptyState';
+    empty.textContent = 'カスタム表示に選択された画像がないか、絞り込み条件に一致しません。';
+    elements.content.replaceChildren(empty);
+  } else {
+    elements.content.replaceChildren(section);
+  }
   scheduleMapRefresh(visibleIds);
 }
 
@@ -676,7 +1131,7 @@ function filteredCameras(mediaType = 'image') {
   });
 }
 
-function createCameraCard(camera, area, { mapFocus = true } = {}) {
+function createCameraCard(camera, area, { mapFocus = true, prefectureName = '' } = {}) {
   const card = document.createElement('article');
   card.className = 'cameraCard';
   card.id = `camera-${camera.id}`;
@@ -688,7 +1143,7 @@ function createCameraCard(camera, area, { mapFocus = true } = {}) {
 
   const city = document.createElement('div');
   city.className = 'city';
-  city.textContent = camera.city;
+  city.textContent = prefectureName ? `${prefectureName}・${camera.city}` : camera.city;
   header.appendChild(city);
 
   const media = document.createElement('div');
@@ -890,7 +1345,7 @@ function createMarkerIcon(color) {
 }
 
 function focusCamera(cameraId, scrollToCard) {
-  const camera = displayedPrefecture()?.cameras.find((item) => item.id === cameraId);
+  const camera = findCameraById(cameraId);
   if (!camera) return;
 
   state.selectedCameraId = cameraId;
@@ -938,8 +1393,15 @@ function fitMapToVisibleMarkers(visibleIds = new Set(state.markers.keys())) {
 }
 
 function resetMap() {
+  if (!state.map) return;
+  if (state.customMode) {
+    const markerIds = new Set(state.markers.keys());
+    if (markerIds.size) fitMapToVisibleMarkers(markerIds);
+    else state.map.setView([36.2, 138.2], 5, { animate: false });
+    return;
+  }
   const prefecture = displayedPrefecture();
-  if (!prefecture || !state.map) return;
+  if (!prefecture) return;
   state.map.setView(
     [prefecture.center.latitude, prefecture.center.longitude],
     prefecture.zoom,
@@ -966,7 +1428,8 @@ function updateClock() {
   }).format(now)}`;
 
   if (!state.prefecture) return;
-  const intervalMinutes = Math.min(...activePrefectures().map((prefecture) => prefecture.refreshIntervalMinutes || 5));
+  const refreshIntervals = activePrefectures().map((prefecture) => prefecture.refreshIntervalMinutes || 5);
+  const intervalMinutes = refreshIntervals.length ? Math.min(...refreshIntervals) : 5;
   const intervalMs = intervalMinutes * 60 * 1000;
   const next = Math.floor(now.getTime() / intervalMs + 1) * intervalMs;
   const seconds = Math.max(0, Math.ceil((next - now.getTime()) / 1000));
@@ -1138,7 +1601,7 @@ function visibilityContext() {
 }
 
 function updateVisibilityPrefectureSwitcher() {
-  const visible = Boolean(state.secondaryPrefecture);
+  const visible = Boolean(state.secondaryPrefecture) && !state.isMobile;
   if (elements.visibilityPrefectureSwitcher) elements.visibilityPrefectureSwitcher.hidden = !visible;
   if (!visible) state.visibilityPrefectureSlot = 'primary';
 
@@ -1430,6 +1893,7 @@ function refreshHiddenImages() {
 
 function openPrefecturePanel() {
   closeVisibilityPanel(false);
+  closeCustomPanel(false);
   elements.prefecturePanel.classList.add('open');
   elements.prefecturePanel.setAttribute('aria-hidden', 'false');
   elements.prefectureMenuButton.setAttribute('aria-expanded', 'true');
@@ -1446,6 +1910,7 @@ function closePrefecturePanel(updateBackdrop = true) {
 
 function openVisibilityPanel() {
   closePrefecturePanel(false);
+  closeCustomPanel(false);
   renderVisibilityEditor();
   renderHiddenImages();
   setVisibilityTab(state.visibilityTab);
@@ -1469,12 +1934,14 @@ function closeVisibilityPanel(updateBackdrop = true) {
 function closeAllSidePanels() {
   closePrefecturePanel(false);
   closeVisibilityPanel(false);
+  closeCustomPanel(false);
   elements.panelBackdrop.hidden = true;
 }
 
 function updatePanelBackdrop() {
   const anyOpen = elements.prefecturePanel.classList.contains('open')
-    || elements.visibilityPanel.classList.contains('open');
+    || elements.visibilityPanel.classList.contains('open')
+    || elements.customPanel.classList.contains('open');
   elements.panelBackdrop.hidden = !anyOpen;
 }
 
@@ -1596,7 +2063,10 @@ function bindEvents() {
 
   elements.gridColumnSelect?.addEventListener('change', (event) => {
     const value = Number(event.target.value);
-    if (state.compareMode) {
+    if (state.isMobile) {
+      state.mobileGridColumns = [1, 2, 3, 4].includes(value) ? value : 2;
+      localStorage.setItem(MOBILE_GRID_COLUMNS_KEY, String(state.mobileGridColumns));
+    } else if (state.compareMode) {
       state.comparisonGridColumns = [6, 8, 10].includes(value) ? value : 6;
       localStorage.setItem(COMPARE_GRID_COLUMNS_KEY, String(state.comparisonGridColumns));
     } else {
@@ -1606,6 +2076,40 @@ function bindEvents() {
     updateMapVisibility();
   });
   elements.comparisonToggleButton?.addEventListener('click', toggleComparisonMode);
+  elements.customModeButton?.addEventListener('click', openCustomPanel);
+  elements.customPanelClose?.addEventListener('click', () => closeCustomPanel());
+  elements.customCameraSearch?.addEventListener('input', async (event) => {
+    state.customSearch = event.target.value;
+    await renderCustomCameraEditor();
+  });
+  elements.customPrefectureFilter?.addEventListener('change', async (event) => {
+    state.customPrefectureFilter = event.target.value;
+    await renderCustomCameraEditor();
+  });
+  elements.customSlotSelect?.addEventListener('change', () => {
+    const slot = selectedCustomSlot();
+    state.customActiveSlotId = slot?.id || null;
+    if (slot) {
+      localStorage.setItem(CUSTOM_ACTIVE_SLOT_KEY, slot.id);
+      elements.customSlotName.value = slot.name;
+    } else {
+      localStorage.removeItem(CUSTOM_ACTIVE_SLOT_KEY);
+      elements.customSlotName.value = '';
+    }
+    updateCustomSlotControls();
+  });
+  elements.customLoadSlotButton?.addEventListener('click', loadCustomSlot);
+  elements.customSaveNewButton?.addEventListener('click', saveCustomSlotAsNew);
+  elements.customOverwriteButton?.addEventListener('click', overwriteCustomSlot);
+  elements.customRenameButton?.addEventListener('click', renameCustomSlot);
+  elements.customDeleteButton?.addEventListener('click', deleteCustomSlot);
+  elements.customClearSelectionButton?.addEventListener('click', async () => {
+    state.customSelection = [];
+    persistCustomSelection();
+    await renderCustomCameraEditor();
+  });
+  elements.customApplyButton?.addEventListener('click', applyCustomSelection);
+  elements.customNormalViewButton?.addEventListener('click', exitCustomMode);
   elements.primaryPrefectureSummaryButton?.addEventListener('click', async () => {
     if (state.compareMode) await swapComparisonPrefectures();
     else await setSingleViewSlot('primary');
@@ -1626,6 +2130,7 @@ function bindEvents() {
   window.addEventListener('wheel', stopAutoScroll, { passive: true });
   window.addEventListener('touchstart', stopAutoScroll, { passive: true });
   window.addEventListener('resize', () => {
+    handleResponsiveChange();
     updateSummaryBarVisibility();
     updateStickyStackHeight();
     scheduleMapRefresh(new Set(state.markers.keys()));
@@ -1660,7 +2165,7 @@ function enabledPrefectures() {
 }
 
 function setPrefectureTargetSlot(slot) {
-  state.prefectureTargetSlot = slot === 'secondary' ? 'secondary' : 'primary';
+  state.prefectureTargetSlot = state.isMobile ? 'primary' : slot === 'secondary' ? 'secondary' : 'primary';
   if (elements.primaryPrefectureTarget) elements.primaryPrefectureTarget.checked = state.prefectureTargetSlot === 'primary';
   if (elements.secondaryPrefectureTarget) elements.secondaryPrefectureTarget.checked = state.prefectureTargetSlot === 'secondary';
   document.querySelectorAll('.prefectureTargetOption').forEach((label) => {
@@ -1674,6 +2179,7 @@ function updatePrefectureSelectionUI() {
   const secondaryName = state.secondaryPrefecture?.name || '未選択';
   if (elements.primaryPrefectureName) elements.primaryPrefectureName.textContent = primaryName;
   if (elements.secondaryPrefectureName) elements.secondaryPrefectureName.textContent = secondaryName;
+  if (elements.secondaryPrefectureSummaryButton) elements.secondaryPrefectureSummaryButton.hidden = state.isMobile;
   if (elements.panelPrimaryPrefectureName) elements.panelPrimaryPrefectureName.textContent = primaryName;
   if (elements.panelSecondaryPrefectureName) elements.panelSecondaryPrefectureName.textContent = secondaryName;
   const viewingPrimary = state.compareMode || state.singleViewSlot === 'primary';
@@ -1690,7 +2196,7 @@ function updatePrefectureSelectionUI() {
 async function assignPrefectureToSlot(prefectureId) {
   if (!findEnabledPrefecture(prefectureId)) return;
 
-  if (state.prefectureTargetSlot === 'secondary') {
+  if (state.prefectureTargetSlot === 'secondary' && !state.isMobile) {
     if (prefectureId === state.prefecture?.id) {
       showStatus('第2県には、第1県とは別の都道府県を選んでください。');
       return;
@@ -1752,12 +2258,14 @@ async function loadSecondaryPrefecture(prefectureId, rerender = true) {
 
 async function setSingleViewSlot(slot) {
   if (state.compareMode) return;
+  const wasCustomMode = state.customMode;
+  if (wasCustomMode) state.customMode = false;
   const target = slot === 'secondary' ? 'secondary' : 'primary';
   if (target === 'secondary' && !state.secondaryPrefecture) {
     await ensureSecondaryPrefecture(state.prefecture?.id);
   }
   if (target === 'secondary' && !state.secondaryPrefecture) return;
-  if (state.singleViewSlot === target) {
+  if (state.singleViewSlot === target && !wasCustomMode) {
     updatePrefectureSelectionUI();
     return;
   }
@@ -1768,6 +2276,7 @@ async function setSingleViewSlot(slot) {
   state.visibilityPrefectureSlot = target;
   elements.cameraSearch.value = '';
   renderAreaSelect();
+  updateComparisonControls();
   initializeOrResetMap();
   updatePageMeta();
   updateYoutubeToggle();
@@ -1811,6 +2320,7 @@ async function swapComparisonPrefectures() {
 }
 
 async function toggleComparisonMode() {
+  if (state.isMobile || state.customMode) return;
   state.compareMode = !state.compareMode;
   localStorage.setItem(COMPARE_MODE_KEY, String(state.compareMode));
   if (state.compareMode) await ensureSecondaryPrefecture(state.prefecture.id);
@@ -1829,7 +2339,8 @@ function updateComparisonControls() {
   elements.comparisonToggleButton.classList.toggle('is-active', state.compareMode);
   elements.comparisonToggleButton.setAttribute('aria-pressed', String(state.compareMode));
   elements.comparisonToggleButton.textContent = state.compareMode ? '1県表示' : '2県表示';
-  if (elements.areaControl) elements.areaControl.hidden = state.compareMode;
+  if (elements.areaControl) elements.areaControl.hidden = state.compareMode || state.customMode;
+  if (elements.comparisonToggleButton) elements.comparisonToggleButton.hidden = state.isMobile || state.customMode;
   updateGridColumnControl();
   updatePrefectureSelectionUI();
   updateVisibilityPrefectureSwitcher();
@@ -1837,6 +2348,16 @@ function updateComparisonControls() {
 }
 
 function activePrefectures() {
+  if (state.customMode) {
+    const seen = new Set();
+    const prefectures = [];
+    for (const entry of selectedCustomEntries()) {
+      if (seen.has(entry.prefecture.id)) continue;
+      seen.add(entry.prefecture.id);
+      prefectures.push(entry.prefecture);
+    }
+    return prefectures;
+  }
   return state.compareMode && state.secondaryPrefecture
     ? [state.prefecture, state.secondaryPrefecture]
     : [displayedPrefecture()].filter(Boolean);
