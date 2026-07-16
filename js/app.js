@@ -14,6 +14,7 @@ const COMPARE_PREFECTURE_KEY = 'national-live-camera:compare-prefecture:v1';
 const YOUTUBE_LIVE_REFRESH_MS = 5 * 60 * 1000;
 const YOUTUBE_LIVE_PROBE_TIMEOUT_MS = 8000;
 const MOBILE_MEDIA_QUERY = '(max-width: 620px)';
+const COMPACT_GRID_MEDIA_QUERY = '(max-width: 1100px)';
 const MOBILE_GRID_COLUMNS_KEY = 'national-live-camera:mobile-grid-columns:v1';
 const CUSTOM_SLOTS_KEY = 'national-live-camera:custom-slots:v1';
 const CUSTOM_DRAFT_KEY = 'national-live-camera:custom-draft:v1';
@@ -68,6 +69,7 @@ const elements = {
   refreshHiddenImagesButton: document.querySelector('#refreshHiddenImagesButton'),
   panelBackdrop: document.querySelector('#panelBackdrop'),
   prefectureNavigation: document.querySelector('#prefectureNavigation'),
+  prefectureCustomSlotList: document.querySelector('#prefectureCustomSlotList'),
   viewer: document.querySelector('#viewer'),
   viewerImage: document.querySelector('#viewerImage'),
   viewerCaption: document.querySelector('#viewerCaption'),
@@ -135,6 +137,7 @@ const state = {
   comparisonGridColumns: 6,
   mobileGridColumns: 2,
   isMobile: false,
+  isCompactGrid: false,
   compareMode: false,
   singleViewSlot: 'primary',
   secondaryPrefecture: null,
@@ -168,6 +171,7 @@ async function init() {
   state.prefectures = await fetchJson(`${DATA_ROOT}/prefectures.json`);
   initializeCustomStorage();
   renderPrefectureNavigation();
+  renderPrefectureCustomSlots();
   updatePrefectureSelectionUI();
 
   const requested = new URLSearchParams(location.search).get('pref');
@@ -283,6 +287,53 @@ function updateCustomSlotControls() {
   for (const button of [elements.customLoadSlotButton, elements.customOverwriteButton, elements.customRenameButton, elements.customDeleteButton]) {
     if (button) button.disabled = !hasActive;
   }
+  renderPrefectureCustomSlots();
+}
+
+function renderPrefectureCustomSlots() {
+  if (!elements.prefectureCustomSlotList) return;
+  const fragment = document.createDocumentFragment();
+
+  if (!state.customSlots.length) {
+    const empty = document.createElement('p');
+    empty.className = 'prefectureCustomSlotEmpty';
+    empty.textContent = '保存したカスタム設定はありません。';
+    fragment.appendChild(empty);
+  } else {
+    for (const slot of state.customSlots) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'prefectureCustomSlotButton';
+      button.dataset.slotId = slot.id;
+
+      const name = document.createElement('strong');
+      name.textContent = slot.name;
+      const count = document.createElement('span');
+      count.textContent = `${slot.cameras.length}地点`;
+      button.append(name, count);
+      button.addEventListener('click', () => loadCustomSlotById(slot.id));
+      fragment.appendChild(button);
+    }
+  }
+
+  elements.prefectureCustomSlotList.replaceChildren(fragment);
+}
+
+async function loadCustomSlotById(slotId) {
+  const slot = state.customSlots.find((item) => item.id === slotId);
+  if (!slot) {
+    showStatus('選択したカスタム設定が見つかりません。');
+    renderPrefectureCustomSlots();
+    return;
+  }
+
+  state.customActiveSlotId = slot.id;
+  localStorage.setItem(CUSTOM_ACTIVE_SLOT_KEY, slot.id);
+  updateCustomSlotControls();
+  if (elements.customSlotSelect) elements.customSlotSelect.value = slot.id;
+  if (elements.customSlotName) elements.customSlotName.value = slot.name;
+  closePrefecturePanel();
+  await loadCustomSlot();
 }
 
 function updateCustomSelectedCount() {
@@ -737,14 +788,15 @@ function initializeDisplayPreferences() {
   }
 
   state.isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+  state.isCompactGrid = window.matchMedia(COMPACT_GRID_MEDIA_QUERY).matches;
   const savedMapVisibility = localStorage.getItem(MAP_VISIBILITY_KEY);
   state.mapVisible = savedMapVisibility !== 'false';
   const savedColumns = Number(localStorage.getItem(GRID_COLUMNS_KEY));
   state.gridColumns = savedColumns === 6 ? 6 : 4;
   const savedMobileColumns = Number(localStorage.getItem(MOBILE_GRID_COLUMNS_KEY));
-  state.mobileGridColumns = [1, 2, 3, 4].includes(savedMobileColumns) ? savedMobileColumns : 2;
+  state.mobileGridColumns = [1, 2, 3].includes(savedMobileColumns) ? savedMobileColumns : 2;
   const savedComparisonColumns = Number(localStorage.getItem(COMPARE_GRID_COLUMNS_KEY));
-  state.comparisonGridColumns = [6, 8, 10].includes(savedComparisonColumns) ? savedComparisonColumns : 6;
+  state.comparisonGridColumns = [6, 8].includes(savedComparisonColumns) ? savedComparisonColumns : 6;
   state.compareMode = !state.isMobile && localStorage.getItem(COMPARE_MODE_KEY) === 'true';
   state.secondaryPrefectureId = localStorage.getItem(COMPARE_PREFECTURE_KEY);
   updateMapVisibility();
@@ -759,14 +811,16 @@ function updateMapVisibility() {
   elements.layout.classList.toggle('mapHidden', !effectiveMapVisible);
   elements.layout.classList.toggle('comparisonMode', state.compareMode);
   elements.layout.classList.toggle('customMode', state.customMode);
-  elements.layout.classList.toggle('gridColumns4', !state.compareMode && !state.isMobile && state.gridColumns === 4);
-  elements.layout.classList.toggle('gridColumns6', !state.compareMode && !state.isMobile && state.gridColumns === 6);
+  const compactSingleView = !state.compareMode && state.isCompactGrid;
+  elements.layout.classList.toggle('gridColumns4', !state.compareMode && !state.isCompactGrid && state.gridColumns === 4);
+  elements.layout.classList.toggle('gridColumns6', !state.compareMode && !state.isCompactGrid && state.gridColumns === 6);
   for (const columns of [1, 2, 3, 4]) {
-    elements.layout.classList.toggle(`mobileColumns${columns}`, !state.compareMode && state.isMobile && state.mobileGridColumns === columns);
+    elements.layout.classList.toggle(`compactColumns${columns}`, compactSingleView && state.mobileGridColumns === columns);
+    elements.layout.classList.remove(`mobileColumns${columns}`);
   }
   elements.layout.classList.toggle('comparisonColumns6', state.compareMode && state.comparisonGridColumns === 6);
   elements.layout.classList.toggle('comparisonColumns8', state.compareMode && state.comparisonGridColumns === 8);
-  elements.layout.classList.toggle('comparisonColumns10', state.compareMode && state.comparisonGridColumns === 10);
+  elements.layout.classList.remove('comparisonColumns10');
   elements.mapToggleButton.hidden = state.compareMode;
   elements.mapToggleButton.classList.toggle('is-off', !state.mapVisible);
   elements.mapToggleButton.setAttribute('aria-pressed', String(state.mapVisible));
@@ -781,8 +835,9 @@ function updateMapVisibility() {
 
 function updateGridColumnControl() {
   if (!elements.gridColumnControl || !elements.gridColumnSelect) return;
-  const values = state.isMobile ? [1, 2, 3, 4] : state.compareMode ? [6, 8, 10] : [4, 6];
-  const selected = state.isMobile
+  const compactSingleView = !state.compareMode && state.isCompactGrid;
+  const values = compactSingleView ? [1, 2, 3] : state.compareMode ? [6, 8] : [4, 6];
+  const selected = compactSingleView
     ? state.mobileGridColumns
     : state.compareMode
       ? state.comparisonGridColumns
@@ -810,12 +865,14 @@ function updateResponsiveControls() {
 
 function handleResponsiveChange() {
   const mobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
-  if (mobile === state.isMobile) {
+  const compactGrid = window.matchMedia(COMPACT_GRID_MEDIA_QUERY).matches;
+  if (mobile === state.isMobile && compactGrid === state.isCompactGrid) {
     updateResponsiveControls();
     return;
   }
 
   state.isMobile = mobile;
+  state.isCompactGrid = compactGrid;
   if (mobile && state.compareMode) {
     state.compareMode = false;
     localStorage.setItem(COMPARE_MODE_KEY, 'false');
@@ -2063,11 +2120,11 @@ function bindEvents() {
 
   elements.gridColumnSelect?.addEventListener('change', (event) => {
     const value = Number(event.target.value);
-    if (state.isMobile) {
-      state.mobileGridColumns = [1, 2, 3, 4].includes(value) ? value : 2;
+    if (!state.compareMode && state.isCompactGrid) {
+      state.mobileGridColumns = [1, 2, 3].includes(value) ? value : 2;
       localStorage.setItem(MOBILE_GRID_COLUMNS_KEY, String(state.mobileGridColumns));
     } else if (state.compareMode) {
-      state.comparisonGridColumns = [6, 8, 10].includes(value) ? value : 6;
+      state.comparisonGridColumns = [6, 8].includes(value) ? value : 6;
       localStorage.setItem(COMPARE_GRID_COLUMNS_KEY, String(state.comparisonGridColumns));
     } else {
       state.gridColumns = value === 6 ? 6 : 4;
